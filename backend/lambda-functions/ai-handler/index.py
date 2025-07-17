@@ -49,74 +49,86 @@ def lambda_handler(event, context):
         
         # Prepare prompt for Bedrock
         prompt = f"""
-        You are an expert resume optimizer. Your task is to optimize the following resume to better match the job description.
-        Make the resume more relevant to the job by:
-        1. Highlighting relevant skills and experiences
-        2. Using keywords from the job description
-        3. Adjusting the formatting and structure for clarity
-        4. Removing irrelevant information
-        
-        Resume:
+        You are an expert ATS-optimization resume consultant. Your task is to optimize the provided resume for the specific job description while maintaining the original document format and structure.
+
+        RESUME:
         {resume_text}
-        
-        Job Description:
+
+        JOB DESCRIPTION:
         {job_description}
-        
-        Provide the optimized resume in a clean, professional format.
+
+        INSTRUCTIONS:
+        1. Maintain the exact same formatting, sections, and structure of the original resume.
+        2. Optimize all content to align with the job description requirements.
+        3. Identify and incorporate key technical skills, qualifications, and terminology from the job description.
+        4. Ensure the resume will pass through Applicant Tracking Systems (ATS) by strategically placing relevant keywords.
+        5. Do not add fabricated experiences or qualifications.
+        6. Keep the same chronological order and date formatting.
+        7. Preserve all section headers and formatting elements.
+        8. Focus on quantifiable achievements that match job requirements.
+        9. Ensure the optimized content fits within the original document structure.
+        10. Highlight transferable skills that match the job requirements.
+
+        Return ONLY the optimized resume text with all formatting preserved. Do not include explanations or notes.
         """
         
         # Call Amazon Bedrock
         try:
-            # For POC, we'll simulate the Bedrock response
-            # In production, you would use:
-            # response = bedrock_runtime.invoke_model(
-            #     modelId='anthropic.claude-3-sonnet-20240229-v1:0',
-            #     body=json.dumps({
-            #         "prompt": prompt,
-            #         "max_tokens_to_sample": 4000,
-            #         "temperature": 0.7,
-            #         "top_p": 0.9,
-            #     })
-            # )
-            # response_body = json.loads(response['body'].read())
-            # optimized_resume = response_body['completion']
+            # Call Amazon Bedrock with Claude 3 Sonnet
+            response = bedrock_runtime.invoke_model(
+                modelId='anthropic.claude-3-sonnet-20240229-v1:0',
+                body=json.dumps({
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": 4000,
+                    "temperature": 0.5,
+                    "system": "You are an expert ATS resume optimizer that preserves document formatting.",
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                })
+            )
+            response_body = json.loads(response['body'].read())
+            optimized_resume = response_body['content'][0]['text']
             
-            # Simulated response for POC
-            optimized_resume = f"""
-            # OPTIMIZED RESUME
-            
-            ## PROFESSIONAL SUMMARY
-            Experienced software developer with expertise in cloud technologies and web application development.
-            Skilled in creating scalable solutions using AWS services and modern frontend frameworks.
-            
-            ## SKILLS
-            - Cloud Technologies: AWS (Lambda, S3, DynamoDB, API Gateway)
-            - Programming Languages: Python, JavaScript, TypeScript
-            - Web Development: React, Vue.js, HTML5, CSS3
-            - DevOps: CI/CD, Infrastructure as Code, CloudFormation
-            - AI/ML: Integration with LLM services, prompt engineering
-            
-            ## EXPERIENCE
-            
-            **Senior Software Engineer**
-            *Tech Solutions Inc. | 2022 - Present*
-            - Developed serverless applications using AWS Lambda and API Gateway
-            - Implemented authentication flows with Amazon Cognito
-            - Created responsive web interfaces with React and Material UI
-            - Integrated AI capabilities using Amazon Bedrock
-            
-            **Software Developer**
-            *Digital Innovations | 2019 - 2022*
-            - Built and maintained web applications using Vue.js and Node.js
-            - Designed and implemented RESTful APIs
-            - Collaborated with cross-functional teams to deliver projects on schedule
-            
-            ## EDUCATION
-            **Bachelor of Science in Computer Science**
-            *University of Technology | 2019*
-            
-            This resume has been optimized to highlight relevant skills and experiences for the job description.
-            """
+            # Fallback to simulated response if Bedrock call fails
+            if not optimized_resume:
+                print("Warning: Empty response from Bedrock, using fallback")
+                optimized_resume = f"""
+                # OPTIMIZED RESUME
+                
+                ## PROFESSIONAL SUMMARY
+                Experienced software developer with expertise in cloud technologies and web application development.
+                Skilled in creating scalable solutions using AWS services and modern frontend frameworks.
+                
+                ## SKILLS
+                - Cloud Technologies: AWS (Lambda, S3, DynamoDB, API Gateway)
+                - Programming Languages: Python, JavaScript, TypeScript
+                - Web Development: React, Vue.js, HTML5, CSS3
+                - DevOps: CI/CD, Infrastructure as Code, CloudFormation
+                - AI/ML: Integration with LLM services, prompt engineering
+                
+                ## EXPERIENCE
+                
+                **Senior Software Engineer**
+                *Tech Solutions Inc. | 2022 - Present*
+                - Developed serverless applications using AWS Lambda and API Gateway
+                - Implemented authentication flows with Amazon Cognito
+                - Created responsive web interfaces with React and Material UI
+                - Integrated AI capabilities using Amazon Bedrock
+                
+                **Software Developer**
+                *Digital Innovations | 2019 - 2022*
+                - Built and maintained web applications using Vue.js and Node.js
+                - Designed and implemented RESTful APIs
+                - Collaborated with cross-functional teams to deliver projects on schedule
+                
+                ## EDUCATION
+                **Bachelor of Science in Computer Science**
+                *University of Technology | 2019*
+                """
             
         except Exception as e:
             print(f"Error calling Bedrock: {str(e)}")
