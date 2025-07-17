@@ -2,6 +2,9 @@ import json
 import boto3
 import os
 import uuid
+import tempfile
+import subprocess
+import base64
 from datetime import datetime
 
 s3 = boto3.client('s3')
@@ -9,6 +12,62 @@ bedrock_runtime = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
 bucket_name = os.environ.get('STORAGE_BUCKET')
 table_name = os.environ.get('USER_HISTORY_TABLE')
+
+# Function to extract text from PDF
+def extract_text_from_pdf(pdf_content):
+    try:
+        # We'll use Amazon Textract for PDF text extraction
+        textract = boto3.client('textract')
+        response = textract.detect_document_text(
+            Document={'Bytes': pdf_content}
+        )
+        
+        # Extract text from the response
+        text = ""
+        for item in response["Blocks"]:
+            if item["BlockType"] == "LINE":
+                text += item["Text"] + "\n"
+        
+        return text
+    except Exception as e:
+        print(f"Error extracting text from PDF: {str(e)}")
+        return f"Error extracting text from PDF: {str(e)}"
+
+# Function to extract text from Word document
+def extract_text_from_docx(docx_content):
+    try:
+        # We'll use Amazon Textract for Word document text extraction
+        textract = boto3.client('textract')
+        response = textract.detect_document_text(
+            Document={'Bytes': docx_content}
+        )
+        
+        # Extract text from the response
+        text = ""
+        for item in response["Blocks"]:
+            if item["BlockType"] == "LINE":
+                text += item["Text"] + "\n"
+        
+        return text
+    except Exception as e:
+        print(f"Error extracting text from Word document: {str(e)}")
+        return f"Error extracting text from Word document: {str(e)}"
+
+# Function to determine file type and extract text
+def extract_text_from_document(file_content, file_key):
+    # Determine file type based on extension
+    file_extension = file_key.lower().split('.')[-1]
+    
+    if file_extension in ['pdf']:
+        return extract_text_from_pdf(file_content)
+    elif file_extension in ['doc', 'docx']:
+        return extract_text_from_docx(file_content)
+    else:
+        # Try to decode as plain text
+        try:
+            return file_content.decode('utf-8')
+        except UnicodeDecodeError:
+            return "Unsupported file format. Please upload a PDF or Word document."
 
 def lambda_handler(event, context):
     try:
@@ -28,23 +87,21 @@ def lambda_handler(event, context):
         
         # Get files from S3
         try:
+            # Get resume file
             resume_obj = s3.get_object(Bucket=bucket_name, Key=resume_key)
             resume_content = resume_obj['Body'].read()
             
-            # Try to extract text from PDF (simplified approach)
-            try:
-                resume_text = resume_content.decode('utf-8')
-            except UnicodeDecodeError:
-                # If we can't decode as text, it's likely a binary format
-                # In a real implementation, you would use a PDF parser library
-                resume_text = "PDF content (binary format) - text extraction would be implemented in production"
+            # Extract text from resume document (PDF or Word)
+            resume_text = extract_text_from_document(resume_content, resume_key)
+            print(f"Extracted resume text length: {len(resume_text)}")
             
+            # Get job description
             job_desc_obj = s3.get_object(Bucket=bucket_name, Key=job_desc_key)
             job_description = job_desc_obj['Body'].read().decode('utf-8')
         except Exception as e:
-            print(f"Error retrieving files from S3: {str(e)}")
+            print(f"Error retrieving or processing files from S3: {str(e)}")
             return {
-                'error': f'Error retrieving files: {str(e)}'
+                'error': f'Error retrieving or processing files: {str(e)}'
             }
         
         # Prepare prompt for Bedrock
