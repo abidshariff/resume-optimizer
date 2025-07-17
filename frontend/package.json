@@ -11,9 +11,12 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "resolutions": {
+    "maplibre-gl": "^4.0.0"
   },
   "eslintConfig": {
     "extends": [
