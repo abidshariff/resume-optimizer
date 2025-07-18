@@ -208,27 +208,38 @@ function App() {
       const response = await API.post('resumeOptimizer', '/optimize', {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token  // No Bearer prefix, Amplify adds it
+          'Authorization': token,  // No Bearer prefix, Amplify adds it
+          'Accept': 'application/json'
         },
         body: {
           resume: resume,
           jobDescription: jobDescription
-        }
+        },
+        response: true  // Get the full response object
       });
       
       console.log("API response received:", response);
       
-      if (response && response.optimizedResumeUrl) {
-        console.log("Fetching optimized resume from URL:", response.optimizedResumeUrl);
+      // Parse the response - it might be in different formats depending on how API Gateway returns it
+      let responseData = response;
+      if (response.body) {
+        // If the response has a body property, it's likely from API Gateway
+        responseData = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;
+      }
+      
+      console.log("Parsed response data:", responseData);
+      
+      if (responseData && responseData.optimizedResumeUrl) {
+        console.log("Fetching optimized resume from URL:", responseData.optimizedResumeUrl);
         
         // Use the fileType from the response instead of parsing from URL
-        const fileExtension = response.fileType || 'txt';
-        let contentType = response.contentType || 'text/plain';
+        const fileExtension = responseData.fileType || 'txt';
+        let contentType = responseData.contentType || 'text/plain';
         
         // Fallback logic if fileType is not provided
-        if (!response.fileType) {
+        if (!responseData.fileType) {
           // Extract just the filename part before query parameters
-          const urlPath = new URL(response.optimizedResumeUrl).pathname;
+          const urlPath = new URL(responseData.optimizedResumeUrl).pathname;
           const cleanFileExtension = urlPath.split('.').pop().toLowerCase();
           
           if (cleanFileExtension === 'docx' || cleanFileExtension === 'doc') {
@@ -246,7 +257,7 @@ function App() {
         setOptimizedResumeType(contentType);
         
         // Fetch the optimized resume content
-        const resumeResponse = await fetch(response.optimizedResumeUrl);
+        const resumeResponse = await fetch(responseData.optimizedResumeUrl);
         if (!resumeResponse.ok) {
           throw new Error(`Failed to fetch optimized resume: ${resumeResponse.status} ${resumeResponse.statusText}`);
         }
