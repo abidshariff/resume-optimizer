@@ -14,6 +14,14 @@ dynamodb = boto3.resource('dynamodb')
 bucket_name = os.environ.get('STORAGE_BUCKET')
 table_name = os.environ.get('USER_HISTORY_TABLE')
 
+# CORS headers for all responses
+CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',  # Allow all origins, or specify your domain
+    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+    'Access-Control-Allow-Methods': 'OPTIONS,POST',
+    'Access-Control-Allow-Credentials': 'true'
+}
+
 # Function to extract text from PDF
 def extract_text_from_pdf(pdf_content):
     try:
@@ -292,7 +300,8 @@ def lambda_handler(event, context):
         # Validate inputs
         if not job_id or not resume_key or not job_desc_key:
             return {
-                'error': 'Missing required parameters'
+                'error': 'Missing required parameters',
+                'headers': CORS_HEADERS
             }
         
         # Get files from S3
@@ -309,14 +318,16 @@ def lambda_handler(event, context):
             if resume_text.startswith("Unfortunately") or resume_text.startswith("Error") or resume_text.startswith("Unable"):
                 print("Text extraction failed with error message")
                 return {
-                    'error': resume_text
+                    'error': resume_text,
+                    'headers': CORS_HEADERS
                 }
             
             # Verify we have enough text to process
             if len(resume_text.strip()) < 50:  # Arbitrary minimum length
                 print("Extracted text too short, likely failed extraction")
                 return {
-                    'error': f"The extracted text from your resume is too short ({len(resume_text.strip())} characters). Please check the file format and try again."
+                    'error': f"The extracted text from your resume is too short ({len(resume_text.strip())} characters). Please check the file format and try again.",
+                    'headers': CORS_HEADERS
                 }
             
             # Get job description
@@ -325,7 +336,8 @@ def lambda_handler(event, context):
         except Exception as e:
             print(f"Error retrieving or processing files from S3: {str(e)}")
             return {
-                'error': f'Error retrieving or processing files: {str(e)}'
+                'error': f'Error retrieving or processing files: {str(e)}',
+                'headers': CORS_HEADERS
             }
         
         # Prepare prompt for Bedrock
@@ -414,7 +426,8 @@ def lambda_handler(event, context):
         except Exception as e:
             print(f"Error calling Bedrock: {str(e)}")
             return {
-                'error': f'Error generating optimized resume: {str(e)}'
+                'error': f'Error generating optimized resume: {str(e)}',
+                'headers': CORS_HEADERS
             }
         
         # Store optimized resume in S3
@@ -456,10 +469,12 @@ def lambda_handler(event, context):
         
         return {
             'optimizedResumeUrl': optimized_url,
-            'jobId': job_id
+            'jobId': job_id,
+            'headers': CORS_HEADERS
         }
     except Exception as e:
         print(f"Error in AI Handler: {str(e)}")
         return {
-            'error': str(e)
+            'error': str(e),
+            'headers': CORS_HEADERS
         }
