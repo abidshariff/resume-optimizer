@@ -1,0 +1,7 @@
+{
+  "allowOrigins": ["https://main.d16ci5rhuvcide.amplifyapp.com", "https://dw2t3tdxg9cog.cloudfront.net", "*"],
+  "allowMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  "allowHeaders": ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token"],
+  "allowCredentials": true,
+  "exposeHeaders": ["Content-Type", "X-Amz-Date", "X-Amz-Security-Token"]
+}

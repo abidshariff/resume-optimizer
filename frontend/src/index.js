@@ -32,7 +32,8 @@ Amplify.configure({
           try {
             const session = await Amplify.Auth.currentSession();
             return {
-              Authorization: session.getIdToken().getJwtToken()
+              'Authorization': session.getIdToken().getJwtToken(),
+              'Content-Type': 'application/json'
             };
           } catch (error) {
             console.error('Error getting auth token:', error);

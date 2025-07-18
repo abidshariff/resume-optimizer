@@ -202,7 +202,7 @@ function App() {
       console.log("Authentication token retrieved successfully");
       
       // Use Amplify's API.post method with authentication
-      const response = await API.post('resumeOptimizer', '', {
+      const response = await API.post('resumeOptimizer', '/optimize', {
         headers: {
           'Content-Type': 'application/json',
           // No need to add 'Bearer' prefix, Amplify adds it automatically
