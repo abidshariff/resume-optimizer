@@ -137,7 +137,10 @@ def lambda_handler(event, context):
             'body': json.dumps({
                 'message': 'Resume optimization complete',
                 'optimizedResumeUrl': ai_result.get('optimizedResumeUrl'),
-                'jobId': job_id
+                'jobId': job_id,
+                'fileType': ai_result.get('fileType', file_type),
+                'contentType': ai_result.get('contentType', 'text/plain'),
+                'downloadFilename': ai_result.get('downloadFilename', f"optimized_resume.{file_type}")
             })
         }
     except Exception as e:

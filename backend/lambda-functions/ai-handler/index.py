@@ -531,6 +531,9 @@ def lambda_handler(event, context):
             ExpiresIn=3600  # URL valid for 1 hour
         )
         
+        # Also generate a direct download URL for the frontend to use
+        download_filename = f"optimized_resume_{job_id[:8]}.{output_extension}"
+        
         # Record in DynamoDB
         if table_name:
             table = dynamodb.Table(table_name)
@@ -552,6 +555,9 @@ def lambda_handler(event, context):
         return {
             'optimizedResumeUrl': optimized_url,
             'jobId': job_id,
+            'fileType': output_extension,
+            'contentType': content_type,
+            'downloadFilename': download_filename,
             'headers': CORS_HEADERS
         }
     except Exception as e:
