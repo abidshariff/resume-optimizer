@@ -4,9 +4,15 @@
   "private": true,
   "dependencies": {
     "@aws-amplify/ui-react": "^4.0.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.2.0",
+    "@mui/material": "^7.2.0",
     "aws-amplify": "^5.0.0",
+    "framer-motion": "^12.23.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-dropzone": "^14.3.8",
     "react-scripts": "5.0.1"
   },
   "scripts": {

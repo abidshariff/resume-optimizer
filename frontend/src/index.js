@@ -3,31 +3,31 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { Amplify } from 'aws-amplify';
+import { CssBaseline } from '@mui/material';
 
-// Configuration with environment variables for flexibility
-const amplifyConfig = {
+// Configure Amplify
+Amplify.configure({
   Auth: {
-    region: 'us-east-1',
-    userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_SUJLMJ51w',
-    userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '11rgtlrprvpmtoga4l016bhhdr',
+    region: process.env.REACT_APP_REGION || 'us-east-1',
+    userPoolId: process.env.REACT_APP_USER_POOL_ID,
+    userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID,
+    mandatorySignIn: true,
   },
   API: {
     endpoints: [
       {
         name: 'resumeOptimizer',
-        endpoint: process.env.REACT_APP_API_ENDPOINT || 'https://t7zfb4h9n7.execute-api.us-east-1.amazonaws.com/dev',
-        region: 'us-east-1'
-      }
-    ]
-  }
-};
-
-// Initialize Amplify with configuration
-Amplify.configure(amplifyConfig);
+        endpoint: process.env.REACT_APP_API_ENDPOINT,
+        region: process.env.REACT_APP_REGION || 'us-east-1',
+      },
+    ],
+  },
+});
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
+    <CssBaseline />
     <App />
   </React.StrictMode>
 );

@@ -113,6 +113,20 @@ def lambda_handler(event, context):
         ai_result = json.loads(ai_response['Payload'].read().decode())
         print(f"AI Handler response: {json.dumps(ai_result)}")
         
+        # Check if AI handler returned an error
+        if 'error' in ai_result:
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Credentials': True
+                },
+                'body': json.dumps({
+                    'message': ai_result['error'],
+                    'jobId': job_id
+                })
+            }
+        
         return {
             'statusCode': 200,
             'headers': {
