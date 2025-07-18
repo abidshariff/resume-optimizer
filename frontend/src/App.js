@@ -193,11 +193,20 @@ function App() {
     setError(null);
     
     try {
+      console.log("Starting resume optimization...");
+      
+      // Get the current session and token
+      const session = await Auth.currentSession();
+      const token = session.getIdToken().getJwtToken();
+      
+      console.log("Authentication token retrieved successfully");
+      
       // Use Amplify's API.post method with authentication
       const response = await API.post('resumeOptimizer', '/optimize', {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await Auth.currentSession()).getIdToken().getJwtToken()}`
+          // No need to add 'Bearer' prefix, Amplify adds it automatically
+          'Authorization': token
         },
         body: {
           resume: resume,
@@ -205,21 +214,41 @@ function App() {
         }
       });
       
-      if (response.optimizedResumeUrl) {
+      console.log("API response received:", response);
+      
+      if (response && response.optimizedResumeUrl) {
+        console.log("Fetching optimized resume from URL:", response.optimizedResumeUrl);
+        
         // Fetch the optimized resume content
         const resumeResponse = await fetch(response.optimizedResumeUrl);
         if (!resumeResponse.ok) {
-          throw new Error('Failed to fetch optimized resume');
+          throw new Error(`Failed to fetch optimized resume: ${resumeResponse.status} ${resumeResponse.statusText}`);
         }
         
         const resumeText = await resumeResponse.text();
+        console.log("Optimized resume content retrieved successfully");
+        
         setOptimizedResume(resumeText);
         setActiveStep(2);
       } else {
-        throw new Error('No optimized resume URL returned');
+        console.error("Invalid API response:", response);
+        throw new Error('No optimized resume URL returned in the API response');
       }
     } catch (error) {
       console.error('Error optimizing resume:', error);
+      
+      // More detailed error logging
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Error response data:", error.response.data);
+        console.error("Error response status:", error.response.status);
+        console.error("Error response headers:", error.response.headers);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("Error request:", error.request);
+      }
+      
       setError(`Error optimizing resume: ${error.message}`);
       setSnackbarMessage(`Error: ${error.message}`);
       setSnackbarOpen(true);

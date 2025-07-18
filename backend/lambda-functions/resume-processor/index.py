@@ -9,7 +9,23 @@ lambda_client = boto3.client('lambda')
 bucket_name = os.environ.get('STORAGE_BUCKET')
 ai_handler_function = os.environ.get('AI_HANDLER_FUNCTION')
 
+# CORS headers for all responses
+CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+    'Access-Control-Allow-Methods': 'OPTIONS,POST',
+    'Access-Control-Allow-Credentials': 'true'
+}
+
 def lambda_handler(event, context):
+    # Handle preflight OPTIONS request
+    if event.get('httpMethod') == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({})
+        }
+    
     try:
         print("Received event:", json.dumps(event))
         
@@ -33,10 +49,7 @@ def lambda_handler(event, context):
         if not resume_content_base64:
             return {
                 'statusCode': 400,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Credentials': True
-                },
+                'headers': CORS_HEADERS,
                 'body': json.dumps({
                     'message': 'Resume content is required'
                 })
@@ -45,10 +58,7 @@ def lambda_handler(event, context):
         if not job_description:
             return {
                 'statusCode': 400,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Credentials': True
-                },
+                'headers': CORS_HEADERS,
                 'body': json.dumps({
                     'message': 'Job description is required'
                 })
@@ -65,10 +75,7 @@ def lambda_handler(event, context):
             print(f"Error decoding resume content: {str(e)}")
             return {
                 'statusCode': 400,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Credentials': True
-                },
+                'headers': CORS_HEADERS,
                 'body': json.dumps({
                     'message': f'Invalid resume content format: {str(e)}'
                 })
@@ -117,10 +124,7 @@ def lambda_handler(event, context):
         if 'error' in ai_result:
             return {
                 'statusCode': 400,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Credentials': True
-                },
+                'headers': CORS_HEADERS,
                 'body': json.dumps({
                     'message': ai_result['error'],
                     'jobId': job_id
@@ -129,10 +133,7 @@ def lambda_handler(event, context):
         
         return {
             'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Credentials': True
-            },
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'message': 'Resume optimization complete',
                 'optimizedResumeUrl': ai_result.get('optimizedResumeUrl'),
@@ -143,10 +144,7 @@ def lambda_handler(event, context):
         print(f"Error processing request: {str(e)}")
         return {
             'statusCode': 500,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Credentials': True
-            },
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'message': f'Error processing request: {str(e)}'
             })
