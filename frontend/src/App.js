@@ -221,17 +221,28 @@ function App() {
       if (response && response.optimizedResumeUrl) {
         console.log("Fetching optimized resume from URL:", response.optimizedResumeUrl);
         
-        // Determine the file type from the URL
-        const fileExtension = response.optimizedResumeUrl.split('.').pop().toLowerCase();
-        let contentType = 'text/plain';
+        // Use the fileType from the response instead of parsing from URL
+        const fileExtension = response.fileType || 'txt';
+        let contentType = response.contentType || 'text/plain';
         
-        if (fileExtension === 'docx') {
-          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        } else if (fileExtension === 'doc') {
-          contentType = 'application/msword';
+        // Fallback logic if fileType is not provided
+        if (!response.fileType) {
+          // Extract just the filename part before query parameters
+          const urlPath = new URL(response.optimizedResumeUrl).pathname;
+          const cleanFileExtension = urlPath.split('.').pop().toLowerCase();
+          
+          if (cleanFileExtension === 'docx' || cleanFileExtension === 'doc') {
+            if (cleanFileExtension === 'docx') {
+              contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            } else {
+              contentType = 'application/msword';
+            }
+            setOptimizedResumeExtension(cleanFileExtension);
+          }
+        } else {
+          setOptimizedResumeExtension(fileExtension);
         }
         
-        setOptimizedResumeExtension(fileExtension);
         setOptimizedResumeType(contentType);
         
         // Fetch the optimized resume content

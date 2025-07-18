@@ -131,6 +131,9 @@ def lambda_handler(event, context):
                 })
             }
         
+        # Default file type if not provided by AI handler
+        default_file_type = 'txt'
+        
         return {
             'statusCode': 200,
             'headers': CORS_HEADERS,
@@ -138,9 +141,9 @@ def lambda_handler(event, context):
                 'message': 'Resume optimization complete',
                 'optimizedResumeUrl': ai_result.get('optimizedResumeUrl'),
                 'jobId': job_id,
-                'fileType': ai_result.get('fileType', file_type),
+                'fileType': ai_result.get('fileType', default_file_type),
                 'contentType': ai_result.get('contentType', 'text/plain'),
-                'downloadFilename': ai_result.get('downloadFilename', f"optimized_resume.{file_type}")
+                'downloadFilename': ai_result.get('downloadFilename', f"optimized_resume.{default_file_type}")
             })
         }
     except Exception as e:
