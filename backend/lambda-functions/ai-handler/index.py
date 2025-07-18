@@ -343,7 +343,7 @@ def lambda_handler(event, context):
         
         # Prepare prompt for Bedrock
         prompt = f"""
-        You are an expert ATS-optimization resume consultant. Your task is to optimize the provided resume for the specific job description while maintaining the original document format and structure.
+        You are an expert ATS-optimization resume consultant. Your task is to optimize the provided resume for the specific job description and format it according to the structure below.
 
         RESUME:
         {resume_text}
@@ -352,18 +352,55 @@ def lambda_handler(event, context):
         {job_description}
 
         INSTRUCTIONS:
-        1. Maintain the exact same formatting, sections, and structure of the original resume.
-        2. Optimize all content to align with the job description requirements.
-        3. Identify and incorporate key technical skills, qualifications, and terminology from the job description.
-        4. Ensure the resume will pass through Applicant Tracking Systems (ATS) by strategically placing relevant keywords.
-        5. Do not add fabricated experiences or qualifications.
-        6. Keep the same chronological order and date formatting.
-        7. Preserve all section headers and formatting elements.
-        8. Focus on quantifiable achievements that match job requirements.
-        9. Ensure the optimized content fits within the original document structure.
-        10. Highlight transferable skills that match the job requirements.
+        1. Extract and optimize the content from the original resume to align with the job description.
+        2. Identify and incorporate key technical skills, qualifications, and terminology from the job description.
+        3. Ensure the resume will pass through Applicant Tracking Systems (ATS) by strategically placing relevant keywords.
+        4. Do not add fabricated experiences or qualifications.
+        5. Keep the same chronological order for experiences and education.
+        6. Focus on quantifiable achievements that match job requirements.
+        7. Highlight transferable skills that match the job requirements.
+        8. Format your response exactly according to the structure below.
 
-        Return ONLY the optimized resume text with all formatting preserved. Do not include explanations or notes.
+        OUTPUT FORMAT:
+        Provide your response in the following JSON structure:
+
+        ```json
+        {{
+          "full_name": "Full Name from Resume",
+          "contact_info": "Email | Phone | LinkedIn | Location",
+          "professional_summary": "3-4 sentences highlighting key qualifications relevant to the job",
+          "skills": [
+            "Skill 1",
+            "Skill 2",
+            "Skill 3",
+            ...
+          ],
+          "experience": [
+            {{
+              "title": "Job Title",
+              "company": "Company Name",
+              "dates": "Start Date - End Date",
+              "achievements": [
+                "Achievement 1",
+                "Achievement 2",
+                ...
+              ]
+            }},
+            ...
+          ],
+          "education": [
+            {{
+              "degree": "Degree Name",
+              "institution": "Institution Name",
+              "dates": "Graduation Year",
+              "details": "Additional details (optional)"
+            }},
+            ...
+          ]
+        }}
+        ```
+
+        Return ONLY the JSON structure with the optimized resume content. Do not include explanations or notes.
         """
         
         # Call Amazon Bedrock
@@ -431,69 +468,155 @@ def lambda_handler(event, context):
                 'headers': CORS_HEADERS
             }
         
-        # Store optimized resume in S3
-        # First, determine the original file extension
-        original_file_extension = resume_key.split('.')[-1].lower()
-        
-        # Default to .txt if we can't determine the extension or it's not a document format
-        output_extension = 'txt'
-        content_type = 'text/plain'
-        
-        if original_file_extension in ['docx', 'doc']:
-            # If the original was a Word document, create a Word document
-            try:
-                # Create a temporary file to store the Word document
-                with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
-                    temp_file_path = temp_file.name
+        # Parse the JSON response from Claude
+        try:
+            # Extract JSON from the response
+            import re
+            json_match = re.search(r'```json\s*(.*?)\s*```', optimized_resume, re.DOTALL)
+            if json_match:
+                resume_json = json.loads(json_match.group(1))
+            else:
+                # Try to parse the entire response as JSON
+                resume_json = json.loads(optimized_resume)
                 
-                # Try to install and use python-docx
-                try:
-                    subprocess.check_call(['pip', 'install', 'python-docx', '-t', '/tmp'])
-                    sys.path.append('/tmp')
-                    import docx
-                    
-                    # Create a new Word document
-                    doc = docx.Document()
-                    
-                    # Add the optimized content
-                    # Split by paragraphs and add each as a paragraph in the document
-                    for paragraph in optimized_resume.split('\n\n'):
-                        if paragraph.strip():
-                            doc.add_paragraph(paragraph.strip())
-                    
-                    # Save the document
-                    doc.save(temp_file_path)
-                    
-                    # Read the document as binary data
-                    with open(temp_file_path, 'rb') as file:
-                        docx_content = file.read()
-                    
-                    # Clean up the temporary file
-                    os.unlink(temp_file_path)
-                    
-                    # Set the output extension and content type
-                    output_extension = 'docx'
-                    content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                    
-                    # Update the optimized content to the Word document binary data
-                    optimized_resume = docx_content
-                    is_binary = True
-                    
-                except Exception as docx_error:
-                    print(f"Error creating Word document: {str(docx_error)}")
-                    # Fall back to text format
-                    output_extension = 'txt'
-                    content_type = 'text/plain'
-                    is_binary = False
-            except Exception as e:
-                print(f"Error in Word document handling: {str(e)}")
-                # Fall back to text format
-                output_extension = 'txt'
-                content_type = 'text/plain'
-                is_binary = False
-        else:
-            # For other formats, use text
+            print("Successfully parsed JSON response")
+            
+            # Import the resume template module
+            from resume_template import create_resume_template
+            
+            # Always create a Word document
+            output_extension = 'docx'
+            content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            is_binary = True
+            
+            # Create a temporary file to store the Word document
+            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
+                temp_file_path = temp_file.name
+            
+            # Install python-docx if needed
+            subprocess.check_call(['pip', 'install', 'python-docx', '-t', '/tmp'])
+            sys.path.append('/tmp')
+            import docx
+            from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+            from docx.shared import Pt, Inches, RGBColor
+            
+            # Create a new Word document
+            doc = docx.Document()
+            
+            # Set margins
+            sections = doc.sections
+            for section in sections:
+                section.top_margin = Inches(0.5)
+                section.bottom_margin = Inches(0.5)
+                section.left_margin = Inches(0.75)
+                section.right_margin = Inches(0.75)
+            
+            # Add name
+            name = doc.add_paragraph()
+            name_run = name.add_run(resume_json.get('full_name', 'Full Name'))
+            name_run.bold = True
+            name_run.font.size = Pt(16)
+            name.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            
+            # Add contact info
+            contact = doc.add_paragraph()
+            contact_run = contact.add_run(resume_json.get('contact_info', 'Contact Information'))
+            contact.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            
+            # Add a line separator
+            doc.add_paragraph("_" * 80)
+            
+            # Add Professional Summary section
+            summary_heading = doc.add_heading('Professional Summary', level=1)
+            summary_heading.style.font.size = Pt(14)
+            summary_heading.style.font.bold = True
+            doc.add_paragraph(resume_json.get('professional_summary', 'Professional Summary'))
+            
+            # Add Skills section
+            skills_heading = doc.add_heading('Skills', level=1)
+            skills_heading.style.font.size = Pt(14)
+            skills_heading.style.font.bold = True
+            
+            # Add skills as bullet points
+            skills_para = doc.add_paragraph()
+            for skill in resume_json.get('skills', []):
+                bullet_para = doc.add_paragraph(style='ListBullet')
+                bullet_para.add_run(skill)
+            
+            # Add Experience section
+            exp_heading = doc.add_heading('Experience', level=1)
+            exp_heading.style.font.size = Pt(14)
+            exp_heading.style.font.bold = True
+            
+            # Add each job
+            for job in resume_json.get('experience', []):
+                # Job title and company
+                job_para = doc.add_paragraph()
+                job_title = job_para.add_run(f"{job.get('title', 'Job Title')} | {job.get('company', 'Company')}")
+                job_title.bold = True
+                
+                # Dates
+                date_para = doc.add_paragraph()
+                date_para.add_run(job.get('dates', 'Dates'))
+                date_para.style.font.italic = True
+                
+                # Achievements as bullet points
+                for achievement in job.get('achievements', []):
+                    achievement_para = doc.add_paragraph(style='ListBullet')
+                    achievement_para.add_run(achievement)
+                
+                # Add some space after each job
+                doc.add_paragraph()
+            
+            # Add Education section
+            edu_heading = doc.add_heading('Education', level=1)
+            edu_heading.style.font.size = Pt(14)
+            edu_heading.style.font.bold = True
+            
+            # Add each education entry
+            for edu in resume_json.get('education', []):
+                # Degree and institution
+                edu_para = doc.add_paragraph()
+                edu_title = edu_para.add_run(f"{edu.get('degree', 'Degree')} | {edu.get('institution', 'Institution')}")
+                edu_title.bold = True
+                
+                # Dates
+                date_para = doc.add_paragraph()
+                date_para.add_run(edu.get('dates', 'Graduation Year'))
+                date_para.style.font.italic = True
+                
+                # Additional details if available
+                if 'details' in edu and edu['details']:
+                    details_para = doc.add_paragraph()
+                    details_para.add_run(edu['details'])
+                
+                # Add some space after each education entry
+                doc.add_paragraph()
+            
+            # Save the document
+            doc.save(temp_file_path)
+            
+            # Read the document as binary data
+            with open(temp_file_path, 'rb') as file:
+                docx_content = file.read()
+            
+            # Clean up the temporary file
+            os.unlink(temp_file_path)
+            
+            # Update the optimized content to the Word document binary data
+            optimized_resume = docx_content
+            
+        except Exception as e:
+            print(f"Error creating Word document from JSON: {str(e)}")
+            print(f"Raw response: {optimized_resume[:500]}...")  # Log part of the raw response
+            
+            # Fall back to text format
+            output_extension = 'txt'
+            content_type = 'text/plain'
             is_binary = False
+            
+            # Keep the original text response
+            optimized_resume = f"Failed to create Word document. Here's the raw response:\n\n{optimized_resume}"
         
         # Store the optimized resume
         optimized_key = f"users/{user_id}/optimized/{job_id}/resume.{output_extension}"
