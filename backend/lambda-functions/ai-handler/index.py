@@ -518,14 +518,15 @@ def lambda_handler(event, context):
         # Generate pre-signed URL for download
         filename = f"optimized_resume.{output_extension}"
         
-        # Generate the pre-signed URL with content type and disposition headers
+        # Use RFC 5987 compliant Content-Disposition header
+        # This format is more widely supported across browsers
         optimized_url = s3.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': bucket_name,
                 'Key': optimized_key,
                 'ResponseContentType': content_type,
-                'ResponseContentDisposition': f'attachment; filename="{filename}"'
+                'ResponseContentDisposition': f"attachment; filename*=UTF-8''{urllib.parse.quote(filename)}"
             },
             ExpiresIn=3600  # URL valid for 1 hour
         )
