@@ -152,6 +152,8 @@ function App() {
   const [resumeName, setResumeName] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [optimizedResume, setOptimizedResume] = useState(null);
+  const [optimizedResumeType, setOptimizedResumeType] = useState('text/plain');
+  const [optimizedResumeExtension, setOptimizedResumeExtension] = useState('txt');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
@@ -219,16 +221,38 @@ function App() {
       if (response && response.optimizedResumeUrl) {
         console.log("Fetching optimized resume from URL:", response.optimizedResumeUrl);
         
+        // Determine the file type from the URL
+        const fileExtension = response.optimizedResumeUrl.split('.').pop().toLowerCase();
+        let contentType = 'text/plain';
+        
+        if (fileExtension === 'docx') {
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        } else if (fileExtension === 'doc') {
+          contentType = 'application/msword';
+        }
+        
+        setOptimizedResumeExtension(fileExtension);
+        setOptimizedResumeType(contentType);
+        
         // Fetch the optimized resume content
         const resumeResponse = await fetch(response.optimizedResumeUrl);
         if (!resumeResponse.ok) {
           throw new Error(`Failed to fetch optimized resume: ${resumeResponse.status} ${resumeResponse.statusText}`);
         }
         
-        const resumeText = await resumeResponse.text();
+        // Handle different content types
+        if (contentType.includes('application/')) {
+          // For binary files like Word documents
+          const resumeBlob = await resumeResponse.blob();
+          setOptimizedResume(resumeBlob);
+        } else {
+          // For text files
+          const resumeText = await resumeResponse.text();
+          setOptimizedResume(resumeText);
+        }
+        
         console.log("Optimized resume content retrieved successfully");
         
-        setOptimizedResume(resumeText);
         setActiveStep(2);
       } else {
         console.error("Invalid API response:", response);
@@ -258,14 +282,24 @@ function App() {
   };
 
   const downloadOptimizedResume = () => {
-    const blob = new Blob([optimizedResume], { type: 'text/plain' });
+    let blob;
+    
+    if (optimizedResume instanceof Blob) {
+      // If it's already a Blob (binary data like Word document)
+      blob = optimizedResume;
+    } else {
+      // If it's text data
+      blob = new Blob([optimizedResume], { type: optimizedResumeType });
+    }
+    
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'optimized-resume.txt';
+    a.download = `optimized-resume.${optimizedResumeExtension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    URL.revokeObjectURL(url); // Clean up
     
     setSnackbarMessage('Resume downloaded successfully!');
     setSnackbarOpen(true);
@@ -464,20 +498,55 @@ function App() {
                         </Typography>
                       </Box>
                       
-                      <Paper 
-                        variant="outlined" 
-                        sx={{ 
-                          p: 3, 
-                          maxHeight: '500px', 
-                          overflow: 'auto',
-                          fontFamily: '"Courier New", monospace',
-                          whiteSpace: 'pre-wrap',
-                          mb: 3,
-                          bgcolor: 'grey.50'
-                        }}
-                      >
-                        {optimizedResume}
-                      </Paper>
+                      {optimizedResumeType.includes('application/') ? (
+                        <Paper 
+                          variant="outlined" 
+                          sx={{ 
+                            p: 3, 
+                            maxHeight: '500px', 
+                            overflow: 'auto',
+                            mb: 3,
+                            bgcolor: 'grey.50',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <DescriptionIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
+                          <Typography variant="h6" gutterBottom>
+                            Word Document Ready for Download
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary" align="center" paragraph>
+                            Your optimized resume has been prepared as a Word document.
+                            Click the download button below to save it to your computer.
+                          </Typography>
+                          <Button 
+                            variant="contained" 
+                            color="primary"
+                            startIcon={<DownloadIcon />}
+                            onClick={downloadOptimizedResume}
+                            sx={{ mt: 2 }}
+                          >
+                            Download Word Document
+                          </Button>
+                        </Paper>
+                      ) : (
+                        <Paper 
+                          variant="outlined" 
+                          sx={{ 
+                            p: 3, 
+                            maxHeight: '500px', 
+                            overflow: 'auto',
+                            fontFamily: '"Courier New", monospace',
+                            whiteSpace: 'pre-wrap',
+                            mb: 3,
+                            bgcolor: 'grey.50'
+                          }}
+                        >
+                          {optimizedResume}
+                        </Paper>
+                      )}
                       
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Button 
@@ -492,7 +561,9 @@ function App() {
                           startIcon={<DownloadIcon />}
                           onClick={downloadOptimizedResume}
                         >
-                          Download Optimized Resume
+                          {optimizedResumeType.includes('application/') 
+                            ? 'Download Word Document' 
+                            : 'Download Optimized Resume'}
                         </Button>
                       </Box>
                     </motion.div>

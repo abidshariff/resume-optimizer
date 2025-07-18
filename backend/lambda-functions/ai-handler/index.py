@@ -431,13 +431,88 @@ def lambda_handler(event, context):
             }
         
         # Store optimized resume in S3
-        optimized_key = f"users/{user_id}/optimized/{job_id}/resume.txt"
-        s3.put_object(
-            Bucket=bucket_name,
-            Key=optimized_key,
-            Body=optimized_resume.encode('utf-8'),
-            ContentType='text/plain'
-        )
+        # First, determine the original file extension
+        original_file_extension = resume_key.split('.')[-1].lower()
+        
+        # Default to .txt if we can't determine the extension or it's not a document format
+        output_extension = 'txt'
+        content_type = 'text/plain'
+        
+        if original_file_extension in ['docx', 'doc']:
+            # If the original was a Word document, create a Word document
+            try:
+                # Create a temporary file to store the Word document
+                with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
+                    temp_file_path = temp_file.name
+                
+                # Try to install and use python-docx
+                try:
+                    subprocess.check_call(['pip', 'install', 'python-docx', '-t', '/tmp'])
+                    sys.path.append('/tmp')
+                    import docx
+                    
+                    # Create a new Word document
+                    doc = docx.Document()
+                    
+                    # Add the optimized content
+                    # Split by paragraphs and add each as a paragraph in the document
+                    for paragraph in optimized_resume.split('\n\n'):
+                        if paragraph.strip():
+                            doc.add_paragraph(paragraph.strip())
+                    
+                    # Save the document
+                    doc.save(temp_file_path)
+                    
+                    # Read the document as binary data
+                    with open(temp_file_path, 'rb') as file:
+                        docx_content = file.read()
+                    
+                    # Clean up the temporary file
+                    os.unlink(temp_file_path)
+                    
+                    # Set the output extension and content type
+                    output_extension = 'docx'
+                    content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    
+                    # Update the optimized content to the Word document binary data
+                    optimized_resume = docx_content
+                    is_binary = True
+                    
+                except Exception as docx_error:
+                    print(f"Error creating Word document: {str(docx_error)}")
+                    # Fall back to text format
+                    output_extension = 'txt'
+                    content_type = 'text/plain'
+                    is_binary = False
+            except Exception as e:
+                print(f"Error in Word document handling: {str(e)}")
+                # Fall back to text format
+                output_extension = 'txt'
+                content_type = 'text/plain'
+                is_binary = False
+        else:
+            # For other formats, use text
+            is_binary = False
+        
+        # Store the optimized resume
+        optimized_key = f"users/{user_id}/optimized/{job_id}/resume.{output_extension}"
+        
+        if is_binary:
+            # Store binary content directly
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=optimized_key,
+                Body=optimized_resume,
+                ContentType=content_type
+            )
+        else:
+            # Store text content
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=optimized_key,
+                Body=optimized_resume.encode('utf-8'),
+                ContentType=content_type
+            )
         
         # Generate pre-signed URL for download
         optimized_url = s3.generate_presigned_url(
