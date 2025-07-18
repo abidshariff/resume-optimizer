@@ -31,8 +31,10 @@ Amplify.configure({
         custom_header: async () => {
           try {
             const session = await Amplify.Auth.currentSession();
+            const token = session.getIdToken().getJwtToken();
+            console.log("Setting custom header with token:", token.substring(0, 20) + "...");
             return {
-              'Authorization': session.getIdToken().getJwtToken(),
+              'Authorization': token,
               'Content-Type': 'application/json'
             };
           } catch (error) {

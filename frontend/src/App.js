@@ -200,13 +200,13 @@ function App() {
       const token = session.getIdToken().getJwtToken();
       
       console.log("Authentication token retrieved successfully");
+      console.log("Token:", token.substring(0, 20) + "...");  // Log part of the token for debugging
       
       // Use Amplify's API.post method with authentication
       const response = await API.post('resumeOptimizer', '/optimize', {
         headers: {
           'Content-Type': 'application/json',
-          // No need to add 'Bearer' prefix, Amplify adds it automatically
-          'Authorization': token
+          'Authorization': token  // No Bearer prefix, Amplify adds it
         },
         body: {
           resume: resume,
