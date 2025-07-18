@@ -6,7 +6,7 @@ A web application that uses AI to optimize resumes based on job descriptions.
 
 This application uses a serverless architecture on AWS:
 
-- **Frontend**: React application hosted on AWS Amplify
+- **Frontend**: React application hosted on AWS Amplify or CloudFront/S3
 - **Backend**: AWS Lambda functions, API Gateway, and Amazon Bedrock
 - **Storage**: Amazon S3 for file storage and DynamoDB for user history
 - **Authentication**: Amazon Cognito for user management
@@ -75,7 +75,9 @@ aws cloudformation describe-stacks \
 
 ### Frontend Deployment
 
-The frontend is deployed automatically through AWS Amplify when changes are pushed to the Git repository.
+#### Option 1: AWS Amplify
+
+The frontend can be deployed automatically through AWS Amplify when changes are pushed to the Git repository.
 
 #### Environment Variables
 
@@ -84,6 +86,25 @@ The following environment variables should be set in the AWS Amplify Console:
 - `REACT_APP_USER_POOL_ID`: Cognito User Pool ID
 - `REACT_APP_USER_POOL_WEB_CLIENT_ID`: Cognito User Pool Client ID
 - `REACT_APP_API_ENDPOINT`: API Gateway endpoint URL
+
+#### Option 2: CloudFront/S3
+
+Alternatively, the frontend can be deployed using CloudFront and S3:
+
+1. Create an S3 bucket for frontend hosting
+2. Upload the built React application to the S3 bucket
+3. Create a CloudFront distribution with the S3 bucket as the origin
+4. Set up an Origin Access Identity (OAI) to secure the S3 bucket
+5. Update the S3 bucket policy to allow access from CloudFront
+
+## Current Deployment
+
+The application is currently deployed with the following resources:
+
+- **Frontend URL**: https://dw2t3tdxg9cog.cloudfront.net
+- **API Endpoint**: https://dqypjuueic.execute-api.us-east-1.amazonaws.com/dev/optimize
+- **User Pool ID**: us-east-1_WFZ10DH6I
+- **User Pool Client ID**: 6bhk08l5egdqjgimmaau0jmrd6
 
 ## Local Development
 

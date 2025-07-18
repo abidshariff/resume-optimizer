@@ -8,14 +8,14 @@ import { Amplify } from 'aws-amplify';
 const amplifyConfig = {
   Auth: {
     region: 'us-east-1',
-    userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_SUJLMJ51w',
-    userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '11rgtlrprvpmtoga4l016bhhdr',
+    userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_WFZ10DH6I',
+    userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '6bhk08l5egdqjgimmaau0jmrd6',
   },
   API: {
     endpoints: [
       {
         name: 'resumeOptimizer',
-        endpoint: process.env.REACT_APP_API_ENDPOINT || 'https://t7zfb4h9n7.execute-api.us-east-1.amazonaws.com/dev',
+        endpoint: process.env.REACT_APP_API_ENDPOINT || 'https://dqypjuueic.execute-api.us-east-1.amazonaws.com/dev/optimize',
         region: 'us-east-1'
       }
     ]
