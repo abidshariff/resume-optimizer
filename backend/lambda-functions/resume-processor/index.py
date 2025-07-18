@@ -120,16 +120,35 @@ def lambda_handler(event, context):
         ai_result = json.loads(ai_response['Payload'].read().decode())
         print(f"AI Handler response: {json.dumps(ai_result)}")
         
-        # Check if AI handler returned an error
-        if 'error' in ai_result:
-            return {
-                'statusCode': 400,
-                'headers': CORS_HEADERS,
-                'body': json.dumps({
-                    'message': ai_result['error'],
-                    'jobId': job_id
-                })
-            }
+        # Parse the AI handler response - it might be in the new format with statusCode, headers, and body
+        if 'statusCode' in ai_result and 'body' in ai_result:
+            # New format - extract the body content
+            ai_body = json.loads(ai_result['body']) if isinstance(ai_result['body'], str) else ai_result['body']
+            
+            # Check if there's an error in the body
+            if 'error' in ai_body:
+                return {
+                    'statusCode': ai_result.get('statusCode', 400),
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'message': ai_body['error'],
+                        'jobId': job_id
+                    })
+                }
+            
+            # Extract the relevant fields from the body
+            ai_result = ai_body
+        else:
+            # Old format - check for error directly
+            if 'error' in ai_result:
+                return {
+                    'statusCode': 400,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'message': ai_result['error'],
+                        'jobId': job_id
+                    })
+                }
         
         # Default file type if not provided by AI handler
         default_file_type = 'txt'

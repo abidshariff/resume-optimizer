@@ -205,7 +205,7 @@ function App() {
       console.log("Token:", token.substring(0, 20) + "...");  // Log part of the token for debugging
       
       // Use Amplify's API.post method with authentication
-      const response = await API.post('resumeOptimizer', '/optimize', {
+      const apiResponse = await API.post('resumeOptimizer', '/optimize', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token  // No Bearer prefix, Amplify adds it
@@ -216,7 +216,19 @@ function App() {
         }
       });
       
-      console.log("API response received:", response);
+      console.log("API response received:", apiResponse);
+      
+      // Parse the response - Amplify might return different formats depending on the API Gateway response
+      let response;
+      if (apiResponse.body) {
+        // If the response has a body property, it's likely from API Gateway
+        response = typeof apiResponse.body === 'string' ? JSON.parse(apiResponse.body) : apiResponse.body;
+      } else {
+        // Otherwise, use the response directly
+        response = apiResponse;
+      }
+      
+      console.log("Parsed response:", response);
       
       if (response && response.optimizedResumeUrl) {
         console.log("Fetching optimized resume from URL:", response.optimizedResumeUrl);
