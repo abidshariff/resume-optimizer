@@ -6,6 +6,7 @@ import tempfile
 import subprocess
 import base64
 import sys
+import urllib.parse
 from datetime import datetime
 
 s3 = boto3.client('s3')
@@ -515,13 +516,16 @@ def lambda_handler(event, context):
             )
         
         # Generate pre-signed URL for download
+        filename = f"optimized_resume.{output_extension}"
+        
+        # Generate the pre-signed URL with content type and disposition headers
         optimized_url = s3.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': bucket_name,
                 'Key': optimized_key,
                 'ResponseContentType': content_type,
-                'ResponseContentDisposition': f'attachment; filename="optimized_resume.{output_extension}"'
+                'ResponseContentDisposition': f'attachment; filename="{filename}"'
             },
             ExpiresIn=3600  # URL valid for 1 hour
         )
