@@ -519,7 +519,9 @@ def lambda_handler(event, context):
             'get_object',
             Params={
                 'Bucket': bucket_name,
-                'Key': optimized_key
+                'Key': optimized_key,
+                'ResponseContentType': content_type,
+                'ResponseContentDisposition': f'attachment; filename="optimized_resume.{output_extension}"'
             },
             ExpiresIn=3600  # URL valid for 1 hour
         )
