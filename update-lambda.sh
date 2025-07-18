@@ -7,7 +7,8 @@ zip -r function.zip index.py
 # Update the Lambda function code
 aws lambda update-function-code \
   --function-name ResumeOptimizerProcessor-dev \
-  --zip-file fileb://function.zip
+  --zip-file fileb://function.zip \
+  --profile resume-optimizer
 
 echo "Lambda function code updated"
 
@@ -18,6 +19,7 @@ zip -r function.zip index.py
 # Update the AI Handler Lambda function code
 aws lambda update-function-code \
   --function-name ResumeOptimizerAIHandler-dev \
-  --zip-file fileb://function.zip
+  --zip-file fileb://function.zip \
+  --profile resume-optimizer
 
 echo "AI Handler Lambda function code updated"
