@@ -15,7 +15,7 @@ const amplifyConfig = {
     endpoints: [
       {
         name: 'resumeOptimizer',
-        endpoint: process.env.REACT_APP_API_ENDPOINT || 'https://dqypjuueic.execute-api.us-east-1.amazonaws.com/dev/optimize',
+        endpoint: process.env.REACT_APP_API_ENDPOINT || 'https://dqypjuueic.execute-api.us-east-1.amazonaws.com/dev',
         region: 'us-east-1'
       }
     ]
