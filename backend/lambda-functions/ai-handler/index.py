@@ -557,12 +557,10 @@ def lambda_handler(event, context):
             'jobId': job_id,
             'fileType': output_extension,
             'contentType': content_type,
-            'downloadFilename': download_filename,
-            'headers': CORS_HEADERS
+            'downloadFilename': download_filename
         }
     except Exception as e:
         print(f"Error in AI Handler: {str(e)}")
         return {
-            'error': str(e),
-            'headers': CORS_HEADERS
+            'error': str(e)
         }

@@ -221,13 +221,30 @@ function App() {
       console.log("API response received:", response);
       
       // Parse the response - it might be in different formats depending on how API Gateway returns it
-      let responseData = response;
-      if (response.body) {
+      let responseData;
+      
+      // Log the full response for debugging
+      console.log("Full response object:", JSON.stringify(response, null, 2));
+      
+      if (response.data) {
+        // If using Axios or similar library that puts the response in a data property
+        responseData = response.data;
+      } else if (response.body) {
         // If the response has a body property, it's likely from API Gateway
         responseData = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;
+      } else {
+        // Otherwise, use the response directly
+        responseData = response;
       }
       
       console.log("Parsed response data:", responseData);
+      
+      // If the response data has a nested structure, extract the relevant part
+      if (responseData && responseData.message === 'Resume optimization complete') {
+        // This means we're getting the expected structure from the Lambda function
+        console.log("Found expected response structure");
+        responseData = responseData; // Keep using the same object
+      }
       
       if (responseData && responseData.optimizedResumeUrl) {
         console.log("Fetching optimized resume from URL:", responseData.optimizedResumeUrl);
