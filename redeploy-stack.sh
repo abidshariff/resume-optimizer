@@ -1,25 +1,27 @@
 #!/bin/bash
 
-# Set variables
-STACK_NAME="resume-optimizer-stack"
-TEMPLATE_FILE="backend/templates/resume-optimizer-stack.yaml"
-ENVIRONMENT="dev"
+# Set environment variables
+API_ID="3bemzv60ge"
+LAMBDA_NAME="ResumeOptimizerProcessor-dev"
+ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 
-echo "Redeploying CloudFormation stack: $STACK_NAME"
+echo "API ID: $API_ID"
+echo "Lambda Name: $LAMBDA_NAME"
+echo "Account ID: $ACCOUNT_ID"
 
-# Deploy the CloudFormation stack
-aws cloudformation deploy \
-  --template-file $TEMPLATE_FILE \
-  --stack-name $STACK_NAME \
-  --capabilities CAPABILITY_IAM \
-  --parameter-overrides Environment=$ENVIRONMENT
+# Add permission for API Gateway to invoke Lambda for OPTIONS method
+echo "Adding permission for API Gateway to invoke Lambda for OPTIONS method..."
+aws lambda add-permission \
+  --function-name $LAMBDA_NAME \
+  --statement-id apigateway-options-test-2 \
+  --action lambda:InvokeFunction \
+  --principal apigateway.amazonaws.com \
+  --source-arn "arn:aws:execute-api:us-east-1:$ACCOUNT_ID:$API_ID/*/OPTIONS/optimize"
 
-echo "Stack deployment initiated. Checking status..."
+# Deploy the API
+echo "Deploying API changes..."
+aws apigateway create-deployment \
+  --rest-api-id $API_ID \
+  --stage-name dev
 
-# Get the outputs from the CloudFormation stack
-echo "Getting stack outputs..."
-aws cloudformation describe-stacks \
-  --stack-name $STACK_NAME \
-  --query "Stacks[0].Outputs"
-
-echo "Stack deployment completed."
+echo "CORS configuration updated and API deployed"

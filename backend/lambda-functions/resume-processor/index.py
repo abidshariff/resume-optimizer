@@ -22,10 +22,16 @@ def lambda_handler(event, context):
     print("Received event:", json.dumps(event))
     
     # Handle preflight OPTIONS request
-    if event.get('httpMethod') == 'OPTIONS':
+    if event.get('httpMethod') == 'OPTIONS' or event.get('requestContext', {}).get('http', {}).get('method') == 'OPTIONS':
+        print("Handling OPTIONS request")
         return {
             'statusCode': 200,
-            'headers': CORS_HEADERS,
+            'headers': {
+                'Access-Control-Allow-Origin': 'https://main.d16ci5rhuvcide.amplifyapp.com',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE',
+                'Access-Control-Allow-Credentials': 'true'
+            },
             'body': json.dumps({})
         }
     

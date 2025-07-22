@@ -1,87 +1,95 @@
 #!/bin/bash
 
-# Get the API ID
-API_ID="3bemzv60ge"  # Your actual API ID
-STAGE_NAME="dev"
-RESOURCE_PATH="/optimize"
+# Set environment variables
+API_ID="3bemzv60ge"
+RESOURCE_ID=$(aws apigateway get-resources --rest-api-id $API_ID --query "items[?path=='/optimize'].id" --output text)
+ORIGIN="https://main.d16ci5rhuvcide.amplifyapp.com"
 
-echo "Enabling CORS for API Gateway..."
-
-# Get the resource ID for the specified path
-RESOURCE_ID=$(aws apigateway get-resources --rest-api-id $API_ID --query "items[?path=='$RESOURCE_PATH'].id" --output text)
+echo "API ID: $API_ID"
 echo "Resource ID: $RESOURCE_ID"
+echo "Origin: $ORIGIN"
 
-# Read CORS configuration from file
-CORS_CONFIG=$(cat cors-config.json)
-ALLOW_ORIGINS=$(echo $CORS_CONFIG | jq -r '.allowOrigins | join(",")')
-ALLOW_METHODS=$(echo $CORS_CONFIG | jq -r '.allowMethods | join(",")')
-ALLOW_HEADERS=$(echo $CORS_CONFIG | jq -r '.allowHeaders | join(",")')
-ALLOW_CREDENTIALS=$(echo $CORS_CONFIG | jq -r '.allowCredentials')
+# Delete the existing OPTIONS method
+echo "Deleting existing OPTIONS method..."
+aws apigateway delete-method \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS
 
-echo "CORS Configuration:"
-echo "Allow Origins: $ALLOW_ORIGINS"
-echo "Allow Methods: $ALLOW_METHODS"
-echo "Allow Headers: $ALLOW_HEADERS"
-echo "Allow Credentials: $ALLOW_CREDENTIALS"
+# Create a new OPTIONS method
+echo "Creating new OPTIONS method..."
+aws apigateway put-method \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --authorization-type NONE
 
-# Update the OPTIONS method response
-echo "Updating OPTIONS method response..."
+# Create method response for OPTIONS
+echo "Creating method response for OPTIONS..."
 aws apigateway put-method-response \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters "{\"method.response.header.Access-Control-Allow-Origin\":true,\"method.response.header.Access-Control-Allow-Methods\":true,\"method.response.header.Access-Control-Allow-Headers\":true,\"method.response.header.Access-Control-Allow-Credentials\":true}" \
-  || echo "OPTIONS method response already exists"
+  --response-parameters "{\"method.response.header.Access-Control-Allow-Headers\":true,\"method.response.header.Access-Control-Allow-Methods\":true,\"method.response.header.Access-Control-Allow-Origin\":true}" \
+  --response-models "{\"application/json\":\"Empty\"}"
 
-# Update the OPTIONS integration response
-echo "Updating OPTIONS integration response..."
+# Create integration for OPTIONS
+echo "Creating integration for OPTIONS..."
+aws apigateway put-integration \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --type MOCK \
+  --integration-http-method OPTIONS \
+  --request-templates "{\"application/json\":\"{\\\"statusCode\\\": 200}\"}"
+
+# Create integration response for OPTIONS
+echo "Creating integration response for OPTIONS..."
 aws apigateway put-integration-response \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters "{\"method.response.header.Access-Control-Allow-Origin\":\"'$ALLOW_ORIGINS'\",\"method.response.header.Access-Control-Allow-Methods\":\"'$ALLOW_METHODS'\",\"method.response.header.Access-Control-Allow-Headers\":\"'$ALLOW_HEADERS'\",\"method.response.header.Access-Control-Allow-Credentials\":\"'$ALLOW_CREDENTIALS'\"}" \
-  || echo "OPTIONS integration response already exists"
+  --response-parameters "{\"method.response.header.Access-Control-Allow-Headers\":\"'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'\",\"method.response.header.Access-Control-Allow-Methods\":\"'GET,POST,PUT,DELETE,OPTIONS'\",\"method.response.header.Access-Control-Allow-Origin\":\"'$ORIGIN'\"}" \
+  --response-templates "{\"application/json\":\"{}\"}"
 
-# Update the POST method response
+# Update the POST method to include CORS headers
 echo "Updating POST method response..."
 aws apigateway put-method-response \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method POST \
   --status-code 200 \
-  --response-parameters "{\"method.response.header.Access-Control-Allow-Origin\":true,\"method.response.header.Access-Control-Allow-Methods\":true,\"method.response.header.Access-Control-Allow-Headers\":true,\"method.response.header.Access-Control-Allow-Credentials\":true}" \
+  --response-parameters "{\"method.response.header.Access-Control-Allow-Origin\":true}" \
   || echo "POST method response already exists"
 
-# Get the current integration ID for the POST method
-INTEGRATION_ID=$(aws apigateway get-integration \
+# Update the POST integration response to include CORS headers
+echo "Updating POST integration response..."
+aws apigateway put-integration-response \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method POST \
-  --query "id" \
-  --output text 2>/dev/null || echo "")
+  --status-code 200 \
+  --response-parameters "{\"method.response.header.Access-Control-Allow-Origin\":\"'$ORIGIN'\"}" \
+  || echo "POST integration response already exists"
 
-if [ -n "$INTEGRATION_ID" ]; then
-  echo "Found integration ID: $INTEGRATION_ID"
-  
-  # Update the POST integration response
-  echo "Updating POST integration response..."
-  aws apigateway put-integration-response \
-    --rest-api-id $API_ID \
-    --resource-id $RESOURCE_ID \
-    --http-method POST \
-    --status-code 200 \
-    --response-parameters "{\"method.response.header.Access-Control-Allow-Origin\":\"'$ALLOW_ORIGINS'\",\"method.response.header.Access-Control-Allow-Methods\":\"'$ALLOW_METHODS'\",\"method.response.header.Access-Control-Allow-Headers\":\"'$ALLOW_HEADERS'\",\"method.response.header.Access-Control-Allow-Credentials\":\"'$ALLOW_CREDENTIALS'\"}" \
-    || echo "Could not update POST integration response"
-else
-  echo "Could not find integration ID for POST method"
-fi
+# Update the API Gateway default responses
+echo "Updating API Gateway default responses..."
+aws apigateway put-gateway-response \
+  --rest-api-id $API_ID \
+  --response-type DEFAULT_4XX \
+  --response-parameters "{\"gatewayresponse.header.Access-Control-Allow-Origin\":\"'$ORIGIN'\"}"
+
+aws apigateway put-gateway-response \
+  --rest-api-id $API_ID \
+  --response-type DEFAULT_5XX \
+  --response-parameters "{\"gatewayresponse.header.Access-Control-Allow-Origin\":\"'$ORIGIN'\"}"
 
 # Deploy the API
 echo "Deploying API changes..."
 aws apigateway create-deployment \
   --rest-api-id $API_ID \
-  --stage-name $STAGE_NAME
+  --stage-name dev
 
 echo "CORS configuration updated and API deployed"

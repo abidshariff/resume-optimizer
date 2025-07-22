@@ -1,68 +1,55 @@
 #!/bin/bash
 
-# Set variables
-STACK_NAME="resume-optimizer-stack"
-TEMPLATE_FILE="backend/templates/resume-optimizer-stack.yaml"
-ENVIRONMENT="dev"
+# Set environment variables
+API_ID="3bemzv60ge"
+RESOURCE_ID=$(aws apigateway get-resources --rest-api-id $API_ID --query "items[?path=='/optimize'].id" --output text)
+ORIGIN="https://main.d16ci5rhuvcide.amplifyapp.com"
+LAMBDA_ARN=$(aws lambda get-function --function-name ResumeOptimizerProcessor-dev --query "Configuration.FunctionArn" --output text)
 
-echo "Checking stack status..."
-STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+echo "API ID: $API_ID"
+echo "Resource ID: $RESOURCE_ID"
+echo "Origin: $ORIGIN"
+echo "Lambda ARN: $LAMBDA_ARN"
 
-echo "Current stack status: $STACK_STATUS"
+# Delete the existing OPTIONS method
+echo "Deleting existing OPTIONS method..."
+aws apigateway delete-method \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS
 
-if [ "$STACK_STATUS" == "DELETE_FAILED" ]; then
-  echo "Stack is in DELETE_FAILED state. Attempting to delete with retain resources..."
-  
-  # Get resources that might be causing deletion failure
-  RESOURCES=$(aws cloudformation list-stack-resources --stack-name $STACK_NAME --query "StackResourceSummaries[?ResourceStatus=='DELETE_FAILED'].LogicalResourceId" --output text)
-  
-  echo "Resources that might be causing deletion failure: $RESOURCES"
-  
-  # Delete stack with retain resources option
-  aws cloudformation delete-stack --stack-name $STACK_NAME --retain-resources $RESOURCES
-  
-  echo "Waiting for stack deletion..."
-  aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME || true
-  
-  echo "Creating new stack..."
-  aws cloudformation create-stack \
-    --stack-name $STACK_NAME \
-    --template-body file://$TEMPLATE_FILE \
-    --capabilities CAPABILITY_IAM \
-    --parameters ParameterKey=Environment,ParameterValue=$ENVIRONMENT
-    
-  echo "Waiting for stack creation..."
-  aws cloudformation wait stack-create-complete --stack-name $STACK_NAME
-  
-elif [ "$STACK_STATUS" == "DOES_NOT_EXIST" ]; then
-  echo "Stack does not exist. Creating new stack..."
-  
-  aws cloudformation create-stack \
-    --stack-name $STACK_NAME \
-    --template-body file://$TEMPLATE_FILE \
-    --capabilities CAPABILITY_IAM \
-    --parameters ParameterKey=Environment,ParameterValue=$ENVIRONMENT
-    
-  echo "Waiting for stack creation..."
-  aws cloudformation wait stack-create-complete --stack-name $STACK_NAME
-  
-else
-  echo "Updating existing stack..."
-  
-  aws cloudformation update-stack \
-    --stack-name $STACK_NAME \
-    --template-body file://$TEMPLATE_FILE \
-    --capabilities CAPABILITY_IAM \
-    --parameters ParameterKey=Environment,ParameterValue=$ENVIRONMENT
-    
-  echo "Waiting for stack update..."
-  aws cloudformation wait stack-update-complete --stack-name $STACK_NAME
-fi
+# Create a new OPTIONS method
+echo "Creating new OPTIONS method..."
+aws apigateway put-method \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --authorization-type NONE
 
-# Get the outputs from the CloudFormation stack
-echo "Getting stack outputs..."
-aws cloudformation describe-stacks \
-  --stack-name $STACK_NAME \
-  --query "Stacks[0].Outputs"
+# Create method response for OPTIONS
+echo "Creating method response for OPTIONS..."
+aws apigateway put-method-response \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --status-code 200 \
+  --response-parameters "{\"method.response.header.Access-Control-Allow-Headers\":true,\"method.response.header.Access-Control-Allow-Methods\":true,\"method.response.header.Access-Control-Allow-Origin\":true}" \
+  --response-models "{\"application/json\":\"Empty\"}"
 
-echo "Stack deployment completed."
+# Create Lambda proxy integration for OPTIONS
+echo "Creating Lambda proxy integration for OPTIONS..."
+aws apigateway put-integration \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --type AWS_PROXY \
+  --integration-http-method POST \
+  --uri "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/$LAMBDA_ARN/invocations"
+
+# Deploy the API
+echo "Deploying API changes..."
+aws apigateway create-deployment \
+  --rest-api-id $API_ID \
+  --stage-name dev
+
+echo "CORS configuration updated and API deployed"

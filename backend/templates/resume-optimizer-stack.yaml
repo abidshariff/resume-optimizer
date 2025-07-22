@@ -231,10 +231,10 @@ Resources:
           - StatusCode: 200
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET,PUT,DELETE'"
+              method.response.header.Access-Control-Allow-Origin: "'https://main.d16ci5rhuvcide.amplifyapp.com'"
             ResponseTemplates:
-              application/json: ''
+              application/json: '{}'
         PassthroughBehavior: WHEN_NO_MATCH
         RequestTemplates:
           application/json: '{"statusCode": 200}'

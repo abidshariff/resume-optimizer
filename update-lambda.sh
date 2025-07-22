@@ -1,25 +1,26 @@
 #!/bin/bash
 
-# Package the Lambda function
-cd /Volumes/workplace/resume-optimizer/backend/lambda-functions/resume-processor
+# Set environment variables
+ENVIRONMENT="dev"
+RESUME_PROCESSOR_FUNCTION="ResumeOptimizerProcessor-${ENVIRONMENT}"
+
+echo "Updating Lambda function with CORS fixes..."
+
+# Package and update Resume Processor Lambda
+echo "Packaging Resume Processor Lambda..."
+cd backend/lambda-functions/resume-processor
 zip -r function.zip index.py
-
-# Update the Lambda function code
+echo "Updating Resume Processor Lambda..."
 aws lambda update-function-code \
-  --function-name ResumeOptimizerProcessor-dev \
-  --zip-file fileb://function.zip \
-  --profile resume-optimizer
+  --function-name ${RESUME_PROCESSOR_FUNCTION} \
+  --zip-file fileb://function.zip
+if [ $? -eq 0 ]; then
+  echo "Resume Processor Lambda updated successfully."
+else
+  echo "Error updating Resume Processor Lambda."
+  exit 1
+fi
 
-echo "Lambda function code updated"
+cd ../../..
 
-# Package the AI Handler Lambda function
-cd /Volumes/workplace/resume-optimizer/backend/lambda-functions/ai-handler
-zip -r function.zip index.py
-
-# Update the AI Handler Lambda function code
-aws lambda update-function-code \
-  --function-name ResumeOptimizerAIHandler-dev \
-  --zip-file fileb://function.zip \
-  --profile resume-optimizer
-
-echo "AI Handler Lambda function code updated"
+echo "Lambda function updated successfully!"
