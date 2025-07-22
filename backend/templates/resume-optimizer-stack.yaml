@@ -187,11 +187,6 @@ Resources:
       EndpointConfiguration:
         Types:
           - REGIONAL
-      # Add CORS configuration at the API level
-      CorsConfiguration:
-        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
-        AllowOrigins: "'*'"
 
   ApiGatewayAuthorizer:
     Type: AWS::ApiGateway::Authorizer

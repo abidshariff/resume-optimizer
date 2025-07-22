@@ -6,7 +6,7 @@ import { Amplify } from 'aws-amplify';
 import { CssBaseline } from '@mui/material';
 
 // Configure Amplify
-const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || 'https://dqypjuueic.execute-api.us-east-1.amazonaws.com/dev';
+const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || 'https://3bemzv60ge.execute-api.us-east-1.amazonaws.com/dev';
 const userPoolId = process.env.REACT_APP_USER_POOL_ID || 'us-east-1_WFZ10DH6I';
 const userPoolWebClientId = process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '6bhk08l5egdqjgimmaau0jmrd6';
 
