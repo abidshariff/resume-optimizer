@@ -244,6 +244,11 @@ function App() {
   const [activeStep, setActiveStep] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  
+  // Legacy variables for backward compatibility with existing UI
+  const isProcessing = isSubmitting || isPolling;
+  const optimizedResume = result ? 'Resume ready for download' : null;
+  const optimizedResumeType = result?.contentType || 'text/plain';
 
   const steps = ['Upload Resume', 'Enter Job Description', 'Get Optimized Resume'];
 
@@ -598,75 +603,61 @@ function App() {
                     </motion.div>
                   )}
                   
-                  {activeStep === 2 && optimizedResume && (
+                  {activeStep === 2 && result && (
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5 }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <AutoAwesomeIcon color="primary" sx={{ mr: 1 }} />
+                        <CheckCircleIcon color="success" sx={{ mr: 1 }} />
                         <Typography variant="h5">
-                          Your Optimized Resume
+                          🎉 Your Optimized Resume is Ready!
                         </Typography>
                       </Box>
                       
-                      {optimizedResumeType.includes('application/') ? (
-                        <Paper 
-                          variant="outlined" 
-                          sx={{ 
-                            p: 3, 
-                            maxHeight: '500px', 
-                            overflow: 'auto',
-                            mb: 3,
-                            bgcolor: 'grey.50',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
+                      <Typography variant="body1" paragraph>
+                        Your resume has been successfully optimized for the job description.
+                      </Typography>
+                      
+                      <Paper 
+                        variant="outlined" 
+                        sx={{ 
+                          p: 3, 
+                          mb: 3,
+                          bgcolor: 'success.50',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <DescriptionIcon sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
+                        <Typography variant="h6" gutterBottom>
+                          Optimized Resume Ready for Download
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" align="center" paragraph>
+                          Your resume has been optimized with relevant keywords and formatting
+                          to improve your chances with Applicant Tracking Systems (ATS).
+                        </Typography>
+                        <Button 
+                          variant="contained" 
+                          color="success"
+                          size="large"
+                          startIcon={<DownloadIcon />}
+                          onClick={downloadOptimizedResume}
+                          sx={{ mt: 2 }}
                         >
-                          <DescriptionIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-                          <Typography variant="h6" gutterBottom>
-                            Word Document Ready for Download
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary" align="center" paragraph>
-                            Your optimized resume has been prepared as a Word document.
-                            Click the download button below to save it to your computer.
-                          </Typography>
-                          <Button 
-                            variant="contained" 
-                            color="primary"
-                            startIcon={<DownloadIcon />}
-                            onClick={downloadOptimizedResume}
-                            sx={{ mt: 2 }}
-                          >
-                            Download Word Document
-                          </Button>
-                        </Paper>
-                      ) : (
-                        <Paper 
-                          variant="outlined" 
-                          sx={{ 
-                            p: 3, 
-                            maxHeight: '500px', 
-                            overflow: 'auto',
-                            fontFamily: '"Courier New", monospace',
-                            whiteSpace: 'pre-wrap',
-                            mb: 3,
-                            bgcolor: 'grey.50'
-                          }}
-                        >
-                          {optimizedResume}
-                        </Paper>
-                      )}
+                          📄 Download Optimized Resume
+                        </Button>
+                      </Paper>
                       
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Button 
                           variant="outlined" 
-                          onClick={() => setActiveStep(1)}
+                          onClick={resetForm}
                         >
-                          Back to Job Description
+                          Optimize Another Resume
                         </Button>
                         <Button 
                           variant="contained" 
@@ -674,9 +665,7 @@ function App() {
                           startIcon={<DownloadIcon />}
                           onClick={downloadOptimizedResume}
                         >
-                          {optimizedResumeType.includes('application/') 
-                            ? 'Download Word Document' 
-                            : 'Download Optimized Resume'}
+                          Download Again
                         </Button>
                       </Box>
                     </motion.div>
