@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API, Auth } from 'aws-amplify';
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
@@ -21,6 +21,7 @@ import {
   StepLabel,
   Alert,
   Snackbar,
+  LinearProgress,
   useTheme,
   ThemeProvider,
   createTheme
@@ -31,7 +32,10 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   Download as DownloadIcon,
   Logout as LogoutIcon,
-  ArrowForward as ArrowForwardIcon
+  ArrowForward as ArrowForwardIcon,
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  Error as ErrorIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -147,14 +151,95 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
   );
 }
 
+// Status indicator component
+function StatusIndicator({ status, message, progress }) {
+  const getStatusIcon = () => {
+    switch (status) {
+      case 'PROCESSING':
+        return <ScheduleIcon sx={{ color: 'primary.main', mr: 1 }} />;
+      case 'COMPLETED':
+        return <CheckCircleIcon sx={{ color: 'success.main', mr: 1 }} />;
+      case 'FAILED':
+        return <ErrorIcon sx={{ color: 'error.main', mr: 1 }} />;
+      default:
+        return <ScheduleIcon sx={{ color: 'grey.500', mr: 1 }} />;
+    }
+  };
+
+  const getStatusColor = () => {
+    switch (status) {
+      case 'PROCESSING':
+        return 'primary.main';
+      case 'COMPLETED':
+        return 'success.main';
+      case 'FAILED':
+        return 'error.main';
+      default:
+        return 'grey.500';
+    }
+  };
+
+  return (
+    <Paper 
+      sx={{ 
+        p: 3, 
+        mb: 3, 
+        border: `2px solid`,
+        borderColor: getStatusColor(),
+        backgroundColor: status === 'PROCESSING' ? 'rgba(63, 81, 181, 0.04)' : 'background.paper'
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        {getStatusIcon()}
+        <Typography variant="h6" sx={{ color: getStatusColor() }}>
+          Status: {status}
+        </Typography>
+      </Box>
+      
+      <Typography variant="body1" sx={{ mb: 2 }}>
+        {message}
+      </Typography>
+      
+      {status === 'PROCESSING' && (
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress 
+            variant={progress ? "determinate" : "indeterminate"} 
+            value={progress} 
+            sx={{ height: 8, borderRadius: 4 }}
+          />
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+            This process typically takes 30-60 seconds...
+          </Typography>
+        </Box>
+      )}
+      
+      {status === 'PROCESSING' && (
+        <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(63, 81, 181, 0.08)', borderRadius: 1 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            💡 What's happening?
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2 }}>
+            <Typography component="li" variant="body2">Your resume is being analyzed and extracted</Typography>
+            <Typography component="li" variant="body2">AI is matching your skills with the job requirements</Typography>
+            <Typography component="li" variant="body2">Keywords are being optimized for ATS systems</Typography>
+            <Typography component="li" variant="body2">A new resume is being generated</Typography>
+          </Box>
+        </Box>
+      )}
+    </Paper>
+  );
+}
+
 function App() {
   const [resume, setResume] = useState(null);
   const [resumeName, setResumeName] = useState('');
   const [jobDescription, setJobDescription] = useState('');
-  const [optimizedResume, setOptimizedResume] = useState(null);
-  const [optimizedResumeType, setOptimizedResumeType] = useState('text/plain');
-  const [optimizedResumeExtension, setOptimizedResumeExtension] = useState('txt');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [jobId, setJobId] = useState(null);
+  const [jobStatus, setJobStatus] = useState(null);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [result, setResult] = useState(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -184,6 +269,50 @@ function App() {
     setJobDescription(e.target.value);
   };
 
+  // Poll for job status
+  useEffect(() => {
+    let intervalId;
+    
+    if (isPolling && jobId) {
+      intervalId = setInterval(async () => {
+        try {
+          const statusResponse = await API.get('resumeOptimizer', '/status', {
+            queryStringParameters: {
+              jobId: jobId
+            }
+          });
+          
+          console.log('Status response:', statusResponse);
+          setJobStatus(statusResponse.status);
+          setStatusMessage(statusResponse.message || '');
+          
+          // If job is complete, stop polling and set result
+          if (statusResponse.status === 'COMPLETED') {
+            setIsPolling(false);
+            setResult(statusResponse);
+            setActiveStep(2);
+          } else if (statusResponse.status === 'FAILED') {
+            setIsPolling(false);
+            setError(statusResponse.message || 'Job failed');
+            setSnackbarMessage(`Error: ${statusResponse.message || 'Job failed'}`);
+            setSnackbarOpen(true);
+          }
+        } catch (err) {
+          console.error('Error checking job status:', err);
+          setError(`Error checking job status: ${err.message || 'Unknown error'}`);
+          setIsPolling(false);
+          setJobStatus('FAILED');
+          setSnackbarMessage(`Error checking status: ${err.message || 'Unknown error'}`);
+          setSnackbarOpen(true);
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isPolling, jobId]);
+
   const handleOptimize = async () => {
     if (!resume || !jobDescription) {
       setSnackbarMessage('Please upload a resume and enter a job description');
@@ -191,157 +320,102 @@ function App() {
       return;
     }
 
-    setIsProcessing(true);
+    setIsSubmitting(true);
     setError(null);
+    setJobStatus('SUBMITTING');
+    setStatusMessage('Submitting your resume for optimization...');
     
     try {
       console.log("Starting resume optimization...");
       
-      // Get the current session and token
-      const session = await Auth.currentSession();
-      const token = session.getIdToken().getJwtToken();
-      
-      console.log("Authentication token retrieved successfully");
-      console.log("Token:", token.substring(0, 20) + "...");  // Log part of the token for debugging
-      
-      // Use Amplify's API.post method with authentication
+      // Submit the job and get job ID immediately
       const response = await API.post('resumeOptimizer', '/optimize', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token,  // No Bearer prefix, Amplify adds it
-          'Accept': 'application/json'
-        },
         body: {
           resume: resume,
           jobDescription: jobDescription
-        },
-        response: true  // Get the full response object
+        }
       });
       
       console.log("API response received:", response);
       
-      // Parse the response - it might be in different formats depending on how API Gateway returns it
-      let responseData;
-      
-      // Log the full response for debugging
-      console.log("Full response object:", JSON.stringify(response, null, 2));
-      
-      if (response.data) {
-        // If using Axios or similar library that puts the response in a data property
-        responseData = response.data;
-      } else if (response.body) {
-        // If the response has a body property, it's likely from API Gateway
-        responseData = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;
+      if (response.jobId) {
+        setJobId(response.jobId);
+        setJobStatus(response.status || 'PROCESSING');
+        setStatusMessage(response.message || 'Job submitted and processing started');
+        setIsPolling(true);
+        setIsSubmitting(false);
       } else {
-        // Otherwise, use the response directly
-        responseData = response;
-      }
-      
-      console.log("Parsed response data:", responseData);
-      
-      // If the response data has a nested structure, extract the relevant part
-      if (responseData && responseData.message === 'Resume optimization complete') {
-        // This means we're getting the expected structure from the Lambda function
-        console.log("Found expected response structure");
-        responseData = responseData; // Keep using the same object
-      }
-      
-      if (responseData && responseData.optimizedResumeUrl) {
-        console.log("Fetching optimized resume from URL:", responseData.optimizedResumeUrl);
-        
-        // Use the fileType from the response instead of parsing from URL
-        const fileExtension = responseData.fileType || 'txt';
-        let contentType = responseData.contentType || 'text/plain';
-        
-        // Fallback logic if fileType is not provided
-        if (!responseData.fileType) {
-          // Extract just the filename part before query parameters
-          const urlPath = new URL(responseData.optimizedResumeUrl).pathname;
-          const cleanFileExtension = urlPath.split('.').pop().toLowerCase();
-          
-          if (cleanFileExtension === 'docx' || cleanFileExtension === 'doc') {
-            if (cleanFileExtension === 'docx') {
-              contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-            } else {
-              contentType = 'application/msword';
-            }
-            setOptimizedResumeExtension(cleanFileExtension);
-          }
-        } else {
-          setOptimizedResumeExtension(fileExtension);
-        }
-        
-        setOptimizedResumeType(contentType);
-        
-        // Fetch the optimized resume content
-        const resumeResponse = await fetch(responseData.optimizedResumeUrl);
-        if (!resumeResponse.ok) {
-          throw new Error(`Failed to fetch optimized resume: ${resumeResponse.status} ${resumeResponse.statusText}`);
-        }
-        
-        // Handle different content types
-        if (contentType.includes('application/')) {
-          // For binary files like Word documents
-          const resumeBlob = await resumeResponse.blob();
-          setOptimizedResume(resumeBlob);
-        } else {
-          // For text files
-          const resumeText = await resumeResponse.text();
-          setOptimizedResume(resumeText);
-        }
-        
-        console.log("Optimized resume content retrieved successfully");
-        
-        setActiveStep(2);
-      } else {
-        console.error("Invalid API response:", response);
-        throw new Error('No optimized resume URL returned in the API response');
+        throw new Error('No job ID returned from the API');
       }
     } catch (error) {
-      console.error('Error optimizing resume:', error);
-      
-      // More detailed error logging
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error("Error response data:", error.response.data);
-        console.error("Error response status:", error.response.status);
-        console.error("Error response headers:", error.response.headers);
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error("Error request:", error.request);
-      }
-      
-      setError(`Error optimizing resume: ${error.message}`);
+      console.error('Error submitting job:', error);
+      setError(`Error submitting job: ${error.message}`);
       setSnackbarMessage(`Error: ${error.message}`);
       setSnackbarOpen(true);
-    } finally {
-      setIsProcessing(false);
+      setJobStatus('FAILED');
+      setIsSubmitting(false);
     }
   };
 
-  const downloadOptimizedResume = () => {
-    let blob;
-    
-    if (optimizedResume instanceof Blob) {
-      // If it's already a Blob (binary data like Word document)
-      blob = optimizedResume;
-    } else {
-      // If it's text data
-      blob = new Blob([optimizedResume], { type: optimizedResumeType });
+  const downloadOptimizedResume = async () => {
+    if (!result || !result.optimizedResumeUrl) {
+      setSnackbarMessage('No download URL available');
+      setSnackbarOpen(true);
+      return;
     }
-    
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `optimized-resume.${optimizedResumeExtension}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url); // Clean up
-    
-    setSnackbarMessage('Resume downloaded successfully!');
-    setSnackbarOpen(true);
+
+    try {
+      // Fetch the optimized resume content
+      const resumeResponse = await fetch(result.optimizedResumeUrl);
+      if (!resumeResponse.ok) {
+        throw new Error(`Failed to fetch optimized resume: ${resumeResponse.status} ${resumeResponse.statusText}`);
+      }
+      
+      const contentType = result.contentType || 'text/plain';
+      const fileExtension = result.fileType || 'txt';
+      const filename = result.downloadFilename || `optimized_resume.${fileExtension}`;
+      
+      let blob;
+      if (contentType.includes('application/')) {
+        // For binary files like Word documents
+        blob = await resumeResponse.blob();
+      } else {
+        // For text files
+        const resumeText = await resumeResponse.text();
+        blob = new Blob([resumeText], { type: contentType });
+      }
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setSnackbarMessage('Resume downloaded successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error downloading resume:', error);
+      setSnackbarMessage(`Error downloading resume: ${error.message}`);
+      setSnackbarOpen(true);
+    }
+  };
+
+  const resetForm = () => {
+    setJobId(null);
+    setJobStatus(null);
+    setStatusMessage('');
+    setResult(null);
+    setIsPolling(false);
+    setIsSubmitting(false);
+    setError(null);
+    setActiveStep(0);
+    setResume(null);
+    setResumeName('');
+    setJobDescription('');
   };
 
   // Wrap the app with Authenticator for user authentication
