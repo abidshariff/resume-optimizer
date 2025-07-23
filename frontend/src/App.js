@@ -254,6 +254,15 @@ function App() {
 
   const handleResumeChange = (file) => {
     if (file) {
+      // Check file size (5MB limit to account for base64 encoding)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setError(`File too large. Maximum size is ${maxSize / 1024 / 1024}MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
+        setSnackbarMessage(`File too large. Please choose a smaller file.`);
+        setSnackbarOpen(true);
+        return;
+      }
+      
       setResumeName(file.name);
       
       // Read the file as base64
@@ -333,12 +342,21 @@ function App() {
     try {
       console.log("Starting resume optimization...");
       
+      // Check payload size before sending
+      const payload = {
+        resume: resume,
+        jobDescription: jobDescription
+      };
+      const payloadSize = new Blob([JSON.stringify(payload)]).size;
+      console.log(`Payload size: ${(payloadSize / 1024 / 1024).toFixed(2)} MB`);
+      
+      if (payloadSize > 10 * 1024 * 1024) { // 10MB limit
+        throw new Error(`Payload too large: ${(payloadSize / 1024 / 1024).toFixed(2)} MB. Maximum allowed is 10 MB.`);
+      }
+      
       // Submit the job and get job ID immediately
       const response = await API.post('resumeOptimizer', '/optimize', {
-        body: {
-          resume: resume,
-          jobDescription: jobDescription
-        }
+        body: payload
       });
       
       console.log("API response received:", response);
@@ -354,8 +372,23 @@ function App() {
       }
     } catch (error) {
       console.error('Error submitting job:', error);
-      setError(`Error submitting job: ${error.message}`);
-      setSnackbarMessage(`Error: ${error.message}`);
+      
+      let errorMessage = error.message;
+      
+      // Handle specific HTTP status codes
+      if (error.response) {
+        const status = error.response.status;
+        if (status === 413) {
+          errorMessage = 'File or request too large. Please try with a smaller resume file or shorter job description.';
+        } else if (status === 502 || status === 504) {
+          errorMessage = 'Server timeout. Please try again in a moment.';
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+      }
+      
+      setError(`Error submitting job: ${errorMessage}`);
+      setSnackbarMessage(`Error: ${errorMessage}`);
       setSnackbarOpen(true);
       setJobStatus('FAILED');
       setIsSubmitting(false);
