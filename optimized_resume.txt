@@ -1,0 +1,64 @@
+ABID SHAIK
+abidshariﬀ009@gmail.com | (716) 970-9249 | https://www.linkedin.com/in/abid-shaik-data-engineer/ | Dallas, Texas, 76210, United States
+
+================================================================================
+
+PROFESSIONAL SUMMARY
+--------------------
+Experienced Data Engineer with expertise in AWS, big data technologies, and data analytics solutions. Proficient in designing and implementing scalable data platforms, real-time analytics, and data transformation pipelines. Skilled in optimizing workload management and improving operational efficiency through automation and process improvements.
+
+SKILLS
+------
+• Cloud Platform: AWS
+• Scripting Languages: Python, SQL, Pyspark, Scala, Java, Unix
+• Big Data Tech: Hadoop, Spark
+• Visualization Tools: Amazon QuickSight, Tableau, Cognos
+• Database Management: PostgreSQL, MySQL, MongoDB, Oracle
+• Orchestration Tools: Apache Airflow
+• ETL Tools: Informatica Powercenter, Informatica Cloud
+
+EXPERIENCE
+----------
+Data Engineer | Amazon
+Dec '20 - Present
+• Trained LLMs in AWS Bedrock to build an AI assistant for self-service analytics and data discovery.
+• Designed and implemented real-time analytic solutions that transformed workload management for over a million hourly associates globally.
+• Developed a centralized metrics library with over 200 core recruiting metrics, improving data integrity and executive reporting accuracy.
+• Played a pivotal role in migrating a critical data reporting system to a modern micro-services architecture.
+• Led a cross-functional team to create an innovative case management tool, improving user experience and earning leadership recognition.
+• Spearheaded process improvements, reducing operational tickets by 30% and improving service reliability.
+• Designed and implemented a custom maintenance utility, reducing system costs by 50% and improving platform stability.
+• Developed an automation framework that reduced time-to-market for new data pipelines by 70%, increasing team efficiency.
+• Designed and implemented security protocols to improve incident response and ensure data protection and compliance.
+
+Data Engineer | CGI
+Jun '15 - Dec '20
+• Designed and implemented AWS systems in line with compliance and security standards, reducing security risks by 40%.
+• Built and deployed scalable, fault-tolerant environments that enhanced application uptime by 30%.
+• Led cloud migration of on-prem applications to AWS, achieving a 25% reduction in infrastructure costs.
+• Developed centralized data repositories and automated data workflows, reducing manual data handling by 50%.
+
+ETL Analyst | Tech Mahindra
+Feb '13 - Jul '14
+• Built a decision support model for Insurance policies, reducing the cost of Insurance claims by 35%.
+• Published customized interactive reports and dashboards using Tableau Server.
+• Developed a scoring model using Informatica Data Quality to automate the de-duplication process of over 50 million passenger vehicle licenses.
+• Designed and developed a data repository in Oracle via Informatica PowerCenter ETL processing to re-design 70+ analytic dashboards for an investment bank with $1B+ in assets.
+
+Systems Engineer | Infosys
+Oct '10 - Oct '12
+• Managed current and historical financial transactions of a multinational bank using Informatica and Oracle DB.
+• Designed and developed various OBIEE Interactive Dashboards and reports with drill-downs, guided navigation, filters, and prompts.
+• Developed Unix shell scripts to schedule and execute the Informatica jobs in UNIX and optimized the existing Informatica mappings, reducing the execution time by 70%.
+• Automated one of the production support processes by developing a tool that reduced the manual effort by 65%.
+
+EDUCATION
+---------
+Masters in Information Systems | University at Buffalo
+2009
+GPA: 3.89
+
+Bachelors in Computer Science | Vellore Institute of Technology
+2008
+GPA: 3.7
+

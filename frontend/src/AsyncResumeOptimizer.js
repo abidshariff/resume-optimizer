@@ -9,6 +9,7 @@ function AsyncResumeOptimizer() {
   const [polling, setPolling] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [jobDescription, setJobDescription] = useState('');
+  const [outputFormat, setOutputFormat] = useState('text'); // 'text' or 'word'
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Convert file to base64
@@ -39,7 +40,8 @@ function AsyncResumeOptimizer() {
       const response = await API.post('resumeOptimizerApi', '/optimize', {
         body: {
           resume: resumeBase64,
-          jobDescription: jobDescription
+          jobDescription: jobDescription,
+          outputFormat: outputFormat
         }
       });
       
@@ -288,6 +290,47 @@ function AsyncResumeOptimizer() {
                 fontFamily: 'inherit'
               }}
             />
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+              Output Format:
+            </label>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="outputFormat"
+                  value="text"
+                  checked={outputFormat === 'text'}
+                  onChange={(e) => setOutputFormat(e.target.value)}
+                  style={{ marginRight: '8px' }}
+                />
+                📄 Text Format (.txt)
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="outputFormat"
+                  value="word"
+                  checked={outputFormat === 'word'}
+                  onChange={(e) => setOutputFormat(e.target.value)}
+                  style={{ marginRight: '8px' }}
+                />
+                📝 Professional Word Document (.docx)
+              </label>
+            </div>
+            <p style={{ 
+              fontSize: '12px', 
+              color: '#666', 
+              marginTop: '8px',
+              fontStyle: 'italic'
+            }}>
+              {outputFormat === 'word' 
+                ? 'Word format provides professional formatting with proper fonts, colors, and layout optimized for one page.'
+                : 'Text format provides a simple, readable version that works everywhere.'
+              }
+            </p>
           </div>
 
           <button

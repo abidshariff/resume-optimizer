@@ -7,7 +7,9 @@ import subprocess
 import base64
 import sys
 import urllib.parse
+import datetime
 from datetime import datetime
+from word_generator import create_word_resume
 
 s3 = boto3.client('s3')
 bedrock_runtime = boto3.client('bedrock-runtime')
@@ -23,6 +25,29 @@ CORS_HEADERS = {
     'Access-Control-Allow-Credentials': 'true'
 }
 
+def update_job_status(bucket, status_key, status, message, data=None):
+    """Update the job status in S3"""
+    try:
+        status_data = {
+            'status': status,
+            'message': message,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Add any additional data
+        if data:
+            status_data.update(data)
+            
+        s3.put_object(
+            Bucket=bucket,
+            Key=status_key,
+            Body=json.dumps(status_data).encode('utf-8'),
+            ContentType='application/json'
+        )
+        print(f"Updated job status to {status}: {message}")
+    except Exception as e:
+        print(f"Error updating job status: {str(e)}")
+
 # Function to extract text from PDF
 def extract_text_from_pdf(pdf_content):
     try:
@@ -31,10 +56,44 @@ def extract_text_from_pdf(pdf_content):
             print("File does not appear to be a valid PDF (missing PDF header)")
             return "The uploaded file does not appear to be a valid PDF. Please check the file format and try again."
         
-        # We'll use Amazon Textract for PDF text extraction
-        textract = boto3.client('textract')
-        
+        # First try using PyPDF2 directly (should be included in the package)
         try:
+            print("Attempting PDF extraction with PyPDF2")
+            # Create a temporary file to store the PDF content
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+                temp_file_path = temp_file.name
+                temp_file.write(pdf_content)
+            
+            # Import PyPDF2 from the package
+            sys.path.append('/tmp')
+            import PyPDF2
+            
+            text = ""
+            with open(temp_file_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                for page_num in range(len(pdf_reader.pages)):
+                    page = pdf_reader.pages[page_num]
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+            
+            # Clean up the temporary file
+            os.unlink(temp_file_path)
+            
+            if text.strip():
+                print(f"Successfully extracted {len(text)} characters from PDF using PyPDF2")
+                return text
+            else:
+                print("PyPDF2 extraction returned no text, trying Textract")
+        except Exception as pypdf_error:
+            print(f"PyPDF2 extraction failed: {str(pypdf_error)}")
+            # Continue to next method
+        
+        # Try using Amazon Textract as a fallback
+        try:
+            print("Attempting PDF extraction with Amazon Textract")
+            textract = boto3.client('textract')
+            
             response = textract.detect_document_text(
                 Document={'Bytes': pdf_content}
             )
@@ -50,40 +109,24 @@ def extract_text_from_pdf(pdf_content):
                 print("Textract returned no text content")
                 return "No text content could be extracted from the PDF. The file might be scanned images or have security restrictions."
                 
+            print(f"Successfully extracted {len(text)} characters from PDF using Textract")
             return text
             
-        except textract.exceptions.UnsupportedDocumentException:
-            print("Textract reports unsupported document format")
-            return "The PDF format is not supported for text extraction. The file might be corrupted, password-protected, or in an unsupported format."
+        except Exception as textract_error:
+            print(f"Textract extraction failed: {str(textract_error)}")
             
-        except textract.exceptions.InvalidS3ObjectException:
-            print("Textract reports invalid document")
-            return "The document appears to be invalid or corrupted. Please check the file and try again."
-            
-        except textract.exceptions.InvalidParameterException:
-            print("Textract reports invalid parameters")
-            return "The document could not be processed due to invalid parameters. Please try a different file format."
-            
-        except textract.exceptions.DocumentTooLargeException:
-            print("Textract reports document too large")
-            return "The document is too large for text extraction. Please try reducing the file size or splitting it into smaller documents."
-            
-    except Exception as e:
-        print(f"Error extracting text from PDF: {str(e)}")
-        
-        # Try fallback method with PyPDF2
-        try:
-            print("Attempting fallback PDF extraction with PyPDF2")
-            # Create a temporary file to store the PDF content
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
-                temp_file_path = temp_file.name
-                temp_file.write(pdf_content)
-            
-            # Try to install and use PyPDF2
+            # If we get here, both methods failed
+            # Try one more fallback - install PyPDF2 if it wasn't available
             try:
+                print("Attempting to install and use PyPDF2 as final fallback")
                 subprocess.check_call(['pip', 'install', 'PyPDF2', '-t', '/tmp'])
                 sys.path.append('/tmp')
                 import PyPDF2
+                
+                # Create a new temporary file
+                with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+                    temp_file_path = temp_file.name
+                    temp_file.write(pdf_content)
                 
                 text = ""
                 with open(temp_file_path, 'rb') as file:
@@ -96,18 +139,17 @@ def extract_text_from_pdf(pdf_content):
                 os.unlink(temp_file_path)
                 
                 if text.strip():
+                    print(f"Successfully extracted {len(text)} characters from PDF using installed PyPDF2")
                     return text
                 else:
                     return "No text could be extracted from the PDF. The file might contain scanned images or have security restrictions."
-                    
-            except Exception as pypdf_error:
-                print(f"PyPDF2 extraction failed: {str(pypdf_error)}")
-                os.unlink(temp_file_path)
-                return f"Error extracting text from PDF: {str(e)}. Fallback method also failed."
-                
-        except Exception as fallback_error:
-            print(f"All PDF extraction methods failed: {str(fallback_error)}")
-            return f"Error extracting text from PDF: {str(e)}"
+            except Exception as final_error:
+                print(f"Final PDF extraction attempt failed: {str(final_error)}")
+                return "The PDF format is not supported for text extraction. The file might be corrupted, password-protected, or in an unsupported format."
+    
+    except Exception as e:
+        print(f"Error in PDF extraction process: {str(e)}")
+        return f"Error extracting text from PDF: {str(e)}"
 
 # Function to extract text from Word document
 def extract_text_from_docx(docx_content):
@@ -288,7 +330,53 @@ def detect_file_type(file_content):
     # Unknown type
     return None
 
+def create_text_resume(resume_json):
+    """Create a text-based resume from the JSON data."""
+    try:
+        # Format the resume as text
+        text_resume = f"{resume_json.get('full_name', 'Full Name')}\n"
+        text_resume += f"{resume_json.get('contact_info', 'Contact Information')}\n\n"
+        text_resume += "=" * 80 + "\n\n"
+        
+        # Professional Summary
+        text_resume += "PROFESSIONAL SUMMARY\n"
+        text_resume += "-" * 20 + "\n"
+        text_resume += f"{resume_json.get('professional_summary', 'Professional Summary')}\n\n"
+        
+        # Skills
+        text_resume += "SKILLS\n"
+        text_resume += "-" * 6 + "\n"
+        for skill in resume_json.get('skills', []):
+            text_resume += f"• {skill}\n"
+        text_resume += "\n"
+        
+        # Experience
+        text_resume += "EXPERIENCE\n"
+        text_resume += "-" * 10 + "\n"
+        for job in resume_json.get('experience', []):
+            text_resume += f"{job.get('title', 'Job Title')} | {job.get('company', 'Company')}\n"
+            text_resume += f"{job.get('dates', 'Dates')}\n"
+            for achievement in job.get('achievements', []):
+                text_resume += f"• {achievement}\n"
+            text_resume += "\n"
+        
+        # Education
+        text_resume += "EDUCATION\n"
+        text_resume += "-" * 9 + "\n"
+        for edu in resume_json.get('education', []):
+            text_resume += f"{edu.get('degree', 'Degree')} | {edu.get('institution', 'Institution')}\n"
+            text_resume += f"{edu.get('dates', 'Graduation Year')}\n"
+            if 'details' in edu and edu['details']:
+                text_resume += f"{edu['details']}\n"
+            text_resume += "\n"
+        
+        return text_resume
+    except Exception as e:
+        print(f"Error creating text resume: {str(e)}")
+        return None
+
 def lambda_handler(event, context):
+    status_key = None
     try:
         print("Received event:", json.dumps(event))
         
@@ -297,13 +385,21 @@ def lambda_handler(event, context):
         job_id = event.get('jobId')
         resume_key = event.get('resumeKey')
         job_desc_key = event.get('jobDescriptionKey')
+        status_key = event.get('statusKey')
+        output_format = event.get('outputFormat', 'text')  # 'text' or 'word'
         
         # Validate inputs
-        if not job_id or not resume_key or not job_desc_key:
+        if not job_id or not resume_key or not job_desc_key or not status_key:
+            error_msg = 'Missing required parameters'
+            if status_key:
+                update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
-                'error': 'Missing required parameters',
+                'error': error_msg,
                 'headers': CORS_HEADERS
             }
+        
+        # Update status to processing
+        update_job_status(bucket_name, status_key, 'PROCESSING', 'Processing resume and job description')
         
         # Get files from S3
         try:
@@ -318,6 +414,7 @@ def lambda_handler(event, context):
             # Check if we got a valid extraction or an error message
             if resume_text.startswith("Unfortunately") or resume_text.startswith("Error") or resume_text.startswith("Unable"):
                 print("Text extraction failed with error message")
+                update_job_status(bucket_name, status_key, 'FAILED', resume_text)
                 return {
                     'error': resume_text,
                     'headers': CORS_HEADERS
@@ -325,9 +422,11 @@ def lambda_handler(event, context):
             
             # Verify we have enough text to process
             if len(resume_text.strip()) < 50:  # Arbitrary minimum length
+                error_msg = f"The extracted text from your resume is too short ({len(resume_text.strip())} characters). Please check the file format and try again."
                 print("Extracted text too short, likely failed extraction")
+                update_job_status(bucket_name, status_key, 'FAILED', error_msg)
                 return {
-                    'error': f"The extracted text from your resume is too short ({len(resume_text.strip())} characters). Please check the file format and try again.",
+                    'error': error_msg,
                     'headers': CORS_HEADERS
                 }
             
@@ -335,11 +434,16 @@ def lambda_handler(event, context):
             job_desc_obj = s3.get_object(Bucket=bucket_name, Key=job_desc_key)
             job_description = job_desc_obj['Body'].read().decode('utf-8')
         except Exception as e:
+            error_msg = f'Error retrieving or processing files: {str(e)}'
             print(f"Error retrieving or processing files from S3: {str(e)}")
+            update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
-                'error': f'Error retrieving or processing files: {str(e)}',
+                'error': error_msg,
                 'headers': CORS_HEADERS
             }
+        
+        # Update status to AI processing
+        update_job_status(bucket_name, status_key, 'PROCESSING', 'Generating optimized resume with AI')
         
         # Prepare prompt for Bedrock
         prompt = f"""
@@ -462,11 +566,16 @@ def lambda_handler(event, context):
                 """
             
         except Exception as e:
+            error_msg = f'Error generating optimized resume: {str(e)}'
             print(f"Error calling Bedrock: {str(e)}")
+            update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
-                'error': f'Error generating optimized resume: {str(e)}',
+                'error': error_msg,
                 'headers': CORS_HEADERS
             }
+        
+        # Update status to finalizing
+        update_job_status(bucket_name, status_key, 'PROCESSING', 'Finalizing optimized resume')
         
         # Parse the JSON response from Claude
         try:
@@ -481,142 +590,51 @@ def lambda_handler(event, context):
                 
             print("Successfully parsed JSON response")
             
-            # Import the resume template module
-            from resume_template import create_resume_template
-            
-            # Always create a Word document
-            output_extension = 'docx'
-            content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            is_binary = True
-            
-            # Create a temporary file to store the Word document
-            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
-                temp_file_path = temp_file.name
-            
-            # Install python-docx if needed
-            subprocess.check_call(['pip', 'install', 'python-docx', '-t', '/tmp'])
-            sys.path.append('/tmp')
-            import docx
-            from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-            from docx.shared import Pt, Inches, RGBColor
-            
-            # Create a new Word document
-            doc = docx.Document()
-            
-            # Set margins
-            sections = doc.sections
-            for section in sections:
-                section.top_margin = Inches(0.5)
-                section.bottom_margin = Inches(0.5)
-                section.left_margin = Inches(0.75)
-                section.right_margin = Inches(0.75)
-            
-            # Add name
-            name = doc.add_paragraph()
-            name_run = name.add_run(resume_json.get('full_name', 'Full Name'))
-            name_run.bold = True
-            name_run.font.size = Pt(16)
-            name.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-            
-            # Add contact info
-            contact = doc.add_paragraph()
-            contact_run = contact.add_run(resume_json.get('contact_info', 'Contact Information'))
-            contact.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-            
-            # Add a line separator
-            doc.add_paragraph("_" * 80)
-            
-            # Add Professional Summary section
-            summary_heading = doc.add_heading('Professional Summary', level=1)
-            summary_heading.style.font.size = Pt(14)
-            summary_heading.style.font.bold = True
-            doc.add_paragraph(resume_json.get('professional_summary', 'Professional Summary'))
-            
-            # Add Skills section
-            skills_heading = doc.add_heading('Skills', level=1)
-            skills_heading.style.font.size = Pt(14)
-            skills_heading.style.font.bold = True
-            
-            # Add skills as bullet points
-            skills_para = doc.add_paragraph()
-            for skill in resume_json.get('skills', []):
-                bullet_para = doc.add_paragraph(style='ListBullet')
-                bullet_para.add_run(skill)
-            
-            # Add Experience section
-            exp_heading = doc.add_heading('Experience', level=1)
-            exp_heading.style.font.size = Pt(14)
-            exp_heading.style.font.bold = True
-            
-            # Add each job
-            for job in resume_json.get('experience', []):
-                # Job title and company
-                job_para = doc.add_paragraph()
-                job_title = job_para.add_run(f"{job.get('title', 'Job Title')} | {job.get('company', 'Company')}")
-                job_title.bold = True
+            # Generate output based on requested format
+            if output_format.lower() == 'word':
+                try:
+                    # Generate Word document
+                    template_key = 'templates/professional_resume_template.docx'
+                    word_content = create_word_resume(resume_json, bucket_name, template_key)
+                    
+                    output_extension = 'docx'
+                    content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    is_binary = True
+                    optimized_resume = word_content
+                    
+                    print("Successfully generated Word document")
+                    
+                except Exception as word_error:
+                    print(f"Error generating Word document: {str(word_error)}")
+                    # Fall back to text format
+                    text_resume = create_text_resume(resume_json)
+                    output_extension = 'txt'
+                    content_type = 'text/plain'
+                    is_binary = False
+                    optimized_resume = text_resume if text_resume else f"Failed to create resume. Error: {str(word_error)}"
+            else:
+                # Generate text format (default)
+                text_resume = create_text_resume(resume_json)
                 
-                # Dates
-                date_para = doc.add_paragraph()
-                date_para.add_run(job.get('dates', 'Dates'))
-                date_para.style.font.italic = True
-                
-                # Achievements as bullet points
-                for achievement in job.get('achievements', []):
-                    achievement_para = doc.add_paragraph(style='ListBullet')
-                    achievement_para.add_run(achievement)
-                
-                # Add some space after each job
-                doc.add_paragraph()
-            
-            # Add Education section
-            edu_heading = doc.add_heading('Education', level=1)
-            edu_heading.style.font.size = Pt(14)
-            edu_heading.style.font.bold = True
-            
-            # Add each education entry
-            for edu in resume_json.get('education', []):
-                # Degree and institution
-                edu_para = doc.add_paragraph()
-                edu_title = edu_para.add_run(f"{edu.get('degree', 'Degree')} | {edu.get('institution', 'Institution')}")
-                edu_title.bold = True
-                
-                # Dates
-                date_para = doc.add_paragraph()
-                date_para.add_run(edu.get('dates', 'Graduation Year'))
-                date_para.style.font.italic = True
-                
-                # Additional details if available
-                if 'details' in edu and edu['details']:
-                    details_para = doc.add_paragraph()
-                    details_para.add_run(edu['details'])
-                
-                # Add some space after each education entry
-                doc.add_paragraph()
-            
-            # Save the document
-            doc.save(temp_file_path)
-            
-            # Read the document as binary data
-            with open(temp_file_path, 'rb') as file:
-                docx_content = file.read()
-            
-            # Clean up the temporary file
-            os.unlink(temp_file_path)
-            
-            # Update the optimized content to the Word document binary data
-            optimized_resume = docx_content
+                if text_resume:
+                    output_extension = 'txt'
+                    content_type = 'text/plain'
+                    is_binary = False
+                    optimized_resume = text_resume
+                else:
+                    # Fall back to raw JSON
+                    output_extension = 'txt'
+                    content_type = 'text/plain'
+                    is_binary = False
+                    optimized_resume = f"Failed to create formatted resume. Here's the raw response:\n\n{optimized_resume}"
             
         except Exception as e:
-            print(f"Error creating Word document from JSON: {str(e)}")
-            print(f"Raw response: {optimized_resume[:500]}...")  # Log part of the raw response
-            
+            print(f"Error parsing JSON response: {str(e)}")
             # Fall back to text format
             output_extension = 'txt'
             content_type = 'text/plain'
             is_binary = False
-            
-            # Keep the original text response
-            optimized_resume = f"Failed to create Word document. Here's the raw response:\n\n{optimized_resume}"
+            optimized_resume = f"Failed to parse JSON response. Here's the raw response:\n\n{optimized_resume}"
         
         # Store the optimized resume
         optimized_key = f"users/{user_id}/optimized/{job_id}/resume.{output_extension}"
@@ -675,6 +693,14 @@ def lambda_handler(event, context):
                 print(f"Error recording to DynamoDB: {str(e)}")
                 # Continue even if DynamoDB recording fails
         
+        # Update status to completed
+        update_job_status(bucket_name, status_key, 'COMPLETED', 'Resume optimization complete', {
+            'optimizedResumeUrl': optimized_url,
+            'fileType': output_extension,
+            'contentType': content_type,
+            'downloadFilename': download_filename
+        })
+        
         return {
             'optimizedResumeUrl': optimized_url,
             'jobId': job_id,
@@ -684,6 +710,11 @@ def lambda_handler(event, context):
         }
     except Exception as e:
         print(f"Error in AI Handler: {str(e)}")
+        
+        # Update status to failed
+        if status_key:
+            update_job_status(bucket_name, status_key, 'FAILED', f'Error: {str(e)}')
+            
         return {
             'error': str(e)
         }
