@@ -37,11 +37,15 @@ function AsyncResumeOptimizer() {
       // Convert file to base64
       const resumeBase64 = await fileToBase64(resumeFile);
 
-      const response = await API.post('resumeOptimizerApi', '/optimize', {
-        body: {
-          resume: resumeBase64,
-          jobDescription: jobDescription,
-          outputFormat: outputFormat
+      const response = await post({
+        apiName: 'resumeOptimizer',
+        path: '/optimize',
+        options: {
+          body: {
+            resume: resumeBase64,
+            jobDescription: jobDescription,
+            outputFormat: outputFormat
+          }
         }
       });
       
@@ -64,9 +68,13 @@ function AsyncResumeOptimizer() {
     if (polling && jobId) {
       intervalId = setInterval(async () => {
         try {
-          const statusResponse = await API.get('resumeOptimizerApi', '/status', {
-            queryStringParameters: {
-              jobId: jobId
+          const statusResponse = await get({
+            apiName: 'resumeOptimizer',
+            path: '/status',
+            options: {
+              queryParams: {
+                jobId: jobId
+              }
             }
           });
           

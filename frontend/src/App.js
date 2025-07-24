@@ -373,13 +373,14 @@ function App() {
       
       console.log("API response received:", response);
       
-      if (response.jobId) {
+      if (response && response.jobId) {
         setJobId(response.jobId);
         setJobStatus(response.status || 'PROCESSING');
         setStatusMessage(response.message || 'Job submitted and processing started');
         setIsPolling(true);
         setIsSubmitting(false);
       } else {
+        console.error("Invalid API response:", response);
         throw new Error('No job ID returned from the API');
       }
     } catch (error) {

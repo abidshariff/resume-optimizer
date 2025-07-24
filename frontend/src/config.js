@@ -5,21 +5,20 @@ const config = {
   // AWS Cognito Configuration
   Auth: {
     region: process.env.REACT_APP_AWS_REGION || 'us-east-1',
-    userPoolId: process.env.REACT_APP_USER_POOL_ID || '',
-    userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '',
+    userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_WFZ10DH6I',
+    userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '6bhk08l5egdqjgimmaau0jmrd6',
     mandatorySignIn: true,
     authenticationFlowType: 'USER_SRP_AUTH'
   },
   
   // API Configuration
   API: {
-    endpoints: [
-      {
-        name: 'resumeOptimizer',
-        endpoint: process.env.REACT_APP_API_ENDPOINT || '',
+    REST: {
+      resumeOptimizer: {
+        endpoint: process.env.REACT_APP_API_ENDPOINT || 'https://dqypjuueic.execute-api.us-east-1.amazonaws.com/dev/optimize',
         region: process.env.REACT_APP_AWS_REGION || 'us-east-1'
       }
-    ]
+    }
   },
   
   // Application Configuration
@@ -46,7 +45,7 @@ export const validateConfig = () => {
     errors.push('REACT_APP_USER_POOL_WEB_CLIENT_ID is not set');
   }
   
-  if (!config.API.endpoints[0].endpoint) {
+  if (!config.API.REST.resumeOptimizer.endpoint) {
     errors.push('REACT_APP_API_ENDPOINT is not set');
   }
   
