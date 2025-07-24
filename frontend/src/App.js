@@ -291,17 +291,33 @@ function App() {
     let intervalId;
     
     if (isPolling && jobId) {
+      // For local development, we don't need to poll as we're using mock data
+      if (window.location.hostname === 'localhost' && jobId.startsWith('local-test-')) {
+        console.log('Local development detected, using mock status polling');
+        return;
+      }
+      
       intervalId = setInterval(async () => {
         try {
-          const statusResponse = await get({
+          // Get the current auth session to include the JWT token
+          const { tokens } = await fetchAuthSession();
+          const idToken = tokens.idToken.toString();
+          
+          const statusResponseObj = await get({
             apiName: 'resumeOptimizer',
             path: '/status',
             options: {
+              headers: {
+                Authorization: idToken
+              },
               queryParams: {
                 jobId: jobId
               }
             }
           });
+          
+          // In Amplify v6, we need to await the response property
+          const statusResponse = await statusResponseObj.response;
           
           console.log('Status response:', statusResponse);
           setJobStatus(statusResponse.status);
@@ -362,33 +378,98 @@ function App() {
         throw new Error(`Payload too large: ${(payloadSize / 1024 / 1024).toFixed(2)} MB. Maximum allowed is 10 MB.`);
       }
       
-      // Submit the job and get job ID immediately
-      const response = await post({
-        apiName: 'resumeOptimizer',
-        path: '/optimize',
-        options: {
-          body: payload
-        }
-      });
+      // Get the current auth session to include the JWT token
+      const { tokens } = await fetchAuthSession();
+      const idToken = tokens.idToken.toString();
       
-      console.log("API response received:", response);
-      
-      if (response && response.jobId) {
-        setJobId(response.jobId);
-        setJobStatus(response.status || 'PROCESSING');
-        setStatusMessage(response.message || 'Job submitted and processing started');
+      // For local development, use a proxy or mock API response
+      if (window.location.hostname === 'localhost') {
+        console.log("Local development detected, using mock API response");
+        // Mock a successful response for local testing
+        const mockResponse = {
+          jobId: 'local-test-' + Date.now(),
+          status: 'PROCESSING',
+          message: 'Job submitted and processing started (mock)'
+        };
+        
+        setJobId(mockResponse.jobId);
+        setJobStatus(mockResponse.status);
+        setStatusMessage(mockResponse.message);
         setIsPolling(true);
         setIsSubmitting(false);
-      } else {
-        console.error("Invalid API response:", response);
-        throw new Error('No job ID returned from the API');
+        
+        // Simulate a completed job after 5 seconds
+        setTimeout(() => {
+          setJobStatus('COMPLETED');
+          setStatusMessage('Resume optimization completed (mock)');
+          setResult({
+            optimizedResume: 'This is a mock optimized resume for local testing.\n\nYour resume has been optimized for the job description.',
+            optimizedResumeUrl: '#',
+            contentType: 'text/plain',
+            fileType: 'txt'
+          });
+          setIsPolling(false);
+        }, 5000);
+        
+        return;
+      }
+      
+      try {
+        // Submit the job and get job ID immediately
+        const responseObj = await post({
+          apiName: 'resumeOptimizer',
+          path: '/optimize',
+          options: {
+            body: payload,
+            headers: {
+              Authorization: idToken
+            }
+          }
+        });
+        
+        // In Amplify v6, we need to await the response property
+        const response = await responseObj.response;
+        
+        console.log("API response received:", response);
+        
+        if (response && response.jobId) {
+          setJobId(response.jobId);
+          setJobStatus(response.status || 'PROCESSING');
+          setStatusMessage(response.message || 'Job submitted and processing started');
+          setIsPolling(true);
+          setIsSubmitting(false);
+        } else {
+          console.error("Invalid API response:", response);
+          throw new Error('No job ID returned from the API');
+        }
+      } catch (error) {
+        console.error('Error submitting job:', error);
+        
+        let errorMessage = error.message;
+        
+        // Handle specific HTTP status codes
+        if (error.name === 'NetworkError') {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        }
+        
+        setError(`Error submitting job: ${errorMessage}`);
+        setSnackbarMessage(`Error: ${errorMessage}`);
+        setSnackbarOpen(true);
+        setJobStatus('FAILED');
+        setIsSubmitting(false);
       }
     } catch (error) {
-      console.error('Error submitting job:', error);
+      console.error('Error in handleOptimize:', error);
       
       let errorMessage = error.message;
       
-      // Handle specific HTTP status codes
+      setError(`Error submitting job: ${errorMessage}`);
+      setSnackbarMessage(`Error: ${errorMessage}`);
+      setSnackbarOpen(true);
+      setJobStatus('FAILED');
+      setIsSubmitting(false);
+    }
+  };
       if (error.response) {
         const status = error.response.status;
         if (status === 413) {
@@ -416,8 +497,38 @@ function App() {
     }
 
     try {
+      // For local development, use the mock optimized resume
+      if (window.location.hostname === 'localhost' && result.optimizedResumeUrl === '#') {
+        console.log('Local development detected, using mock download');
+        
+        // Create a blob from the mock optimized resume
+        const contentType = result.contentType || 'text/plain';
+        const fileExtension = result.fileType || 'txt';
+        const blob = new Blob([result.optimizedResume], { type: contentType });
+        
+        // Create a download link and trigger it
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `optimized_resume.${fileExtension}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        return;
+      }
+      
+      // Get the current auth session to include the JWT token
+      const { tokens } = await fetchAuthSession();
+      const idToken = tokens.idToken.toString();
+      
       // Fetch the optimized resume content
-      const resumeResponse = await fetch(result.optimizedResumeUrl);
+      const resumeResponse = await fetch(result.optimizedResumeUrl, {
+        headers: {
+          Authorization: idToken
+        }
+      });
       if (!resumeResponse.ok) {
         throw new Error(`Failed to fetch optimized resume: ${resumeResponse.status} ${resumeResponse.statusText}`);
       }
@@ -472,7 +583,7 @@ function App() {
   // Wrap the app with Authenticator for user authentication
   return (
     <ThemeProvider theme={theme}>
-      <Authenticator>
+      <Authenticator loginMechanisms={['email', 'username']}>
         {({ signOut, user }) => (
           <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             <AppBar position="static" color="primary" elevation={0}>

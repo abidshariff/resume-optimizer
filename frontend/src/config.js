@@ -5,8 +5,8 @@ const config = {
   // AWS Cognito Configuration
   Auth: {
     region: process.env.REACT_APP_AWS_REGION || 'us-east-1',
-    userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_WFZ10DH6I',
-    userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '6bhk08l5egdqjgimmaau0jmrd6',
+    userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_Hgs2gd3iK',
+    userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '6ql99bmnbe2fr2dcl8n5cda3de',
     mandatorySignIn: true,
     authenticationFlowType: 'USER_SRP_AUTH'
   },
@@ -15,7 +15,7 @@ const config = {
   API: {
     REST: {
       resumeOptimizer: {
-        endpoint: process.env.REACT_APP_API_ENDPOINT || 'https://dqypjuueic.execute-api.us-east-1.amazonaws.com/dev/optimize',
+        endpoint: process.env.REACT_APP_API_ENDPOINT || 'https://3bemzv60ge.execute-api.us-east-1.amazonaws.com/dev',
         region: process.env.REACT_APP_AWS_REGION || 'us-east-1'
       }
     }
