@@ -470,24 +470,6 @@ function App() {
       setIsSubmitting(false);
     }
   };
-      if (error.response) {
-        const status = error.response.status;
-        if (status === 413) {
-          errorMessage = 'File or request too large. Please try with a smaller resume file or shorter job description.';
-        } else if (status === 502 || status === 504) {
-          errorMessage = 'Server timeout. Please try again in a moment.';
-        } else if (status >= 500) {
-          errorMessage = 'Server error. Please try again later.';
-        }
-      }
-      
-      setError(`Error submitting job: ${errorMessage}`);
-      setSnackbarMessage(`Error: ${errorMessage}`);
-      setSnackbarOpen(true);
-      setJobStatus('FAILED');
-      setIsSubmitting(false);
-    }
-  };
 
   const downloadOptimizedResume = async () => {
     if (!result || !result.optimizedResumeUrl) {
