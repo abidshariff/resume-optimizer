@@ -15,7 +15,7 @@ const config = {
   API: {
     endpoints: [
       {
-        name: 'ResumeOptimizerAPI',
+        name: 'resumeOptimizer',
         endpoint: process.env.REACT_APP_API_ENDPOINT || '',
         region: process.env.REACT_APP_AWS_REGION || 'us-east-1'
       }
