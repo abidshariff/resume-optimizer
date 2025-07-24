@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { Amplify } from 'aws-amplify';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { CssBaseline } from '@mui/material';
 
 // Configure Amplify
@@ -30,8 +31,8 @@ Amplify.configure({
         region: 'us-east-1',
         custom_header: async () => {
           try {
-            const session = await Amplify.Auth.currentSession();
-            const token = session.getIdToken().getJwtToken();
+            const { tokens } = await fetchAuthSession();
+            const token = tokens.idToken.toString();
             console.log("Setting custom header with token:", token.substring(0, 20) + "...");
             return {
               'Authorization': token,

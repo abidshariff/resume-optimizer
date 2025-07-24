@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API } from 'aws-amplify';
+import { get, post } from 'aws-amplify/api';
 
 function AsyncResumeOptimizer() {
   const [jobId, setJobId] = useState(null);

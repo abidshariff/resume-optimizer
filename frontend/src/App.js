@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { API, Auth } from 'aws-amplify';
+import { fetchAuthSession } from 'aws-amplify/auth';
+import { get, post } from 'aws-amplify/api';
 import { Authenticator } from '@aws-amplify/ui-react';
+import * as API from 'aws-amplify/api';
 import '@aws-amplify/ui-react/styles.css';
 import { 
   Box, 
