@@ -9,7 +9,7 @@ import sys
 import urllib.parse
 import datetime
 from datetime import datetime
-from word_generator import create_word_resume
+from minimal_word_generator import create_minimal_word_resume
 
 s3 = boto3.client('s3')
 bedrock_runtime = boto3.client('bedrock-runtime')
@@ -593,16 +593,36 @@ def lambda_handler(event, context):
             # Generate output based on requested format
             if output_format.lower() == 'word':
                 try:
-                    # Generate Word document
-                    template_key = 'templates/professional_resume_template.docx'
-                    word_content = create_word_resume(resume_json, bucket_name, template_key)
-                    
-                    output_extension = 'docx'
-                    content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                    is_binary = True
-                    optimized_resume = word_content
-                    
-                    print("Successfully generated Word document")
+                    # Try to use python-docx for enhanced formatting
+                    try:
+                        # Install python-docx in /tmp
+                        subprocess.check_call(['pip', 'install', 'python-docx', '-t', '/tmp'])
+                        sys.path.append('/tmp')
+                        
+                        # Import the enhanced Word generator
+                        from enhanced_word_generator import create_enhanced_word_resume
+                        
+                        # Generate Word document with enhanced formatting
+                        word_content = create_enhanced_word_resume(resume_json)
+                        
+                        output_extension = 'docx'
+                        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        is_binary = True
+                        optimized_resume = word_content
+                        
+                        print("Successfully generated Word document using enhanced formatting")
+                        
+                    except Exception as enhanced_error:
+                        print(f"Error using enhanced Word generator: {str(enhanced_error)}")
+                        # Fall back to minimal Word generator
+                        word_content = create_minimal_word_resume(resume_json)
+                        
+                        output_extension = 'docx'
+                        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        is_binary = True
+                        optimized_resume = word_content
+                        
+                        print("Successfully generated Word document using minimal approach")
                     
                 except Exception as word_error:
                     print(f"Error generating Word document: {str(word_error)}")

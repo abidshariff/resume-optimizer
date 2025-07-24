@@ -1,28 +1,26 @@
 {
   "name": "resume-optimizer-frontend",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "AI-powered resume optimization tool - Frontend",
   "private": true,
   "dependencies": {
-    "@aws-amplify/ui-react": "^4.0.0",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.2.0",
-    "@mui/material": "^7.2.0",
-    "aws-amplify": "^5.0.0",
-    "framer-motion": "^12.23.6",
+    "@aws-amplify/ui-react": "^6.1.0",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.0",
+    "@mui/material": "^5.14.0",
+    "aws-amplify": "^6.0.0",
+    "framer-motion": "^10.16.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-dropzone": "^14.3.8",
+    "react-dropzone": "^14.2.0",
     "react-scripts": "5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-  },
-  "resolutions": {
-    "maplibre-gl": "^4.0.0"
   },
   "eslintConfig": {
     "extends": [
@@ -41,5 +39,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "homepage": "."
 }

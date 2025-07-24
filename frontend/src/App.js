@@ -244,6 +244,7 @@ function App() {
   const [activeStep, setActiveStep] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [outputFormat, setOutputFormat] = useState('word'); // Default to Word format
   
   // Legacy variables for backward compatibility with existing UI
   const isProcessing = isSubmitting || isPolling;
@@ -345,7 +346,8 @@ function App() {
       // Check payload size before sending
       const payload = {
         resume: resume,
-        jobDescription: jobDescription
+        jobDescription: jobDescription,
+        outputFormat: outputFormat
       };
       const payloadSize = new Blob([JSON.stringify(payload)]).size;
       console.log(`Payload size: ${(payloadSize / 1024 / 1024).toFixed(2)} MB`);

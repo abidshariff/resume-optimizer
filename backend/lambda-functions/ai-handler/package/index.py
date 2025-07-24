@@ -7,7 +7,9 @@ import subprocess
 import base64
 import sys
 import urllib.parse
+import datetime
 from datetime import datetime
+from minimal_word_generator import create_minimal_word_resume
 
 s3 = boto3.client('s3')
 bedrock_runtime = boto3.client('bedrock-runtime')
@@ -22,6 +24,29 @@ CORS_HEADERS = {
     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
     'Access-Control-Allow-Credentials': 'true'
 }
+
+def update_job_status(bucket, status_key, status, message, data=None):
+    """Update the job status in S3"""
+    try:
+        status_data = {
+            'status': status,
+            'message': message,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Add any additional data
+        if data:
+            status_data.update(data)
+            
+        s3.put_object(
+            Bucket=bucket,
+            Key=status_key,
+            Body=json.dumps(status_data).encode('utf-8'),
+            ContentType='application/json'
+        )
+        print(f"Updated job status to {status}: {message}")
+    except Exception as e:
+        print(f"Error updating job status: {str(e)}")
 
 # Function to extract text from PDF
 def extract_text_from_pdf(pdf_content):
@@ -351,6 +376,7 @@ def create_text_resume(resume_json):
         return None
 
 def lambda_handler(event, context):
+    status_key = None
     try:
         print("Received event:", json.dumps(event))
         
@@ -359,13 +385,21 @@ def lambda_handler(event, context):
         job_id = event.get('jobId')
         resume_key = event.get('resumeKey')
         job_desc_key = event.get('jobDescriptionKey')
+        status_key = event.get('statusKey')
+        output_format = event.get('outputFormat', 'text')  # 'text' or 'word'
         
         # Validate inputs
-        if not job_id or not resume_key or not job_desc_key:
+        if not job_id or not resume_key or not job_desc_key or not status_key:
+            error_msg = 'Missing required parameters'
+            if status_key:
+                update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
-                'error': 'Missing required parameters',
+                'error': error_msg,
                 'headers': CORS_HEADERS
             }
+        
+        # Update status to processing
+        update_job_status(bucket_name, status_key, 'PROCESSING', 'Processing resume and job description')
         
         # Get files from S3
         try:
@@ -380,6 +414,7 @@ def lambda_handler(event, context):
             # Check if we got a valid extraction or an error message
             if resume_text.startswith("Unfortunately") or resume_text.startswith("Error") or resume_text.startswith("Unable"):
                 print("Text extraction failed with error message")
+                update_job_status(bucket_name, status_key, 'FAILED', resume_text)
                 return {
                     'error': resume_text,
                     'headers': CORS_HEADERS
@@ -387,9 +422,11 @@ def lambda_handler(event, context):
             
             # Verify we have enough text to process
             if len(resume_text.strip()) < 50:  # Arbitrary minimum length
+                error_msg = f"The extracted text from your resume is too short ({len(resume_text.strip())} characters). Please check the file format and try again."
                 print("Extracted text too short, likely failed extraction")
+                update_job_status(bucket_name, status_key, 'FAILED', error_msg)
                 return {
-                    'error': f"The extracted text from your resume is too short ({len(resume_text.strip())} characters). Please check the file format and try again.",
+                    'error': error_msg,
                     'headers': CORS_HEADERS
                 }
             
@@ -397,11 +434,16 @@ def lambda_handler(event, context):
             job_desc_obj = s3.get_object(Bucket=bucket_name, Key=job_desc_key)
             job_description = job_desc_obj['Body'].read().decode('utf-8')
         except Exception as e:
+            error_msg = f'Error retrieving or processing files: {str(e)}'
             print(f"Error retrieving or processing files from S3: {str(e)}")
+            update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
-                'error': f'Error retrieving or processing files: {str(e)}',
+                'error': error_msg,
                 'headers': CORS_HEADERS
             }
+        
+        # Update status to AI processing
+        update_job_status(bucket_name, status_key, 'PROCESSING', 'Generating optimized resume with AI')
         
         # Prepare prompt for Bedrock
         prompt = f"""
@@ -524,11 +566,16 @@ def lambda_handler(event, context):
                 """
             
         except Exception as e:
+            error_msg = f'Error generating optimized resume: {str(e)}'
             print(f"Error calling Bedrock: {str(e)}")
+            update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
-                'error': f'Error generating optimized resume: {str(e)}',
+                'error': error_msg,
                 'headers': CORS_HEADERS
             }
+        
+        # Update status to finalizing
+        update_job_status(bucket_name, status_key, 'PROCESSING', 'Finalizing optimized resume')
         
         # Parse the JSON response from Claude
         try:
@@ -543,21 +590,42 @@ def lambda_handler(event, context):
                 
             print("Successfully parsed JSON response")
             
-            # Create a text-based resume
-            text_resume = create_text_resume(resume_json)
-            
-            if text_resume:
-                # Successfully created text resume
-                output_extension = 'txt'
-                content_type = 'text/plain'
-                is_binary = False
-                optimized_resume = text_resume
+            # Generate output based on requested format
+            if output_format.lower() == 'word':
+                try:
+                    # Generate Word document using minimal approach (no external dependencies)
+                    word_content = create_minimal_word_resume(resume_json)
+                    
+                    output_extension = 'docx'
+                    content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    is_binary = True
+                    optimized_resume = word_content
+                    
+                    print("Successfully generated Word document using minimal approach")
+                    
+                except Exception as word_error:
+                    print(f"Error generating Word document: {str(word_error)}")
+                    # Fall back to text format
+                    text_resume = create_text_resume(resume_json)
+                    output_extension = 'txt'
+                    content_type = 'text/plain'
+                    is_binary = False
+                    optimized_resume = text_resume if text_resume else f"Failed to create resume. Error: {str(word_error)}"
             else:
-                # Fall back to raw JSON
-                output_extension = 'txt'
-                content_type = 'text/plain'
-                is_binary = False
-                optimized_resume = f"Failed to create formatted resume. Here's the raw response:\n\n{optimized_resume}"
+                # Generate text format (default)
+                text_resume = create_text_resume(resume_json)
+                
+                if text_resume:
+                    output_extension = 'txt'
+                    content_type = 'text/plain'
+                    is_binary = False
+                    optimized_resume = text_resume
+                else:
+                    # Fall back to raw JSON
+                    output_extension = 'txt'
+                    content_type = 'text/plain'
+                    is_binary = False
+                    optimized_resume = f"Failed to create formatted resume. Here's the raw response:\n\n{optimized_resume}"
             
         except Exception as e:
             print(f"Error parsing JSON response: {str(e)}")
@@ -624,6 +692,14 @@ def lambda_handler(event, context):
                 print(f"Error recording to DynamoDB: {str(e)}")
                 # Continue even if DynamoDB recording fails
         
+        # Update status to completed
+        update_job_status(bucket_name, status_key, 'COMPLETED', 'Resume optimization complete', {
+            'optimizedResumeUrl': optimized_url,
+            'fileType': output_extension,
+            'contentType': content_type,
+            'downloadFilename': download_filename
+        })
+        
         return {
             'optimizedResumeUrl': optimized_url,
             'jobId': job_id,
@@ -633,6 +709,11 @@ def lambda_handler(event, context):
         }
     except Exception as e:
         print(f"Error in AI Handler: {str(e)}")
+        
+        # Update status to failed
+        if status_key:
+            update_job_status(bucket_name, status_key, 'FAILED', f'Error: {str(e)}')
+            
         return {
             'error': str(e)
         }

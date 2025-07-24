@@ -9,7 +9,7 @@ function AsyncResumeOptimizer() {
   const [polling, setPolling] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [jobDescription, setJobDescription] = useState('');
-  const [outputFormat, setOutputFormat] = useState('text'); // 'text' or 'word'
+  const [outputFormat, setOutputFormat] = useState('word'); // Default to Word format
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Convert file to base64
