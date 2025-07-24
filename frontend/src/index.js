@@ -5,49 +5,47 @@ import App from './App';
 import { Amplify } from 'aws-amplify';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { CssBaseline } from '@mui/material';
+import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
 
 // Configure Amplify
 const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || 'https://3bemzv60ge.execute-api.us-east-1.amazonaws.com/dev';
-const userPoolId = process.env.REACT_APP_USER_POOL_ID || 'us-east-1_WFZ10DH6I';
-const userPoolWebClientId = process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '6bhk08l5egdqjgimmaau0jmrd6';
+const userPoolId = process.env.REACT_APP_USER_POOL_ID || 'us-east-1_Hgs2gd3iK';
+const userPoolWebClientId = process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '6ql99bmnbe2fr2dcl8n5cda3de';
 
 console.log('Configuring Amplify with:');
 console.log('API Endpoint:', apiEndpoint);
 console.log('User Pool ID:', userPoolId);
 console.log('User Pool Web Client ID:', userPoolWebClientId);
 
+// Configure Amplify for v6
 Amplify.configure({
   Auth: {
-    region: 'us-east-1',
-    userPoolId: userPoolId,
-    userPoolWebClientId: userPoolWebClientId,
-    mandatorySignIn: true,
+    Cognito: {
+      userPoolId: userPoolId,
+      userPoolClientId: userPoolWebClientId,
+      loginWith: {
+        email: true
+      }
+    }
   },
   API: {
-    endpoints: [
-      {
-        name: 'resumeOptimizer',
+    REST: {
+      resumeOptimizer: {
         endpoint: apiEndpoint,
-        region: 'us-east-1',
-        custom_header: async () => {
-          try {
-            const { tokens } = await fetchAuthSession();
-            const token = tokens.idToken.toString();
-            console.log("Setting custom header with token:", token.substring(0, 20) + "...");
-            return {
-              'Authorization': token,
-              'Content-Type': 'application/json'
-            };
-          } catch (error) {
-            console.error('Error getting auth token:', error);
-            return {};
-          }
-        }
+        region: 'us-east-1'
       }
-    ]
+    }
   }
 });
 
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <CssBaseline />
+    <App />
+  </React.StrictMode>
+);
+// Add the root render part
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

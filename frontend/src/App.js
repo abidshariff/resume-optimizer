@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { get, post } from 'aws-amplify/api';
+import { get, post } from 'aws-amplify/api/rest';
 import { Authenticator } from '@aws-amplify/ui-react';
-import * as API from 'aws-amplify/api';
+import * as API from 'aws-amplify/api/rest';
 import '@aws-amplify/ui-react/styles.css';
 import { 
   Box, 
@@ -293,25 +293,28 @@ function App() {
     if (isPolling && jobId) {
       intervalId = setInterval(async () => {
         try {
-          const statusResponse = await API.get('resumeOptimizer', '/status', {
-            queryStringParameters: {
+          const statusResponse = await get({
+            apiName: 'resumeOptimizer',
+            path: '/status',
+            queryParams: {
               jobId: jobId
             }
-          });
+          }).response;
           
-          console.log('Status response:', statusResponse);
-          setJobStatus(statusResponse.status);
-          setStatusMessage(statusResponse.message || '');
+          const statusData = await statusResponse.body.json();
+          console.log('Status response:', statusData);
+          setJobStatus(statusData.status);
+          setStatusMessage(statusData.message || '');
           
           // If job is complete, stop polling and set result
-          if (statusResponse.status === 'COMPLETED') {
+          if (statusData.status === 'COMPLETED') {
             setIsPolling(false);
-            setResult(statusResponse);
+            setResult(statusData);
             setActiveStep(2);
-          } else if (statusResponse.status === 'FAILED') {
+          } else if (statusData.status === 'FAILED') {
             setIsPolling(false);
-            setError(statusResponse.message || 'Job failed');
-            setSnackbarMessage(`Error: ${statusResponse.message || 'Job failed'}`);
+            setError(statusData.message || 'Job failed');
+            setSnackbarMessage(`Error: ${statusData.message || 'Job failed'}`);
             setSnackbarOpen(true);
           }
         } catch (err) {
@@ -359,16 +362,21 @@ function App() {
       }
       
       // Submit the job and get job ID immediately
-      const response = await API.post('resumeOptimizer', '/optimize', {
-        body: payload
-      });
+      const response = await post({
+        apiName: 'resumeOptimizer',
+        path: '/optimize',
+        options: {
+          body: payload
+        }
+      }).response;
       
-      console.log("API response received:", response);
+      const responseData = await response.body.json();
+      console.log("API response received:", responseData);
       
-      if (response.jobId) {
-        setJobId(response.jobId);
-        setJobStatus(response.status || 'PROCESSING');
-        setStatusMessage(response.message || 'Job submitted and processing started');
+      if (responseData.jobId) {
+        setJobId(responseData.jobId);
+        setJobStatus(responseData.status || 'PROCESSING');
+        setStatusMessage(responseData.message || 'Job submitted and processing started');
         setIsPolling(true);
         setIsSubmitting(false);
       } else {
