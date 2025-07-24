@@ -3,9 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { Amplify } from 'aws-amplify';
-import { fetchAuthSession } from 'aws-amplify/auth';
 import { CssBaseline } from '@mui/material';
-import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
 
 // Configure Amplify
 const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || 'https://3bemzv60ge.execute-api.us-east-1.amazonaws.com/dev';
@@ -29,23 +27,16 @@ Amplify.configure({
     }
   },
   API: {
-    REST: {
-      resumeOptimizer: {
+    endpoints: [
+      {
+        name: 'resumeOptimizer',
         endpoint: apiEndpoint,
         region: 'us-east-1'
       }
-    }
+    ]
   }
 });
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <CssBaseline />
-    <App />
-  </React.StrictMode>
-);
-// Add the root render part
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

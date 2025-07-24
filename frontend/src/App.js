@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { get, post } from 'aws-amplify/api/rest';
+import { get, post } from '@aws-amplify/api';
 import { Authenticator } from '@aws-amplify/ui-react';
-import * as API from 'aws-amplify/api/rest';
+import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react/styles.css';
 import { 
   Box, 
@@ -296,25 +296,26 @@ function App() {
           const statusResponse = await get({
             apiName: 'resumeOptimizer',
             path: '/status',
-            queryParams: {
-              jobId: jobId
+            options: {
+              queryParams: {
+                jobId: jobId
+              }
             }
-          }).response;
+          });
           
-          const statusData = await statusResponse.body.json();
-          console.log('Status response:', statusData);
-          setJobStatus(statusData.status);
-          setStatusMessage(statusData.message || '');
+          console.log('Status response:', statusResponse);
+          setJobStatus(statusResponse.status);
+          setStatusMessage(statusResponse.message || '');
           
           // If job is complete, stop polling and set result
-          if (statusData.status === 'COMPLETED') {
+          if (statusResponse.status === 'COMPLETED') {
             setIsPolling(false);
-            setResult(statusData);
+            setResult(statusResponse);
             setActiveStep(2);
-          } else if (statusData.status === 'FAILED') {
+          } else if (statusResponse.status === 'FAILED') {
             setIsPolling(false);
-            setError(statusData.message || 'Job failed');
-            setSnackbarMessage(`Error: ${statusData.message || 'Job failed'}`);
+            setError(statusResponse.message || 'Job failed');
+            setSnackbarMessage(`Error: ${statusResponse.message || 'Job failed'}`);
             setSnackbarOpen(true);
           }
         } catch (err) {
@@ -368,15 +369,14 @@ function App() {
         options: {
           body: payload
         }
-      }).response;
+      });
       
-      const responseData = await response.body.json();
-      console.log("API response received:", responseData);
+      console.log("API response received:", response);
       
-      if (responseData.jobId) {
-        setJobId(responseData.jobId);
-        setJobStatus(responseData.status || 'PROCESSING');
-        setStatusMessage(responseData.message || 'Job submitted and processing started');
+      if (response.jobId) {
+        setJobId(response.jobId);
+        setJobStatus(response.status || 'PROCESSING');
+        setStatusMessage(response.message || 'Job submitted and processing started');
         setIsPolling(true);
         setIsSubmitting(false);
       } else {
