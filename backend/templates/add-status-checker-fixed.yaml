@@ -1,0 +1,289 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Add Status Checker Lambda to existing Resume Optimizer stack'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: Environment name
+  
+  ExistingBucketName:
+    Type: String
+    Description: Name of the existing S3 bucket
+  
+  ExistingApiGatewayId:
+    Type: String
+    Description: ID of the existing API Gateway
+  
+  ExistingAuthorizerId:
+    Type: String
+    Description: ID of the existing Cognito Authorizer
+
+Resources:
+  # Status Checker Role
+  StatusCheckerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'ResumeOptimizerStatusCheckerRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: StatusCheckerPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                Resource: !Sub 'arn:aws:s3:::${ExistingBucketName}/*'
+
+  # Status Checker Lambda
+  StatusCheckerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ResumeOptimizerStatusChecker-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt StatusCheckerRole.Arn
+      Timeout: 10
+      MemorySize: 128
+      Environment:
+        Variables:
+          STORAGE_BUCKET: !Ref ExistingBucketName
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+
+          s3 = boto3.client('s3')
+          bucket_name = os.environ.get('STORAGE_BUCKET')
+
+          # CORS headers for all responses
+          CORS_HEADERS = {
+              'Access-Control-Allow-Origin': 'https://main.d16ci5rhuvcide.amplifyapp.com',
+              'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+              'Access-Control-Allow-Methods': 'OPTIONS,GET',
+              'Access-Control-Allow-Credentials': 'true'
+          }
+
+          def lambda_handler(event, context):
+              print("Received event:", json.dumps(event))
+              
+              if event.get('httpMethod') == 'OPTIONS':
+                  return {
+                      'statusCode': 200,
+                      'headers': CORS_HEADERS,
+                      'body': json.dumps({})
+                  }
+              
+              try:
+                  query_params = event.get('queryStringParameters', {}) or {}
+                  job_id = query_params.get('jobId')
+                  
+                  if not job_id:
+                      return {
+                          'statusCode': 400,
+                          'headers': CORS_HEADERS,
+                          'body': json.dumps({'message': 'jobId is required'})
+                      }
+                  
+                  user_id = "anonymous"
+                  if 'requestContext' in event and 'authorizer' in event['requestContext']:
+                      if 'claims' in event['requestContext']['authorizer']:
+                          user_id = event['requestContext']['authorizer']['claims'].get('sub', 'anonymous')
+                  
+                  status_key = f"users/{user_id}/status/{job_id}/status.json"
+                  
+                  try:
+                      status_obj = s3.get_object(Bucket=bucket_name, Key=status_key)
+                      status_data = json.loads(status_obj['Body'].read().decode('utf-8'))
+                  except s3.exceptions.NoSuchKey:
+                      return {
+                          'statusCode': 404,
+                          'headers': CORS_HEADERS,
+                          'body': json.dumps({'message': 'Job not found'})
+                      }
+                  
+                  return {
+                      'statusCode': 200,
+                      'headers': CORS_HEADERS,
+                      'body': json.dumps(status_data)
+                  }
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'headers': CORS_HEADERS,
+                      'body': json.dumps({'message': f'Error: {str(e)}'})
+                  }
+
+  # Get the root resource ID of the existing API Gateway
+  ApiGatewayRootResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ExistingApiGatewayId
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      PathPart: status
+
+  # Custom resource to get the root resource ID
+  ApiGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub 'temp-api-${AWS::StackName}'
+      Description: Temporary API to get root resource structure
+
+  # Status API Resource
+  StatusResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ExistingApiGatewayId
+      ParentId: 
+        Fn::GetAtt:
+          - GetRootResourceId
+          - RootResourceId
+      PathPart: status
+
+  # Custom resource to get the root resource ID
+  GetRootResourceId:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt GetRootResourceIdFunction.Arn
+      ApiGatewayId: !Ref ExistingApiGatewayId
+
+  GetRootResourceIdFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.9
+      Handler: index.handler
+      Role: !GetAtt GetRootResourceIdRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import cfnresponse
+          
+          def handler(event, context):
+              try:
+                  if event['RequestType'] == 'Delete':
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      return
+                  
+                  api_gateway = boto3.client('apigateway')
+                  api_id = event['ResourceProperties']['ApiGatewayId']
+                  
+                  response = api_gateway.get_resources(restApiId=api_id)
+                  root_resource = next(r for r in response['items'] if r['path'] == '/')
+                  
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {
+                      'RootResourceId': root_resource['id']
+                  })
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {})
+
+  GetRootResourceIdRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ApiGatewayAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - apigateway:GET
+                Resource: '*'
+
+  # Status GET Method
+  StatusGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ExistingApiGatewayId
+      ResourceId: !Ref StatusResource
+      HttpMethod: GET
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ExistingAuthorizerId
+      RequestParameters:
+        method.request.querystring.jobId: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusCheckerLambda.Arn}/invocations'
+
+  # Status OPTIONS Method
+  StatusOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ExistingApiGatewayId
+      ResourceId: !Ref StatusResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'https://main.d16ci5rhuvcide.amplifyapp.com'"
+            ResponseTemplates:
+              application/json: '{}'
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # New Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: 
+      - StatusGetMethod
+      - StatusOptionsMethod
+    Properties:
+      RestApiId: !Ref ExistingApiGatewayId
+      StageName: !Ref Environment
+      Description: !Sub 'Deployment for status endpoint - ${AWS::StackName}'
+
+  # Lambda Permission
+  StatusCheckerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref StatusCheckerLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ExistingApiGatewayId}/*/GET/status'
+
+Outputs:
+  StatusCheckerLambdaArn:
+    Description: ARN of the Status Checker Lambda
+    Value: !GetAtt StatusCheckerLambda.Arn
+  
+  StatusEndpoint:
+    Description: Status endpoint URL
+    Value: !Sub 'https://${ExistingApiGatewayId}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/status'
