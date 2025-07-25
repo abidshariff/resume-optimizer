@@ -37,6 +37,13 @@ function AsyncResumeOptimizer() {
       // Convert file to base64
       const resumeBase64 = await fileToBase64(resumeFile);
 
+      console.log('Submitting job...');
+      console.log('Payload size:', new Blob([JSON.stringify({
+        resume: resumeBase64,
+        jobDescription: jobDescription,
+        outputFormat: outputFormat
+      })]).size);
+
       const response = await post({
         apiName: 'resumeOptimizer',
         path: '/optimize',
@@ -49,10 +56,43 @@ function AsyncResumeOptimizer() {
         }
       });
       
-      setJobId(response.jobId);
-      setStatus(response.status);
+      console.log('Submit response received:', response);
+      
+      // Parse the response more carefully
+      let parsedResponse = response;
+      
+      // Handle string responses
+      if (typeof response === 'string') {
+        try {
+          parsedResponse = JSON.parse(response);
+        } catch (e) {
+          console.error('Failed to parse string response:', e);
+          throw new Error(`Invalid response format: ${response}`);
+        }
+      }
+      
+      // Handle wrapped responses
+      if (parsedResponse && parsedResponse.response) {
+        parsedResponse = parsedResponse.response;
+      }
+      
+      // Validate response structure
+      if (!parsedResponse || typeof parsedResponse !== 'object') {
+        throw new Error(`Invalid response structure: ${JSON.stringify(response)}`);
+      }
+      
+      // Extract jobId
+      const extractedJobId = parsedResponse.jobId;
+      if (!extractedJobId) {
+        throw new Error(`No jobId in response: ${JSON.stringify(parsedResponse)}`);
+      }
+      
+      console.log('Job submitted successfully, jobId:', extractedJobId);
+      setJobId(extractedJobId);
+      setStatus(parsedResponse.status || 'PROCESSING');
       setPolling(true);
       setIsSubmitting(false);
+      
     } catch (err) {
       console.error('Error submitting job:', err);
       setError(`Error submitting job: ${err.message || 'Unknown error'}`);
@@ -66,8 +106,12 @@ function AsyncResumeOptimizer() {
     let intervalId;
     
     if (polling && jobId) {
+      console.log('Starting status polling for jobId:', jobId);
+      
       intervalId = setInterval(async () => {
         try {
+          console.log('Polling status for jobId:', jobId);
+          
           const statusResponse = await get({
             apiName: 'resumeOptimizer',
             path: '/status',
@@ -78,17 +122,51 @@ function AsyncResumeOptimizer() {
             }
           });
           
-          console.log('Status response:', statusResponse);
-          setStatus(statusResponse.status);
+          console.log('Status response received:', statusResponse);
           
-          // If job is complete, stop polling and set result
-          if (statusResponse.status === 'COMPLETED') {
-            setPolling(false);
-            setResult(statusResponse);
-          } else if (statusResponse.status === 'FAILED') {
-            setPolling(false);
-            setError(statusResponse.message || 'Job failed');
+          // Parse the response more carefully
+          let parsedResponse = statusResponse;
+          
+          // Handle string responses
+          if (typeof statusResponse === 'string') {
+            try {
+              parsedResponse = JSON.parse(statusResponse);
+            } catch (e) {
+              console.error('Failed to parse status string response:', e);
+              throw new Error(`Invalid status response format: ${statusResponse}`);
+            }
           }
+          
+          // Handle wrapped responses
+          if (parsedResponse && parsedResponse.response) {
+            parsedResponse = parsedResponse.response;
+          }
+          
+          // Validate response structure
+          if (!parsedResponse || typeof parsedResponse !== 'object') {
+            throw new Error(`Invalid status response structure: ${JSON.stringify(statusResponse)}`);
+          }
+          
+          // Extract status
+          const jobStatus = parsedResponse.status;
+          if (!jobStatus) {
+            throw new Error(`No status in response: ${JSON.stringify(parsedResponse)}`);
+          }
+          
+          console.log('Current job status:', jobStatus);
+          setStatus(jobStatus);
+          
+          // Handle completion
+          if (jobStatus === 'COMPLETED') {
+            console.log('Job completed successfully');
+            setPolling(false);
+            setResult(parsedResponse);
+          } else if (jobStatus === 'FAILED') {
+            console.log('Job failed:', parsedResponse.message);
+            setPolling(false);
+            setError(parsedResponse.message || 'Job failed');
+          }
+          
         } catch (err) {
           console.error('Error checking job status:', err);
           setError(`Error checking job status: ${err.message || 'Unknown error'}`);
@@ -99,7 +177,10 @@ function AsyncResumeOptimizer() {
     }
     
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      if (intervalId) {
+        console.log('Clearing status polling interval');
+        clearInterval(intervalId);
+      }
     };
   }, [polling, jobId]);
 

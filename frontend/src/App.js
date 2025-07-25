@@ -316,19 +316,55 @@ function App() {
             }
           });
           
-          console.log('Status response:', statusResponse);
-          setJobStatus(statusResponse.status);
-          setStatusMessage(statusResponse.message || '');
+          console.log('Raw status response:', statusResponse);
+          console.log('Status response type:', typeof statusResponse);
+          console.log('Status response keys:', statusResponse ? Object.keys(statusResponse) : 'null');
+          console.log('Status response JSON:', JSON.stringify(statusResponse, null, 2));
+          
+          // Handle different response formats more robustly
+          let actualResponse = statusResponse;
+          
+          // Handle string responses
+          if (typeof statusResponse === 'string') {
+            try {
+              actualResponse = JSON.parse(statusResponse);
+              console.log("Parsed status string response:", actualResponse);
+            } catch (e) {
+              console.error("Failed to parse status string response:", e);
+              throw new Error(`Invalid status response format: ${statusResponse}`);
+            }
+          }
+          
+          // Handle wrapped responses
+          if (actualResponse && actualResponse.response && typeof actualResponse.response === 'object') {
+            actualResponse = actualResponse.response;
+            console.log("Unwrapped status response:", actualResponse);
+          }
+          
+          // Validate response structure
+          if (!actualResponse || typeof actualResponse !== 'object') {
+            throw new Error(`Invalid status response structure: ${JSON.stringify(statusResponse)}`);
+          }
+          
+          // Extract status
+          const currentStatus = actualResponse.status;
+          if (!currentStatus) {
+            throw new Error(`No status in response: ${JSON.stringify(actualResponse)}`);
+          }
+          
+          console.log('Current job status:', currentStatus);
+          setJobStatus(currentStatus);
+          setStatusMessage(actualResponse.message || '');
           
           // If job is complete, stop polling and set result
-          if (statusResponse.status === 'COMPLETED') {
+          if (currentStatus === 'COMPLETED') {
             setIsPolling(false);
-            setResult(statusResponse);
+            setResult(actualResponse);
             setActiveStep(2);
-          } else if (statusResponse.status === 'FAILED') {
+          } else if (currentStatus === 'FAILED') {
             setIsPolling(false);
-            setError(statusResponse.message || 'Job failed');
-            setSnackbarMessage(`Error: ${statusResponse.message || 'Job failed'}`);
+            setError(actualResponse.message || 'Job failed');
+            setSnackbarMessage(`Error: ${actualResponse.message || 'Job failed'}`);
             setSnackbarOpen(true);
           }
         } catch (err) {
@@ -439,14 +475,31 @@ function App() {
         console.log("API response received:", responseData);
         console.log("Response type:", typeof responseData);
         console.log("Response keys:", responseData ? Object.keys(responseData) : 'null');
+        console.log("Raw response JSON:", JSON.stringify(responseData, null, 2));
         
-        // Handle different response formats
+        // Handle different response formats more robustly
         let actualResponse = responseData;
         
+        // Handle string responses
+        if (typeof responseData === 'string') {
+          try {
+            actualResponse = JSON.parse(responseData);
+            console.log("Parsed string response:", actualResponse);
+          } catch (e) {
+            console.error("Failed to parse string response:", e);
+            throw new Error(`Invalid response format: ${responseData}`);
+          }
+        }
+        
         // If the response is wrapped in a 'response' object, unwrap it
-        if (responseData && responseData.response && typeof responseData.response === 'object') {
-          actualResponse = responseData.response;
+        if (actualResponse && actualResponse.response && typeof actualResponse.response === 'object') {
+          actualResponse = actualResponse.response;
           console.log("Unwrapped response:", actualResponse);
+        }
+        
+        // Validate response structure
+        if (!actualResponse || typeof actualResponse !== 'object') {
+          throw new Error(`Invalid response structure: ${JSON.stringify(responseData)}`);
         }
         
         // Check if we have a jobId in the response
