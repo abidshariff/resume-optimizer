@@ -31,10 +31,15 @@ def lambda_handler(event, context):
             'body': json.dumps({})
         }
     
-    # Handle GET request for status checking
+    # Handle GET request - check if it's for download or status
     if event.get('httpMethod') == 'GET':
-        print("Handling GET request for status checking")
-        return handle_status_request(event)
+        path = event.get('path', '')
+        if '/download' in path:
+            print("Handling GET request for file download")
+            return handle_download_request(event)
+        else:
+            print("Handling GET request for status checking")
+            return handle_status_request(event)
     
     # Handle POST request for job submission
     if event.get('httpMethod') == 'POST':
@@ -49,6 +54,110 @@ def lambda_handler(event, context):
             'message': 'Method not allowed'
         })
     }
+
+def handle_download_request(event):
+    """Handle GET requests for file download"""
+    try:
+        # Get user ID from Cognito authorizer
+        user_id = "anonymous"
+        if 'requestContext' in event and 'authorizer' in event['requestContext']:
+            if 'claims' in event['requestContext']['authorizer']:
+                user_id = event['requestContext']['authorizer']['claims'].get('sub', 'anonymous')
+        
+        # Get job ID from query parameters
+        job_id = None
+        if 'queryStringParameters' in event and event['queryStringParameters']:
+            job_id = event['queryStringParameters'].get('jobId')
+        
+        if not job_id:
+            return {
+                'statusCode': 400,
+                'headers': CORS_HEADERS,
+                'body': json.dumps({
+                    'message': 'Job ID is required'
+                })
+            }
+        
+        # First check if the job is completed
+        status_key = f"users/{user_id}/status/{job_id}/status.json"
+        
+        try:
+            response = s3.get_object(Bucket=bucket_name, Key=status_key)
+            status_data = json.loads(response['Body'].read().decode('utf-8'))
+            
+            if status_data.get('status') != 'COMPLETED':
+                return {
+                    'statusCode': 400,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'message': 'Job is not completed yet'
+                    })
+                }
+                
+        except Exception as e:
+            return {
+                'statusCode': 404,
+                'headers': CORS_HEADERS,
+                'body': json.dumps({
+                    'message': 'Job not found'
+                })
+            }
+        
+        # Get the optimized resume file
+        optimized_key = f"users/{user_id}/optimized/{job_id}/resume.docx"
+        
+        try:
+            # Get the file from S3
+            file_response = s3.get_object(Bucket=bucket_name, Key=optimized_key)
+            file_content = file_response['Body'].read()
+            
+            # Encode the file content as base64 for API Gateway
+            file_base64 = base64.b64encode(file_content).decode('utf-8')
+            
+            # Get content type from status data or default
+            content_type = status_data.get('contentType', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            download_filename = status_data.get('downloadFilename', f'optimized_resume_{job_id[:8]}.docx')
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    **CORS_HEADERS,
+                    'Content-Type': content_type,
+                    'Content-Disposition': f'attachment; filename="{download_filename}"'
+                },
+                'body': file_base64,
+                'isBase64Encoded': True
+            }
+            
+        except Exception as e:
+            error_str = str(e)
+            if 'NoSuchKey' in error_str or 'Not Found' in error_str or '404' in error_str:
+                return {
+                    'statusCode': 404,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'message': 'Optimized resume file not found'
+                    })
+                }
+            else:
+                print(f"Error downloading file: {error_str}")
+                return {
+                    'statusCode': 500,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'message': 'Error downloading file'
+                    })
+                }
+                
+    except Exception as e:
+        print(f"Error in download handler: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({
+                'message': 'Internal server error'
+            })
+        }
 
 def handle_status_request(event):
     """Handle GET requests for job status"""

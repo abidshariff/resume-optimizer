@@ -562,29 +562,36 @@ function App() {
       const { tokens } = await fetchAuthSession();
       const idToken = tokens.idToken.toString();
       
-      // Fetch the optimized resume content
+      console.log('Downloading from new API Gateway endpoint:', result.optimizedResumeUrl);
+      
+      // Fetch the optimized resume content from the new API Gateway download endpoint
       const resumeResponse = await fetch(result.optimizedResumeUrl, {
+        method: 'GET',
         headers: {
-          Authorization: idToken
+          'Authorization': idToken,
+          'Content-Type': 'application/json'
         }
       });
+      
       if (!resumeResponse.ok) {
         throw new Error(`Failed to fetch optimized resume: ${resumeResponse.status} ${resumeResponse.statusText}`);
       }
       
-      const contentType = result.contentType || 'text/plain';
-      const fileExtension = result.fileType || 'txt';
-      const filename = result.downloadFilename || `optimized_resume.${fileExtension}`;
+      // Get filename from Content-Disposition header or use fallback
+      const contentDisposition = resumeResponse.headers.get('Content-Disposition');
+      let filename = result.downloadFilename || `optimized_resume.${result.fileType || 'docx'}`;
       
-      let blob;
-      if (contentType.includes('application/')) {
-        // For binary files like Word documents
-        blob = await resumeResponse.blob();
-      } else {
-        // For text files
-        const resumeText = await resumeResponse.text();
-        blob = new Blob([resumeText], { type: contentType });
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
       }
+      
+      console.log('Download filename:', filename);
+      
+      // Create blob from response (API Gateway returns the file directly)
+      const blob = await resumeResponse.blob();
       
       // Create download link
       const url = URL.createObjectURL(blob);
