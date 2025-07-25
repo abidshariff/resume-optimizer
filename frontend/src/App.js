@@ -303,7 +303,7 @@ function App() {
           const { tokens } = await fetchAuthSession();
           const idToken = tokens.idToken.toString();
           
-          const statusResponse = await get({
+          const operation = get({
             apiName: 'resumeOptimizer',
             path: '/status',
             options: {
@@ -315,6 +315,9 @@ function App() {
               }
             }
           });
+          
+          const { response } = await operation.response;
+          const statusResponse = await response.body.json();
           
           console.log('Status response:', statusResponse);
           setJobStatus(statusResponse.status);
@@ -413,7 +416,7 @@ function App() {
       
       try {
         // Submit the job and get job ID immediately
-        const response = await post({
+        const operation = post({
           apiName: 'resumeOptimizer',
           path: '/optimize',
           options: {
@@ -424,16 +427,19 @@ function App() {
           }
         });
         
-        console.log("API response received:", response);
+        const { response } = await operation.response;
+        const responseData = await response.body.json();
         
-        if (response && response.jobId) {
-          setJobId(response.jobId);
-          setJobStatus(response.status || 'PROCESSING');
-          setStatusMessage(response.message || 'Job submitted and processing started');
+        console.log("API response received:", responseData);
+        
+        if (responseData && responseData.jobId) {
+          setJobId(responseData.jobId);
+          setJobStatus(responseData.status || 'PROCESSING');
+          setStatusMessage(responseData.message || 'Job submitted and processing started');
           setIsPolling(true);
           setIsSubmitting(false);
         } else {
-          console.error("Invalid API response:", response);
+          console.error("Invalid API response:", responseData);
           throw new Error('No job ID returned from the API');
         }
       } catch (error) {
