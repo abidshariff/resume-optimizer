@@ -1,0 +1,46 @@
+Senior Full Stack Developer
+
+Company: Tech Innovations Inc.
+Location: Remote (US-based)
+
+About the Role:
+We are seeking an experienced Senior Full Stack Developer to join our growing team. The ideal candidate will have strong experience with React, Node.js, and AWS cloud services. You will be responsible for developing and maintaining our web applications, collaborating with cross-functional teams, and mentoring junior developers.
+
+Key Responsibilities:
+- Design, develop, and maintain web applications using React and Node.js
+- Implement serverless architectures using AWS Lambda, API Gateway, and DynamoDB
+- Write clean, maintainable, and efficient code
+- Collaborate with UX/UI designers to implement responsive designs
+- Participate in code reviews and provide constructive feedback
+- Mentor junior developers and help them grow their skills
+- Troubleshoot and debug applications
+- Stay up-to-date with emerging trends and technologies
+
+Requirements:
+- 5+ years of experience in full-stack development
+- Strong proficiency in JavaScript/TypeScript, React, and Node.js
+- Experience with AWS services (Lambda, S3, DynamoDB, API Gateway)
+- Knowledge of RESTful API design and implementation
+- Familiarity with CI/CD pipelines and DevOps practices
+- Experience with version control systems (Git)
+- Bachelor's degree in Computer Science or related field (or equivalent experience)
+- Strong problem-solving skills and attention to detail
+- Excellent communication and teamwork skills
+
+Nice to Have:
+- Experience with GraphQL
+- Knowledge of containerization technologies (Docker, Kubernetes)
+- Familiarity with Agile methodologies
+- AWS certifications
+- Experience with microservices architecture
+
+Benefits:
+- Competitive salary and benefits package
+- Remote-first work environment
+- Flexible working hours
+- Professional development opportunities
+- Health, dental, and vision insurance
+- 401(k) matching
+- Paid time off and holidays
+
+Tech Innovations Inc. is an equal opportunity employer. We celebrate diversity and are committed to creating an inclusive environment for all employees.

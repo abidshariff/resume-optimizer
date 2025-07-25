@@ -562,10 +562,36 @@ function App() {
     setJobDescription('');
   };
 
+  // Custom form fields for the Authenticator
+  const formFields = {
+    signIn: {
+      username: {
+        placeholder: 'Enter your username or email',
+        label: 'Username or Email *',
+        isRequired: true,
+      },
+    },
+    signUp: {
+      username: {
+        placeholder: 'Enter your username',
+        label: 'Username *',
+        isRequired: true,
+      },
+      email: {
+        placeholder: 'Enter your email',
+        label: 'Email *',
+        isRequired: true,
+      },
+    },
+  };
+
   // Wrap the app with Authenticator for user authentication
   return (
     <ThemeProvider theme={theme}>
-      <Authenticator loginMechanisms={['email', 'username']}>
+      <Authenticator 
+        loginMechanisms={['username']}
+        formFields={formFields}
+      >
         {({ signOut, user }) => (
           <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             <AppBar position="static" color="primary" elevation={0}>
