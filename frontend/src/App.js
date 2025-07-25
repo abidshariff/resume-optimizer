@@ -297,14 +297,6 @@ function App() {
 
   const [milestones, setMilestones] = useState(processingMilestones);
 
-  // Scroll to top when processing starts
-  useEffect(() => {
-    if (isProcessing && !result) {
-      // Smooth scroll to top when processing screen appears
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [isProcessing, result]);
-
   // Enhanced status messages based on actual backend status
   const getEnhancedStatusMessage = (status, message) => {
     switch (status) {
@@ -387,6 +379,14 @@ function App() {
   const isProcessing = isSubmitting || isPolling;
   const optimizedResume = result ? 'Resume ready for download' : null;
   const optimizedResumeType = result?.contentType || 'text/plain';
+
+  // Scroll to top when processing starts
+  useEffect(() => {
+    if (isProcessing && !result) {
+      // Smooth scroll to top when processing screen appears
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isProcessing, result]);
 
   const steps = ['Upload Resume', 'Enter Job Description', 'Get Optimized Resume'];
 
