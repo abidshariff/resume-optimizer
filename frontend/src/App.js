@@ -297,6 +297,14 @@ function App() {
 
   const [milestones, setMilestones] = useState(processingMilestones);
 
+  // Scroll to top when processing starts
+  useEffect(() => {
+    if (isProcessing && !result) {
+      // Smooth scroll to top when processing screen appears
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isProcessing, result]);
+
   // Enhanced status messages based on actual backend status
   const getEnhancedStatusMessage = (status, message) => {
     switch (status) {
@@ -965,14 +973,15 @@ function App() {
                         <Button 
                           variant="contained" 
                           color="primary"
-                          endIcon={<AutoAwesomeIcon />}
+                          endIcon={isProcessing ? null : <AutoAwesomeIcon />}
                           disabled={!jobDescription || isProcessing}
                           onClick={handleOptimize}
+                          size="large"
                         >
                           {isProcessing ? (
                             <>
                               <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
-                              Optimizing...
+                              Processing... (See above)
                             </>
                           ) : 'Optimize Resume'}
                         </Button>
@@ -986,19 +995,31 @@ function App() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
+                      style={{ 
+                        minHeight: '70vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}
                     >
-                      <Box sx={{ textAlign: 'center', mb: 4 }}>
-                        <Typography variant="h5" gutterBottom>
+                      <Box sx={{ 
+                        textAlign: 'center', 
+                        mb: 4,
+                        width: '100%',
+                        maxWidth: 600
+                      }}>
+                        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
                           🤖 Optimizing Your Resume
                         </Typography>
-                        <Typography variant="body1" color="textSecondary" paragraph>
+                        <Typography variant="h6" color="textSecondary" paragraph>
                           Our AI is analyzing your resume and tailoring it to the job description.
                         </Typography>
                       </Box>
 
                       {/* Progress Milestones */}
-                      <Box sx={{ mb: 4 }}>
-                        <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+                      <Box sx={{ mb: 4, width: '100%', maxWidth: 500 }}>
+                        <Typography variant="h6" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
                           Progress
                         </Typography>
                         {milestones.map((milestone, index) => (
@@ -1008,33 +1029,35 @@ function App() {
                               display: 'flex', 
                               alignItems: 'center', 
                               mb: 2,
-                              opacity: milestone.completed ? 1 : 0.6
+                              opacity: milestone.completed ? 1 : 0.6,
+                              justifyContent: 'flex-start'
                             }}
                           >
                             <Box
                               sx={{
-                                width: 32,
-                                height: 32,
+                                width: 36,
+                                height: 36,
                                 borderRadius: '50%',
                                 backgroundColor: milestone.completed ? 'success.main' : 'grey.300',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                mr: 2,
+                                mr: 3,
                                 transition: 'all 0.3s ease'
                               }}
                             >
                               {milestone.completed ? (
-                                <CheckCircleIcon sx={{ color: 'white', fontSize: 20 }} />
+                                <CheckCircleIcon sx={{ color: 'white', fontSize: 22 }} />
                               ) : (
-                                <Typography sx={{ fontSize: 16 }}>{milestone.icon}</Typography>
+                                <Typography sx={{ fontSize: 18 }}>{milestone.icon}</Typography>
                               )}
                             </Box>
                             <Typography 
                               variant="body1" 
                               sx={{ 
                                 fontWeight: milestone.completed ? 600 : 400,
-                                color: milestone.completed ? 'text.primary' : 'text.secondary'
+                                color: milestone.completed ? 'text.primary' : 'text.secondary',
+                                fontSize: '1.1rem'
                               }}
                             >
                               {milestone.label}
@@ -1048,15 +1071,17 @@ function App() {
                       <Paper 
                         variant="outlined" 
                         sx={{ 
-                          p: 3, 
+                          p: 4, 
                           mb: 4,
                           bgcolor: 'primary.50',
-                          borderColor: 'primary.200'
+                          borderColor: 'primary.200',
+                          width: '100%',
+                          maxWidth: 500
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <CircularProgress size={24} sx={{ mr: 2 }} />
-                          <Typography variant="body1" fontWeight={600}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
+                          <CircularProgress size={28} sx={{ mr: 2 }} />
+                          <Typography variant="body1" fontWeight={600} sx={{ fontSize: '1.1rem' }}>
                             {getEnhancedStatusMessage(jobStatus, statusMessage)}
                           </Typography>
                         </Box>
@@ -1066,15 +1091,15 @@ function App() {
                           variant="determinate" 
                           value={(milestones.filter(m => m.completed).length / milestones.length) * 100}
                           sx={{ 
-                            height: 8, 
-                            borderRadius: 4,
+                            height: 10, 
+                            borderRadius: 5,
                             backgroundColor: 'grey.200',
                             '& .MuiLinearProgress-bar': {
-                              borderRadius: 4
+                              borderRadius: 5
                             }
                           }}
                         />
-                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                        <Typography variant="body1" color="textSecondary" sx={{ mt: 2, textAlign: 'center', fontWeight: 500 }}>
                           {Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100)}% Complete
                         </Typography>
                       </Paper>
@@ -1083,10 +1108,13 @@ function App() {
                       <Paper 
                         variant="outlined" 
                         sx={{ 
-                          p: 3,
+                          p: 4,
                           bgcolor: 'info.50',
                           borderColor: 'info.200',
-                          minHeight: 120
+                          minHeight: 140,
+                          width: '100%',
+                          maxWidth: 500,
+                          mb: 3
                         }}
                       >
                         <motion.div
@@ -1097,14 +1125,14 @@ function App() {
                           transition={{ duration: 0.5 }}
                         >
                           <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                            <Typography sx={{ fontSize: 32, mr: 2 }}>
+                            <Typography sx={{ fontSize: 36, mr: 3 }}>
                               {educationalTips[currentTip].icon}
                             </Typography>
                             <Box>
-                              <Typography variant="h6" gutterBottom>
+                              <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem' }}>
                                 💡 {educationalTips[currentTip].title}
                               </Typography>
-                              <Typography variant="body2" color="textSecondary">
+                              <Typography variant="body1" color="textSecondary" sx={{ fontSize: '1rem', lineHeight: 1.6 }}>
                                 {educationalTips[currentTip].text}
                               </Typography>
                             </Box>
@@ -1112,13 +1140,13 @@ function App() {
                         </motion.div>
                         
                         {/* Tip indicators */}
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                           {educationalTips.map((_, index) => (
                             <Box
                               key={index}
                               sx={{
-                                width: 8,
-                                height: 8,
+                                width: 10,
+                                height: 10,
                                 borderRadius: '50%',
                                 backgroundColor: index === currentTip ? 'info.main' : 'grey.300',
                                 mx: 0.5,
@@ -1130,8 +1158,8 @@ function App() {
                       </Paper>
 
                       {/* Estimated time */}
-                      <Box sx={{ textAlign: 'center', mt: 3 }}>
-                        <Typography variant="body2" color="textSecondary">
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="h6" color="textSecondary" sx={{ fontWeight: 500 }}>
                           ⏱️ Estimated time remaining: 30-45 seconds
                         </Typography>
                       </Box>
