@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { get, post } from '@aws-amplify/api';
+import { get, post } from 'aws-amplify/api';
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react/styles.css';
@@ -303,7 +303,7 @@ function App() {
           const { tokens } = await fetchAuthSession();
           const idToken = tokens.idToken.toString();
           
-          const statusResponseObj = await get({
+          const statusResponse = await get({
             apiName: 'resumeOptimizer',
             path: '/status',
             options: {
@@ -315,9 +315,6 @@ function App() {
               }
             }
           });
-          
-          // In Amplify v6, we need to await the response property
-          const statusResponse = await statusResponseObj.response;
           
           console.log('Status response:', statusResponse);
           setJobStatus(statusResponse.status);
@@ -416,7 +413,7 @@ function App() {
       
       try {
         // Submit the job and get job ID immediately
-        const responseObj = await post({
+        const response = await post({
           apiName: 'resumeOptimizer',
           path: '/optimize',
           options: {
@@ -426,9 +423,6 @@ function App() {
             }
           }
         });
-        
-        // In Amplify v6, we need to await the response property
-        const response = await responseObj.response;
         
         console.log("API response received:", response);
         
