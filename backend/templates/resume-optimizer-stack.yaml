@@ -127,6 +127,10 @@ Resources:
                 Resource: !Sub '${ResumeStorageBucket.Arn}/*'
               - Effect: Allow
                 Action:
+                  - 's3:ListBucket'
+                Resource: !Sub '${ResumeStorageBucket.Arn}'
+              - Effect: Allow
+                Action:
                   - 'lambda:InvokeFunction'
                 Resource: '*'  # Will be updated after AIHandlerLambda is created
 

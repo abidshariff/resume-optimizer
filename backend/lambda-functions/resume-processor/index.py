@@ -86,14 +86,27 @@ def handle_status_request(event):
                 'body': json.dumps(status_data)
             }
             
-        except s3.exceptions.NoSuchKey:
-            return {
-                'statusCode': 404,
-                'headers': CORS_HEADERS,
-                'body': json.dumps({
-                    'message': 'Job not found'
-                })
-            }
+        except Exception as e:
+            error_str = str(e)
+            # Handle specific S3 exceptions
+            if 'NoSuchKey' in error_str or 'Not Found' in error_str or '404' in error_str:
+                return {
+                    'statusCode': 404,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'message': 'Job not found'
+                    })
+                }
+            else:
+                # Log the actual error for debugging but return generic message
+                print(f"S3 error for status check: {error_str}")
+                return {
+                    'statusCode': 500,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'message': 'Error retrieving job status'
+                    })
+                }
             
     except Exception as e:
         print(f"Error checking job status: {str(e)}")
