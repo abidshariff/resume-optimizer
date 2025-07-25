@@ -938,7 +938,7 @@ function App() {
                     </motion.div>
                   )}
                   
-                  {activeStep === 1 && (
+                  {activeStep === 1 && !isProcessing && (
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -973,34 +973,29 @@ function App() {
                         <Button 
                           variant="contained" 
                           color="primary"
-                          endIcon={isProcessing ? null : <AutoAwesomeIcon />}
-                          disabled={!jobDescription || isProcessing}
+                          endIcon={<AutoAwesomeIcon />}
+                          disabled={!jobDescription}
                           onClick={handleOptimize}
                           size="large"
                         >
-                          {isProcessing ? (
-                            <>
-                              <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
-                              Processing... (See above)
-                            </>
-                          ) : 'Optimize Resume'}
+                          Optimize Resume
                         </Button>
                       </Box>
                     </motion.div>
                   )}
                   
-                  {/* Processing Screen - Show when job is being processed */}
-                  {isProcessing && !result && (
+                  {/* Processing Screen - Replace job description step when processing */}
+                  {activeStep === 1 && isProcessing && !result && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
                       style={{ 
-                        minHeight: '70vh',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        minHeight: '600px'
                       }}
                     >
                       <Box sx={{ 
@@ -1162,6 +1157,24 @@ function App() {
                         <Typography variant="h6" color="textSecondary" sx={{ fontWeight: 500 }}>
                           ⏱️ Estimated time remaining: 30-45 seconds
                         </Typography>
+                      </Box>
+
+                      {/* Back button for if user wants to cancel */}
+                      <Box sx={{ mt: 4 }}>
+                        <Button 
+                          variant="outlined" 
+                          onClick={() => {
+                            // Reset processing state and go back
+                            setIsPolling(false);
+                            setIsSubmitting(false);
+                            setJobStatus(null);
+                            setStatusMessage('');
+                            resetProcessingState();
+                          }}
+                          disabled={isSubmitting}
+                        >
+                          Cancel Optimization
+                        </Button>
                       </Box>
                     </motion.div>
                   )}
