@@ -414,6 +414,7 @@ function App() {
       try {
         // Submit the job and get job ID immediately
         console.log("Submitting job to API...");
+        console.log("Payload being sent:", payload);
         
         const responseData = await post({
           apiName: 'resumeOptimizer',
@@ -427,16 +428,20 @@ function App() {
         });
         
         console.log("API response received:", responseData);
+        console.log("Response type:", typeof responseData);
+        console.log("Response keys:", responseData ? Object.keys(responseData) : 'null');
         
         if (responseData && responseData.jobId) {
+          console.log("Job ID found:", responseData.jobId);
           setJobId(responseData.jobId);
           setJobStatus(responseData.status || 'PROCESSING');
           setStatusMessage(responseData.message || 'Job submitted and processing started');
           setIsPolling(true);
           setIsSubmitting(false);
         } else {
-          console.error("Invalid API response:", responseData);
-          throw new Error('No job ID returned from the API');
+          console.error("Invalid API response - no jobId found");
+          console.error("Full response:", JSON.stringify(responseData, null, 2));
+          throw new Error(`No job ID returned from the API. Response: ${JSON.stringify(responseData)}`);
         }
       } catch (error) {
         console.error('Error submitting job:', error);
