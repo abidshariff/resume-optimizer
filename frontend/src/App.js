@@ -1022,113 +1022,87 @@ function App() {
                         </Typography>
                       </Box>
 
-                      {/* Progress Milestones */}
-                      <Box sx={{ mb: 4, width: '100%', maxWidth: 600 }}>
-                        <Typography variant="h6" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
-                          Progress
-                        </Typography>
-                        {milestones.map((milestone, index) => (
-                          <Box 
-                            key={milestone.id}
-                            sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              mb: 2,
-                              opacity: milestone.completed ? 1 : 0.6,
-                              justifyContent: 'flex-start'
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                width: 36,
-                                height: 36,
-                                borderRadius: '50%',
-                                backgroundColor: milestone.completed ? 'success.main' : 'grey.300',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                mr: 3,
-                                transition: 'all 0.3s ease'
-                              }}
-                            >
-                              {milestone.completed ? (
-                                <CheckCircleIcon sx={{ color: 'white', fontSize: 22 }} />
-                              ) : (
-                                <Typography sx={{ fontSize: 18 }}>{milestone.icon}</Typography>
-                              )}
-                            </Box>
-                            <Typography 
-                              variant="body1" 
+                      {/* Progress Milestones and Progress Bar Side by Side */}
+                      <Box sx={{ 
+                        mb: 4, 
+                        width: '100%', 
+                        maxWidth: 900,
+                        display: 'flex',
+                        gap: 6,
+                        '@media (max-width: 768px)': {
+                          flexDirection: 'column',
+                          gap: 4
+                        }
+                      }}>
+                        {/* Left Side - Progress Milestones */}
+                        <Box sx={{ flex: '1 1 50%', minWidth: 0 }}>
+                          <Typography variant="h6" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
+                            AI Processing Steps
+                          </Typography>
+                          {milestones.map((milestone, index) => (
+                            <Box 
+                              key={milestone.id}
                               sx={{ 
-                                fontWeight: milestone.completed ? 600 : 400,
-                                color: milestone.completed ? 'text.primary' : 'text.secondary',
-                                fontSize: '1.1rem'
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                mb: 2,
+                                opacity: milestone.completed ? 1 : 0.6,
+                                justifyContent: 'flex-start'
                               }}
                             >
-                              {milestone.label}
-                              {milestone.completed && ' ✅'}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Box>
-
-                      {/* Status and Progress Bar Side by Side */}
-                      <Paper 
-                        variant="outlined" 
-                        sx={{ 
-                          p: 4, 
-                          mb: 4,
-                          bgcolor: 'primary.50',
-                          borderColor: 'primary.200',
-                          width: '100%',
-                          maxWidth: 700
-                        }}
-                      >
-                        {/* Single Container with Status and Progress Side by Side */}
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 4,
-                          '@media (max-width: 768px)': {
-                            flexDirection: 'column',
-                            gap: 3
-                          }
-                        }}>
-                          {/* Status Message - Left Side */}
-                          <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center',
-                            flex: '1 1 auto',
-                            minWidth: 0
-                          }}>
-                            <CircularProgress size={32} sx={{ mr: 2, flexShrink: 0 }} />
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography variant="body1" fontWeight={600} sx={{ 
-                                fontSize: '1rem', 
-                                lineHeight: 1.3,
-                                wordBreak: 'break-word'
-                              }}>
-                                {getEnhancedStatusMessage(jobStatus, statusMessage)}
+                              <Box
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: '50%',
+                                  backgroundColor: milestone.completed ? 'success.main' : 'grey.300',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  mr: 2,
+                                  transition: 'all 0.3s ease',
+                                  flexShrink: 0
+                                }}
+                              >
+                                {milestone.completed ? (
+                                  <CheckCircleIcon sx={{ color: 'white', fontSize: 18 }} />
+                                ) : (
+                                  <Typography sx={{ fontSize: 16 }}>{milestone.icon}</Typography>
+                                )}
+                              </Box>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  fontWeight: milestone.completed ? 600 : 400,
+                                  color: milestone.completed ? 'text.primary' : 'text.secondary',
+                                  fontSize: '0.95rem',
+                                  lineHeight: 1.3
+                                }}
+                              >
+                                {milestone.label}
+                                {milestone.completed && ' ✅'}
                               </Typography>
                             </Box>
-                          </Box>
-                          
-                          {/* Progress Bar - Right Side */}
-                          <Box sx={{ 
-                            flex: '1 1 auto',
-                            minWidth: 200,
-                            '@media (max-width: 768px)': {
-                              width: '100%',
-                              minWidth: 'auto'
-                            }
+                          ))}
+                        </Box>
+
+                        {/* Right Side - Overall Progress */}
+                        <Box sx={{ 
+                          flex: '1 1 50%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          minWidth: 0
+                        }}>
+                          <Typography variant="h6" gutterBottom sx={{ 
+                            textAlign: 'center', 
+                            mb: 3,
+                            fontSize: '1.1rem'
                           }}>
-                            <Typography variant="h6" gutterBottom sx={{ 
-                              textAlign: 'center', 
-                              mb: 2,
-                              fontSize: '1.1rem'
-                            }}>
-                              Overall Progress
-                            </Typography>
+                            Overall Progress
+                          </Typography>
+                          <Box sx={{ width: '100%', maxWidth: 250 }}>
                             <LinearProgress 
                               variant="determinate" 
                               value={(milestones.filter(m => m.completed).length / milestones.length) * 100}
@@ -1142,18 +1116,55 @@ function App() {
                                 }
                               }}
                             />
-                            <Typography variant="h5" color="primary" sx={{ 
+                            <Typography variant="h4" color="primary" sx={{ 
                               mt: 2, 
                               textAlign: 'center', 
                               fontWeight: 700,
-                              fontSize: '1.5rem'
+                              fontSize: '2rem'
                             }}>
-                              {Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100)}% Complete
+                              {Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100)}%
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary" sx={{ 
+                              textAlign: 'center',
+                              mt: 1
+                            }}>
+                              Complete
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+
+                      {/* Current Status Message */}
+                      <Paper 
+                        variant="outlined" 
+                        sx={{ 
+                          p: 4, 
+                          mb: 4,
+                          bgcolor: 'primary.50',
+                          borderColor: 'primary.200',
+                          width: '100%',
+                          maxWidth: 700
+                        }}
+                      >
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center'
+                        }}>
+                          <CircularProgress size={32} sx={{ mr: 2, flexShrink: 0 }} />
+                          <Box>
+                            <Typography variant="h6" fontWeight={600} sx={{ 
+                              fontSize: '1.1rem', 
+                              lineHeight: 1.3,
+                              color: 'primary.main'
+                            }}>
+                              {getEnhancedStatusMessage(jobStatus, statusMessage)}
                             </Typography>
                           </Box>
                         </Box>
 
-                        {/* Estimated time - Full width below */}
+                        {/* Estimated time */}
                         <Box sx={{ 
                           textAlign: 'center', 
                           mt: 3, 
