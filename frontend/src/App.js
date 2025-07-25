@@ -1002,7 +1002,7 @@ function App() {
                         textAlign: 'center', 
                         mb: 4,
                         width: '100%',
-                        maxWidth: 600
+                        maxWidth: 700
                       }}>
                         <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
                           🤖 Optimizing Your Resume
@@ -1013,7 +1013,7 @@ function App() {
                       </Box>
 
                       {/* Progress Milestones */}
-                      <Box sx={{ mb: 4, width: '100%', maxWidth: 500 }}>
+                      <Box sx={{ mb: 4, width: '100%', maxWidth: 600 }}>
                         <Typography variant="h6" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
                           Progress
                         </Typography>
@@ -1062,7 +1062,7 @@ function App() {
                         ))}
                       </Box>
 
-                      {/* Enhanced Status Message */}
+                      {/* Status and Progress Bar Side by Side */}
                       <Paper 
                         variant="outlined" 
                         sx={{ 
@@ -1071,35 +1071,54 @@ function App() {
                           bgcolor: 'primary.50',
                           borderColor: 'primary.200',
                           width: '100%',
-                          maxWidth: 500
+                          maxWidth: 700
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
-                          <CircularProgress size={28} sx={{ mr: 2 }} />
-                          <Typography variant="body1" fontWeight={600} sx={{ fontSize: '1.1rem' }}>
-                            {getEnhancedStatusMessage(jobStatus, statusMessage)}
+                        {/* Status Message and Progress Bar in Grid Layout */}
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 4, alignItems: 'center' }}>
+                          {/* Status Message - Left Side */}
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <CircularProgress size={32} sx={{ mr: 2 }} />
+                            <Box>
+                              <Typography variant="body1" fontWeight={600} sx={{ fontSize: '1rem', lineHeight: 1.3 }}>
+                                {getEnhancedStatusMessage(jobStatus, statusMessage)}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          
+                          {/* Progress Bar - Right Side (Emphasized) */}
+                          <Box>
+                            <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
+                              Overall Progress
+                            </Typography>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={(milestones.filter(m => m.completed).length / milestones.length) * 100}
+                              sx={{ 
+                                height: 16, 
+                                borderRadius: 8,
+                                backgroundColor: 'grey.200',
+                                '& .MuiLinearProgress-bar': {
+                                  borderRadius: 8,
+                                  background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
+                                }
+                              }}
+                            />
+                            <Typography variant="h5" color="primary" sx={{ mt: 2, textAlign: 'center', fontWeight: 700 }}>
+                              {Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100)}% Complete
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Estimated time */}
+                        <Box sx={{ textAlign: 'center', mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'primary.200' }}>
+                          <Typography variant="body1" color="textSecondary" sx={{ fontWeight: 500 }}>
+                            ⏱️ Estimated time remaining: 30-45 seconds
                           </Typography>
                         </Box>
-                        
-                        {/* Progress Bar */}
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={(milestones.filter(m => m.completed).length / milestones.length) * 100}
-                          sx={{ 
-                            height: 10, 
-                            borderRadius: 5,
-                            backgroundColor: 'grey.200',
-                            '& .MuiLinearProgress-bar': {
-                              borderRadius: 5
-                            }
-                          }}
-                        />
-                        <Typography variant="body1" color="textSecondary" sx={{ mt: 2, textAlign: 'center', fontWeight: 500 }}>
-                          {Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100)}% Complete
-                        </Typography>
                       </Paper>
 
-                      {/* Educational Tips */}
+                      {/* Educational Tips - Below */}
                       <Paper 
                         variant="outlined" 
                         sx={{ 
@@ -1108,10 +1127,13 @@ function App() {
                           borderColor: 'info.200',
                           minHeight: 140,
                           width: '100%',
-                          maxWidth: 500,
+                          maxWidth: 700,
                           mb: 3
                         }}
                       >
+                        <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+                          💡 Resume Optimization Tips
+                        </Typography>
                         <motion.div
                           key={currentTip}
                           initial={{ opacity: 0, x: 20 }}
@@ -1125,7 +1147,7 @@ function App() {
                             </Typography>
                             <Box>
                               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem' }}>
-                                💡 {educationalTips[currentTip].title}
+                                {educationalTips[currentTip].title}
                               </Typography>
                               <Typography variant="body1" color="textSecondary" sx={{ fontSize: '1rem', lineHeight: 1.6 }}>
                                 {educationalTips[currentTip].text}
@@ -1152,15 +1174,8 @@ function App() {
                         </Box>
                       </Paper>
 
-                      {/* Estimated time */}
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h6" color="textSecondary" sx={{ fontWeight: 500 }}>
-                          ⏱️ Estimated time remaining: 30-45 seconds
-                        </Typography>
-                      </Box>
-
                       {/* Back button for if user wants to cancel */}
-                      <Box sx={{ mt: 4 }}>
+                      <Box sx={{ mt: 2 }}>
                         <Button 
                           variant="outlined" 
                           onClick={() => {
