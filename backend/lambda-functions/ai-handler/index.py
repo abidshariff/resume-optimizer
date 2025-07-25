@@ -516,31 +516,87 @@ def lambda_handler(event, context):
             max_experiences = 7
             max_bullets_per_job = 4
 
-        # Prepare prompt for Bedrock
-        prompt = f"""
-        You are an expert ATS-optimization resume consultant. Your task is to optimize the provided resume for the specific job description and format it according to the structure below.
+        # Extract key information from job description for targeted optimization
+        def extract_job_keywords(job_desc):
+            """Extract key technical skills, tools, and requirements from job description"""
+            # Common technical keywords to look for
+            tech_patterns = [
+                'Python', 'Java', 'JavaScript', 'React', 'Node.js', 'AWS', 'Docker', 'Kubernetes',
+                'SQL', 'MongoDB', 'PostgreSQL', 'Git', 'CI/CD', 'Agile', 'Scrum', 'REST API',
+                'GraphQL', 'TypeScript', 'Vue.js', 'Angular', 'Spring', 'Django', 'Flask',
+                'Microservices', 'DevOps', 'Jenkins', 'Terraform', 'Linux', 'Machine Learning',
+                'Data Science', 'Analytics', 'Tableau', 'Power BI', 'Spark', 'Hadoop'
+            ]
+            
+            found_keywords = []
+            job_lower = job_desc.lower()
+            
+            for keyword in tech_patterns:
+                if keyword.lower() in job_lower:
+                    found_keywords.append(keyword)
+            
+            return found_keywords
 
-        RESUME:
+        job_keywords = extract_job_keywords(job_description)
+        print(f"Extracted job keywords: {job_keywords}")
+
+        # Prepare enhanced prompt for Bedrock with aggressive optimization
+        prompt = f"""
+        You are an expert ATS resume optimizer and career consultant. Your mission is to COMPLETELY TRANSFORM the provided resume to perfectly match the job description while maintaining truthfulness about the candidate's background.
+
+        ORIGINAL RESUME:
         {resume_text}
 
-        JOB DESCRIPTION:
+        TARGET JOB DESCRIPTION:
         {job_description}
+
+        EXTRACTED KEY TECHNOLOGIES/SKILLS FROM JOB: {', '.join(job_keywords) if job_keywords else 'General skills optimization'}
 
         ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
 
-        INSTRUCTIONS:
-        1. Extract and optimize the content from the original resume to align with the job description.
-        2. Identify and incorporate key technical skills, qualifications, and terminology from the job description.
-        3. Ensure the resume will pass through Applicant Tracking Systems (ATS) by strategically placing relevant keywords.
-        4. Do not add fabricated experiences or qualifications.
-        5. Keep the same chronological order for experiences and education.
-        6. Focus on quantifiable achievements that match job requirements.
-        7. Highlight transferable skills that match the job requirements.
-        8. **LENGTH CONSTRAINT: {length_guidance}**
-        9. **CONTENT LIMITS: Include maximum {max_experiences} experience entries with maximum {max_bullets_per_job} bullet points each.**
-        10. **PRIORITIZATION: Focus on the most recent and relevant experiences. If the original resume has more content, prioritize based on relevance to the job description.**
-        11. **CONCISENESS: Use concise, impactful language. Each bullet point should be 1-2 lines maximum.**
-        12. Format your response exactly according to the structure below.
+        CRITICAL OPTIMIZATION REQUIREMENTS:
+
+        1. **AGGRESSIVE KEYWORD INTEGRATION**: 
+           - Identify ALL technical skills, tools, frameworks, and buzzwords from the job description
+           - Integrate these keywords naturally throughout the resume, especially in experience bullets
+           - If the candidate has ANY related experience, reframe it using job description terminology
+           - Add relevant keywords to skills section even if not explicitly mentioned in original resume (but candidate likely has exposure)
+
+        2. **COMPLETE EXPERIENCE TRANSFORMATION**:
+           - REWRITE every single bullet point to align with job requirements
+           - Transform generic accomplishments into role-specific achievements
+           - Use action verbs and terminology that match the job description exactly
+           - Quantify achievements wherever possible, even if you need to reframe existing numbers
+           - Focus on impact and results that matter for this specific role
+
+        3. **STRATEGIC SKILL ENHANCEMENT**:
+           - Add technical skills from job description that the candidate likely has but didn't mention
+           - Reorganize skills to prioritize job-relevant technologies
+           - Include both hard and soft skills mentioned in job posting
+           - Use exact terminology from job description (e.g., if job says "React.js", use "React.js" not "React")
+
+        4. **PROFESSIONAL SUMMARY OVERHAUL**:
+           - Completely rewrite to sound like the perfect candidate for this specific role
+           - Include years of experience in relevant areas
+           - Mention key technologies and methodologies from job description
+           - Highlight leadership/collaboration aspects if mentioned in job posting
+
+        5. **CONTENT PRIORITIZATION**:
+           - {length_guidance}
+           - **MAXIMUM {max_experiences} experience entries with MAXIMUM {max_bullets_per_job} bullet points each**
+           - Prioritize most recent and relevant experiences
+           - Remove or de-emphasize experiences that don't align with target role
+
+        6. **ATS OPTIMIZATION**:
+           - Use exact phrases from job description where appropriate
+           - Include industry-standard terminology
+           - Ensure keyword density is high but natural
+           - Format for maximum ATS compatibility
+
+        TRANSFORMATION EXAMPLES:
+        - Original: "Developed web applications" → "Built responsive React.js applications with Node.js backend and AWS deployment"
+        - Original: "Worked with databases" → "Designed and optimized PostgreSQL databases, implemented complex queries for data analytics"
+        - Original: "Team collaboration" → "Led cross-functional Agile teams using Scrum methodology, facilitated daily standups and sprint planning"
 
         OUTPUT FORMAT:
         Provide your response in the following JSON structure:
@@ -549,39 +605,48 @@ def lambda_handler(event, context):
         {{
           "full_name": "Full Name from Resume",
           "contact_info": "Email | Phone | LinkedIn | Location",
-          "professional_summary": "2-3 sentences highlighting key qualifications relevant to the job (keep under 100 words)",
+          "professional_summary": "2-3 sentences that make this candidate sound perfect for the target role, incorporating key job requirements and technologies (under 100 words)",
           "skills": [
-            "Skill 1",
-            "Skill 2",
-            "Skill 3",
-            "Maximum 12 skills total"
+            "Include ALL relevant technical skills from job description",
+            "Prioritize job-mentioned technologies first",
+            "Add related skills candidate likely has",
+            "Use exact terminology from job posting",
+            "Maximum 15 skills total, most relevant first"
           ],
           "experience": [
             {{
-              "title": "Job Title",
+              "title": "Job Title (enhanced if needed to sound more relevant)",
               "company": "Company Name",
               "dates": "Start Date - End Date",
               "achievements": [
-                "Concise achievement 1 (1-2 lines max)",
-                "Concise achievement 2 (1-2 lines max)",
-                "Maximum {max_bullets_per_job} achievements per job"
+                "COMPLETELY rewritten bullet focusing on job-relevant impact with specific technologies/methodologies",
+                "Quantified achievement using job description terminology and relevant metrics",
+                "Another transformed bullet that showcases skills mentioned in job posting",
+                "Maximum {max_bullets_per_job} bullets per job, each 1-2 lines, highly targeted"
               ]
             }}
           ],
           "education": [
             {{
               "degree": "Degree Name",
-              "institution": "Institution Name",
+              "institution": "Institution Name", 
               "dates": "Graduation Year",
-              "details": "Brief additional details if relevant (optional)"
+              "details": "Add relevant coursework/projects if they align with job requirements (optional)"
             }}
           ]
         }}
         ```
 
-        **CRITICAL**: Ensure the optimized resume maintains the same approximate length as the original ({original_page_count} page(s)) or shorter. Prioritize quality and relevance over quantity.
+        **CRITICAL SUCCESS CRITERIA**:
+        - Every bullet point should feel like it was written specifically for this job
+        - Resume should contain 80%+ of the technical keywords from job description
+        - Candidate should sound like the ideal fit based on resume content
+        - Maintain truthfulness - enhance and reframe, don't fabricate experiences
+        - Final resume should be significantly different from original while staying factual
 
-        Return ONLY the JSON structure with the optimized resume content. Do not include explanations or notes.
+        **REMEMBER**: This is not just editing - this is a complete strategic transformation to make this candidate irresistible for this specific role.
+
+        Return ONLY the JSON structure with the completely optimized resume content. No explanations or notes.
         """
         
         # Call Amazon Bedrock with automatic model fallback
