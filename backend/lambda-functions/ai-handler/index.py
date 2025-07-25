@@ -467,6 +467,55 @@ def lambda_handler(event, context):
         # Update status to AI processing
         update_job_status(bucket_name, status_key, 'PROCESSING', 'Generating optimized resume with AI')
         
+        # Estimate the page count of the original resume
+        def estimate_page_count(text):
+            """
+            Estimate the number of pages based on text length and content structure.
+            Assumes approximately 500-600 words per page for a typical resume.
+            """
+            words = len(text.split())
+            lines = len(text.split('\n'))
+            
+            # Base estimation on word count (500-600 words per page)
+            word_based_pages = max(1, words / 550)
+            
+            # Adjust based on line count (assuming 40-50 lines per page)
+            line_based_pages = max(1, lines / 45)
+            
+            # Take the average and round up to nearest 0.5
+            estimated_pages = (word_based_pages + line_based_pages) / 2
+            
+            # Round to nearest 0.5 and ensure minimum of 1 page
+            if estimated_pages <= 1:
+                return 1
+            elif estimated_pages <= 1.5:
+                return 1.5
+            elif estimated_pages <= 2:
+                return 2
+            else:
+                return min(3, round(estimated_pages * 2) / 2)  # Cap at 3 pages max
+        
+        original_page_count = estimate_page_count(resume_text)
+        print(f"Estimated original resume page count: {original_page_count}")
+        
+        # Determine content length guidance based on page count
+        if original_page_count <= 1:
+            length_guidance = "Keep the resume concise and fit everything on 1 page. Limit to 3-4 experience entries with 2-3 bullet points each."
+            max_experiences = 4
+            max_bullets_per_job = 3
+        elif original_page_count <= 1.5:
+            length_guidance = "Keep the resume to 1-1.5 pages maximum. Limit to 4-5 experience entries with 3-4 bullet points each."
+            max_experiences = 5
+            max_bullets_per_job = 4
+        elif original_page_count <= 2:
+            length_guidance = "Keep the resume to 2 pages maximum. You can include up to 5-6 experience entries with 3-4 bullet points each."
+            max_experiences = 6
+            max_bullets_per_job = 4
+        else:
+            length_guidance = "Keep the resume to 2-3 pages maximum. Focus on the most relevant experiences and achievements."
+            max_experiences = 7
+            max_bullets_per_job = 4
+
         # Prepare prompt for Bedrock
         prompt = f"""
         You are an expert ATS-optimization resume consultant. Your task is to optimize the provided resume for the specific job description and format it according to the structure below.
@@ -477,6 +526,8 @@ def lambda_handler(event, context):
         JOB DESCRIPTION:
         {job_description}
 
+        ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
+
         INSTRUCTIONS:
         1. Extract and optimize the content from the original resume to align with the job description.
         2. Identify and incorporate key technical skills, qualifications, and terminology from the job description.
@@ -485,7 +536,11 @@ def lambda_handler(event, context):
         5. Keep the same chronological order for experiences and education.
         6. Focus on quantifiable achievements that match job requirements.
         7. Highlight transferable skills that match the job requirements.
-        8. Format your response exactly according to the structure below.
+        8. **LENGTH CONSTRAINT: {length_guidance}**
+        9. **CONTENT LIMITS: Include maximum {max_experiences} experience entries with maximum {max_bullets_per_job} bullet points each.**
+        10. **PRIORITIZATION: Focus on the most recent and relevant experiences. If the original resume has more content, prioritize based on relevance to the job description.**
+        11. **CONCISENESS: Use concise, impactful language. Each bullet point should be 1-2 lines maximum.**
+        12. Format your response exactly according to the structure below.
 
         OUTPUT FORMAT:
         Provide your response in the following JSON structure:
@@ -494,12 +549,12 @@ def lambda_handler(event, context):
         {{
           "full_name": "Full Name from Resume",
           "contact_info": "Email | Phone | LinkedIn | Location",
-          "professional_summary": "3-4 sentences highlighting key qualifications relevant to the job",
+          "professional_summary": "2-3 sentences highlighting key qualifications relevant to the job (keep under 100 words)",
           "skills": [
             "Skill 1",
             "Skill 2",
             "Skill 3",
-            ...
+            "Maximum 12 skills total"
           ],
           "experience": [
             {{
@@ -507,24 +562,24 @@ def lambda_handler(event, context):
               "company": "Company Name",
               "dates": "Start Date - End Date",
               "achievements": [
-                "Achievement 1",
-                "Achievement 2",
-                ...
+                "Concise achievement 1 (1-2 lines max)",
+                "Concise achievement 2 (1-2 lines max)",
+                "Maximum {max_bullets_per_job} achievements per job"
               ]
-            }},
-            ...
+            }}
           ],
           "education": [
             {{
               "degree": "Degree Name",
               "institution": "Institution Name",
               "dates": "Graduation Year",
-              "details": "Additional details (optional)"
-            }},
-            ...
+              "details": "Brief additional details if relevant (optional)"
+            }}
           ]
         }}
         ```
+
+        **CRITICAL**: Ensure the optimized resume maintains the same approximate length as the original ({original_page_count} page(s)) or shorter. Prioritize quality and relevance over quantity.
 
         Return ONLY the JSON structure with the optimized resume content. Do not include explanations or notes.
         """
