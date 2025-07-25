@@ -184,12 +184,17 @@ const theme = createTheme({
 });
 
 // Profile Dialog Component
-function ProfileDialog({ open, onClose, user, userProfile, setUserProfile }) {
+function ProfileDialog({ open, onClose, user, userProfile, setUserProfile, setSnackbarMessage, setSnackbarOpen }) {
   const handleSave = () => {
     // Here you would typically save to backend
     console.log('Saving profile:', userProfile);
+    setSnackbarMessage('Profile updated successfully!');
+    setSnackbarOpen(true);
     onClose();
   };
+
+  // Get user attributes from Cognito
+  const userAttributes = user?.attributes || {};
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -207,38 +212,70 @@ function ProfileDialog({ open, onClose, user, userProfile, setUserProfile }) {
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Full Name"
-              value={userProfile.name}
-              onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
+              label="First Name"
+              value={userProfile.firstName || userAttributes.given_name || ''}
+              onChange={(e) => setUserProfile({...userProfile, firstName: e.target.value})}
               variant="outlined"
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
+              label="Last Name"
+              value={userProfile.lastName || userAttributes.family_name || ''}
+              onChange={(e) => setUserProfile({...userProfile, lastName: e.target.value})}
+              variant="outlined"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
               label="Email"
-              value={userProfile.email || user?.attributes?.email || ''}
+              value={userProfile.email || userAttributes.email || ''}
               onChange={(e) => setUserProfile({...userProfile, email: e.target.value})}
               variant="outlined"
               disabled
+              helperText="Email cannot be changed here. Contact support if needed."
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Phone Number"
+              value={userProfile.phone || userAttributes.phone_number || ''}
+              onChange={(e) => setUserProfile({...userProfile, phone: e.target.value})}
+              variant="outlined"
+              placeholder="+1 (555) 123-4567"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Username"
+              value={user?.username || ''}
+              variant="outlined"
+              disabled
+              helperText="Username cannot be changed"
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="Company"
-              value={userProfile.company}
+              value={userProfile.company || ''}
               onChange={(e) => setUserProfile({...userProfile, company: e.target.value})}
               variant="outlined"
+              placeholder="Your company name"
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="Job Title"
-              value={userProfile.jobTitle}
+              value={userProfile.jobTitle || ''}
               onChange={(e) => setUserProfile({...userProfile, jobTitle: e.target.value})}
               variant="outlined"
+              placeholder="Your current job title"
             />
           </Grid>
         </Grid>
@@ -1038,16 +1075,84 @@ function App() {
         label: 'Username or Email *',
         isRequired: true,
       },
+      password: {
+        placeholder: 'Enter your password',
+        label: 'Password *',
+        isRequired: true,
+      },
     },
     signUp: {
       username: {
-        placeholder: 'Enter your username',
+        placeholder: 'Choose a unique username',
         label: 'Username *',
         isRequired: true,
+        order: 1,
       },
       email: {
-        placeholder: 'Enter your email',
-        label: 'Email *',
+        placeholder: 'Enter your professional email',
+        label: 'Email Address *',
+        isRequired: true,
+        order: 2,
+      },
+      password: {
+        placeholder: 'Create a strong password',
+        label: 'Password *',
+        isRequired: true,
+        order: 3,
+      },
+      confirm_password: {
+        placeholder: 'Confirm your password',
+        label: 'Confirm Password *',
+        isRequired: true,
+        order: 4,
+      },
+      given_name: {
+        placeholder: 'Enter your first name',
+        label: 'First Name *',
+        isRequired: true,
+        order: 5,
+      },
+      family_name: {
+        placeholder: 'Enter your last name',
+        label: 'Last Name *',
+        isRequired: true,
+        order: 6,
+      },
+      phone_number: {
+        placeholder: '+1 (555) 123-4567',
+        label: 'Phone Number',
+        isRequired: false,
+        order: 7,
+      },
+    },
+    confirmSignUp: {
+      confirmation_code: {
+        placeholder: 'Enter the 6-digit code',
+        label: 'Verification Code *',
+        isRequired: true,
+      },
+    },
+    resetPassword: {
+      username: {
+        placeholder: 'Enter your username or email',
+        label: 'Username or Email *',
+        isRequired: true,
+      },
+    },
+    confirmResetPassword: {
+      confirmation_code: {
+        placeholder: 'Enter the verification code',
+        label: 'Verification Code *',
+        isRequired: true,
+      },
+      password: {
+        placeholder: 'Enter your new password',
+        label: 'New Password *',
+        isRequired: true,
+      },
+      confirm_password: {
+        placeholder: 'Confirm your new password',
+        label: 'Confirm New Password *',
         isRequired: true,
       },
     },
@@ -1080,6 +1185,161 @@ function App() {
         </Box>
       );
     },
+    SignIn: {
+      Header() {
+        return (
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 600, 
+              color: '#ffffff',
+              mb: 1 
+            }}>
+              Welcome Back
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              Sign in to optimize your resume with AI
+            </Typography>
+          </Box>
+        );
+      },
+      Footer() {
+        return (
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              Don't have an account?{' '}
+              <Typography 
+                component="span" 
+                sx={{ 
+                  color: '#ff6b35', 
+                  cursor: 'pointer',
+                  '&:hover': { color: '#ff9800' }
+                }}
+              >
+                Sign up for free
+              </Typography>
+            </Typography>
+          </Box>
+        );
+      },
+    },
+    SignUp: {
+      Header() {
+        return (
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 600, 
+              color: '#ffffff',
+              mb: 1 
+            }}>
+              Create Your Account
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              Join thousands of professionals optimizing their resumes
+            </Typography>
+          </Box>
+        );
+      },
+      Footer() {
+        return (
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              Already have an account?{' '}
+              <Typography 
+                component="span" 
+                sx={{ 
+                  color: '#ff6b35', 
+                  cursor: 'pointer',
+                  '&:hover': { color: '#ff9800' }
+                }}
+              >
+                Sign in here
+              </Typography>
+            </Typography>
+            <Typography variant="caption" sx={{ 
+              color: '#888', 
+              display: 'block', 
+              mt: 2,
+              fontSize: '0.75rem'
+            }}>
+              By signing up, you agree to our Terms of Service and Privacy Policy
+            </Typography>
+          </Box>
+        );
+      },
+    },
+    ConfirmSignUp: {
+      Header() {
+        return (
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 600, 
+              color: '#ffffff',
+              mb: 1 
+            }}>
+              Verify Your Email
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              We've sent a verification code to your email address
+            </Typography>
+          </Box>
+        );
+      },
+      Footer() {
+        return (
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              Didn't receive the code?{' '}
+              <Typography 
+                component="span" 
+                sx={{ 
+                  color: '#ff6b35', 
+                  cursor: 'pointer',
+                  '&:hover': { color: '#ff9800' }
+                }}
+              >
+                Resend code
+              </Typography>
+            </Typography>
+          </Box>
+        );
+      },
+    },
+    ResetPassword: {
+      Header() {
+        return (
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 600, 
+              color: '#ffffff',
+              mb: 1 
+            }}>
+              Reset Password
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              Enter your username or email to reset your password
+            </Typography>
+          </Box>
+        );
+      },
+    },
+    ConfirmResetPassword: {
+      Header() {
+        return (
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 600, 
+              color: '#ffffff',
+              mb: 1 
+            }}>
+              Create New Password
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              Enter the verification code and your new password
+            </Typography>
+          </Box>
+        );
+      },
+    },
   };
 
   // Wrap the app with Authenticator for user authentication
@@ -1089,6 +1349,33 @@ function App() {
         loginMechanisms={['username']}
         formFields={formFields}
         components={components}
+        services={{
+          async handleSignUp(formData) {
+            let { username, password, email, phone_number, given_name, family_name } = formData;
+            // Format phone number if provided
+            if (phone_number && !phone_number.startsWith('+')) {
+              phone_number = `+1${phone_number.replace(/\D/g, '')}`;
+            }
+            return {
+              username,
+              password,
+              options: {
+                userAttributes: {
+                  email,
+                  phone_number,
+                  given_name,
+                  family_name,
+                },
+              },
+            };
+          },
+        }}
+        signUpAttributes={[
+          'email',
+          'given_name', 
+          'family_name',
+          'phone_number'
+        ]}
         theme={{
           name: 'resume-optimizer-theme',
           tokens: {
@@ -1100,14 +1387,32 @@ function App() {
               font: {
                 primary: '#ffffff',
                 secondary: '#b0b0b0',
+                tertiary: '#888888',
               },
               brand: {
                 primary: {
                   10: '#ff6b35',
+                  20: '#ff6b35',
+                  40: '#ff6b35',
+                  60: '#ff6b35',
                   80: '#ff6b35',
                   90: '#ff6b35',
                   100: '#ff6b35',
                 },
+                secondary: {
+                  10: '#ff9800',
+                  20: '#ff9800',
+                  40: '#ff9800',
+                  60: '#ff9800',
+                  80: '#ff9800',
+                  90: '#ff9800',
+                  100: '#ff9800',
+                },
+              },
+              border: {
+                primary: 'rgba(255, 107, 53, 0.3)',
+                secondary: 'rgba(255, 107, 53, 0.1)',
+                focus: '#ff6b35',
               },
             },
             components: {
@@ -1117,19 +1422,87 @@ function App() {
                   borderRadius: '12px',
                   backgroundColor: '#1e1e1e',
                   border: '1px solid rgba(255, 107, 53, 0.3)',
+                  maxWidth: '480px',
+                  margin: '2rem auto',
                 },
               },
               button: {
                 primary: {
                   backgroundColor: '#ff6b35',
+                  color: '#ffffff',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  padding: '12px 24px',
+                  fontSize: '1rem',
+                  background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                  boxShadow: '0 4px 20px rgba(255, 107, 53, 0.3)',
                   _hover: {
                     backgroundColor: '#e64a19',
+                    background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+                    boxShadow: '0 6px 25px rgba(255, 107, 53, 0.4)',
+                    transform: 'translateY(-1px)',
+                  },
+                  _focus: {
+                    backgroundColor: '#ff6b35',
+                    boxShadow: '0 0 0 2px rgba(255, 107, 53, 0.5)',
+                  },
+                  _active: {
+                    backgroundColor: '#d84315',
+                    transform: 'translateY(0px)',
+                  },
+                },
+                link: {
+                  color: '#ff6b35',
+                  _hover: {
+                    color: '#ff9800',
+                    textDecoration: 'underline',
                   },
                 },
               },
               fieldcontrol: {
+                backgroundColor: '#2a2a2a',
+                borderColor: 'rgba(255, 107, 53, 0.3)',
+                borderRadius: '8px',
+                color: '#ffffff',
+                padding: '12px 16px',
+                fontSize: '1rem',
                 _focus: {
                   borderColor: '#ff6b35',
+                  boxShadow: '0 0 0 2px rgba(255, 107, 53, 0.2)',
+                  backgroundColor: '#333333',
+                },
+                _hover: {
+                  borderColor: '#ff6b35',
+                },
+                _error: {
+                  borderColor: '#f44336',
+                  boxShadow: '0 0 0 2px rgba(244, 67, 54, 0.2)',
+                },
+              },
+              fieldmessages: {
+                color: '#f44336',
+                fontSize: '0.875rem',
+                marginTop: '4px',
+              },
+              text: {
+                primary: {
+                  color: '#ffffff',
+                },
+                secondary: {
+                  color: '#b0b0b0',
+                },
+              },
+              tabs: {
+                item: {
+                  color: '#b0b0b0',
+                  borderColor: 'transparent',
+                  _active: {
+                    color: '#ff6b35',
+                    borderColor: '#ff6b35',
+                  },
+                  _hover: {
+                    color: '#ff9800',
+                  },
                 },
               },
             },
@@ -1732,6 +2105,8 @@ function App() {
               user={user}
               userProfile={userProfile}
               setUserProfile={setUserProfile}
+              setSnackbarMessage={setSnackbarMessage}
+              setSnackbarOpen={setSnackbarOpen}
             />
             
             {/* Settings Dialog */}
