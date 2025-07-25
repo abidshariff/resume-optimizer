@@ -303,7 +303,7 @@ function App() {
           const { tokens } = await fetchAuthSession();
           const idToken = tokens.idToken.toString();
           
-          const operation = get({
+          const statusResponse = await get({
             apiName: 'resumeOptimizer',
             path: '/status',
             options: {
@@ -315,9 +315,6 @@ function App() {
               }
             }
           });
-          
-          const { response } = await operation.response;
-          const statusResponse = await response.body.json();
           
           console.log('Status response:', statusResponse);
           setJobStatus(statusResponse.status);
@@ -416,7 +413,9 @@ function App() {
       
       try {
         // Submit the job and get job ID immediately
-        const operation = post({
+        console.log("Submitting job to API...");
+        
+        const responseData = await post({
           apiName: 'resumeOptimizer',
           path: '/optimize',
           options: {
@@ -426,9 +425,6 @@ function App() {
             }
           }
         });
-        
-        const { response } = await operation.response;
-        const responseData = await response.body.json();
         
         console.log("API response received:", responseData);
         

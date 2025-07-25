@@ -31,6 +31,82 @@ def lambda_handler(event, context):
             'body': json.dumps({})
         }
     
+    # Handle GET request for status checking
+    if event.get('httpMethod') == 'GET':
+        print("Handling GET request for status checking")
+        return handle_status_request(event)
+    
+    # Handle POST request for job submission
+    if event.get('httpMethod') == 'POST':
+        print("Handling POST request for job submission")
+        return handle_job_submission(event)
+    
+    # If we get here, it's an unsupported method
+    return {
+        'statusCode': 405,
+        'headers': CORS_HEADERS,
+        'body': json.dumps({
+            'message': 'Method not allowed'
+        })
+    }
+
+def handle_status_request(event):
+    """Handle GET requests for job status"""
+    try:
+        # Get user ID from Cognito authorizer
+        user_id = "anonymous"
+        if 'requestContext' in event and 'authorizer' in event['requestContext']:
+            if 'claims' in event['requestContext']['authorizer']:
+                user_id = event['requestContext']['authorizer']['claims'].get('sub', 'anonymous')
+        
+        # Get job ID from query parameters
+        job_id = None
+        if 'queryStringParameters' in event and event['queryStringParameters']:
+            job_id = event['queryStringParameters'].get('jobId')
+        
+        if not job_id:
+            return {
+                'statusCode': 400,
+                'headers': CORS_HEADERS,
+                'body': json.dumps({
+                    'message': 'Job ID is required'
+                })
+            }
+        
+        # Get status from S3
+        status_key = f"users/{user_id}/status/{job_id}/status.json"
+        
+        try:
+            response = s3.get_object(Bucket=bucket_name, Key=status_key)
+            status_data = json.loads(response['Body'].read().decode('utf-8'))
+            
+            return {
+                'statusCode': 200,
+                'headers': CORS_HEADERS,
+                'body': json.dumps(status_data)
+            }
+            
+        except s3.exceptions.NoSuchKey:
+            return {
+                'statusCode': 404,
+                'headers': CORS_HEADERS,
+                'body': json.dumps({
+                    'message': 'Job not found'
+                })
+            }
+            
+    except Exception as e:
+        print(f"Error checking job status: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({
+                'message': f'Error checking job status: {str(e)}'
+            })
+        }
+
+def handle_job_submission(event):
+    """Handle POST requests for job submission"""
     try:
         # Parse the request body
         if 'body' in event:
@@ -73,40 +149,47 @@ def lambda_handler(event, context):
                 })
             }
         
-        # Decode base64 resume content
+        # Generate unique job ID
+        job_id = str(uuid.uuid4())
+        
+        # Decode the base64 resume content
         try:
-            # Remove data URL prefix if present
-            if ',' in resume_content_base64:
-                resume_content_base64 = resume_content_base64.split(',')[1]
+            # Handle data URL format (data:type;base64,content)
+            if resume_content_base64.startswith('data:'):
+                # Extract the base64 content after the comma
+                base64_content = resume_content_base64.split(',')[1]
+            else:
+                base64_content = resume_content_base64
             
-            resume_content = base64.b64decode(resume_content_base64)
+            resume_content = base64.b64decode(base64_content)
         except Exception as e:
             print(f"Error decoding resume content: {str(e)}")
             return {
                 'statusCode': 400,
                 'headers': CORS_HEADERS,
                 'body': json.dumps({
-                    'message': f'Invalid resume content format: {str(e)}'
+                    'message': 'Invalid resume content encoding'
                 })
             }
         
-        # Generate unique IDs for the files
-        job_id = str(uuid.uuid4())
-        
-        # Store original files in S3
+        # Store files in S3
         resume_key = f"users/{user_id}/original/{job_id}/resume.pdf"
         job_desc_key = f"users/{user_id}/original/{job_id}/job_description.txt"
         
+        # Upload resume file to S3
         s3.put_object(
             Bucket=bucket_name,
             Key=resume_key,
-            Body=resume_content
+            Body=resume_content,
+            ContentType='application/pdf'
         )
         
+        # Upload job description to S3
         s3.put_object(
             Bucket=bucket_name,
             Key=job_desc_key,
-            Body=job_description.encode('utf-8')
+            Body=job_description.encode('utf-8'),
+            ContentType='text/plain'
         )
         
         print(f"Stored original files in S3: {resume_key} and {job_desc_key}")
@@ -127,7 +210,7 @@ def lambda_handler(event, context):
             ContentType='application/json'
         )
         
-        # Call AI Handler Lambda asynchronously
+        # Prepare payload for AI handler
         ai_payload = {
             'userId': user_id,
             'jobId': job_id,
@@ -137,12 +220,14 @@ def lambda_handler(event, context):
             'outputFormat': output_format
         }
         
-        print(f"Invoking AI Handler Lambda asynchronously: {ai_handler_function}")
+        # Invoke AI handler Lambda asynchronously
         lambda_client.invoke(
             FunctionName=ai_handler_function,
             InvocationType='Event',  # Asynchronous invocation
             Payload=json.dumps(ai_payload)
         )
+        
+        print(f"Invoked AI handler for job {job_id}")
         
         # Return job ID immediately
         return {
@@ -154,12 +239,13 @@ def lambda_handler(event, context):
                 'status': 'PROCESSING'
             })
         }
+        
     except Exception as e:
         print(f"Error processing request: {str(e)}")
         return {
             'statusCode': 500,
             'headers': CORS_HEADERS,
             'body': json.dumps({
-                'message': f'Error processing request: {str(e)}'
+                'message': f'Internal server error: {str(e)}'
             })
         }
