@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { get } from 'aws-amplify/api';
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react/styles.css';
@@ -303,48 +302,27 @@ function App() {
           const { tokens } = await fetchAuthSession();
           const idToken = tokens.idToken.toString();
           
-          const statusResponse = await get({
-            apiName: 'resumeOptimizer',
-            path: '/status',
-            options: {
-              headers: {
-                Authorization: idToken
-              },
-              queryParams: {
-                jobId: jobId
-              }
+          // Use direct fetch for status polling to avoid response wrapping issues
+          const statusResponse = await fetch(`https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev/status?jobId=${encodeURIComponent(jobId)}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': idToken,
+              'Accept': 'application/json'
             }
           });
           
-          console.log('Raw status response:', statusResponse);
-          console.log('Status response type:', typeof statusResponse);
-          console.log('Status response keys:', statusResponse ? Object.keys(statusResponse) : 'null');
-          console.log('Status response JSON:', JSON.stringify(statusResponse, null, 2));
-          
-          // Handle different response formats more robustly
-          let actualResponse = statusResponse;
-          
-          // Handle string responses
-          if (typeof statusResponse === 'string') {
-            try {
-              actualResponse = JSON.parse(statusResponse);
-              console.log("Parsed status string response:", actualResponse);
-            } catch (e) {
-              console.error("Failed to parse status string response:", e);
-              throw new Error(`Invalid status response format: ${statusResponse}`);
-            }
+          if (!statusResponse.ok) {
+            const errorText = await statusResponse.text();
+            console.error("Status API request failed:", statusResponse.status, errorText);
+            throw new Error(`Status API request failed: ${statusResponse.status} ${statusResponse.statusText}`);
           }
           
-          // Handle wrapped responses
-          if (actualResponse && actualResponse.response && typeof actualResponse.response === 'object') {
-            actualResponse = actualResponse.response;
-            console.log("Unwrapped status response:", actualResponse);
-          }
+          const actualResponse = await statusResponse.json();
           
-          // Validate response structure
-          if (!actualResponse || typeof actualResponse !== 'object') {
-            throw new Error(`Invalid status response structure: ${JSON.stringify(statusResponse)}`);
-          }
+          console.log('Status response received:', actualResponse);
+          console.log('Status response type:', typeof actualResponse);
+          console.log('Status response keys:', actualResponse ? Object.keys(actualResponse) : 'null');
+          console.log('Status response JSON:', JSON.stringify(actualResponse, null, 2));
           
           // Extract status
           const currentStatus = actualResponse.status;
