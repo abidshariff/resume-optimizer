@@ -111,19 +111,26 @@ def handle_download_request(event):
             file_response = s3.get_object(Bucket=bucket_name, Key=optimized_key)
             file_content = file_response['Body'].read()
             
-            # Encode the file content as base64 for API Gateway
-            file_base64 = base64.b64encode(file_content).decode('utf-8')
-            
             # Get content type from status data or default
             content_type = status_data.get('contentType', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
             download_filename = status_data.get('downloadFilename', f'optimized_resume_{job_id[:8]}.docx')
+            
+            # For binary files, we need to base64 encode for API Gateway
+            # but ensure we're handling it correctly
+            file_base64 = base64.b64encode(file_content).decode('utf-8')
+            
+            print(f"File size: {len(file_content)} bytes")
+            print(f"Base64 size: {len(file_base64)} characters")
+            print(f"Content type: {content_type}")
+            print(f"Download filename: {download_filename}")
             
             return {
                 'statusCode': 200,
                 'headers': {
                     **CORS_HEADERS,
                     'Content-Type': content_type,
-                    'Content-Disposition': f'attachment; filename="{download_filename}"'
+                    'Content-Disposition': f'attachment; filename="{download_filename}"',
+                    'Content-Length': str(len(file_content))
                 },
                 'body': file_base64,
                 'isBase64Encoded': True

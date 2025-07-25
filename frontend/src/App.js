@@ -590,8 +590,22 @@ function App() {
       
       console.log('Download filename:', filename);
       
-      // Create blob from response (API Gateway returns the file directly)
-      const blob = await resumeResponse.blob();
+      // The API Gateway returns base64 encoded binary data as text
+      // We need to decode it properly for binary files
+      const responseText = await resumeResponse.text();
+      
+      // Convert base64 string to binary data
+      const binaryString = atob(responseText);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      // Create blob from the decoded binary data
+      const contentType = result.contentType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      const blob = new Blob([bytes], { type: contentType });
+      
+      console.log('Created blob:', blob.size, 'bytes, type:', blob.type);
       
       // Create download link
       const url = URL.createObjectURL(blob);
