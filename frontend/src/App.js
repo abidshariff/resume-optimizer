@@ -1130,55 +1130,20 @@ function App() {
                             }}>
                               Complete
                             </Typography>
+                            
+                            {/* Estimated time right under progress */}
+                            <Typography variant="body2" color="textSecondary" sx={{ 
+                              textAlign: 'center',
+                              mt: 2,
+                              fontWeight: 500
+                            }}>
+                              ⏱️ Estimated time: 15-30 seconds
+                            </Typography>
                           </Box>
                         </Box>
                       </Box>
 
-                      {/* Current Status Message */}
-                      <Paper 
-                        variant="outlined" 
-                        sx={{ 
-                          p: 4, 
-                          mb: 4,
-                          bgcolor: 'primary.50',
-                          borderColor: 'primary.200',
-                          width: '100%',
-                          maxWidth: 700
-                        }}
-                      >
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          textAlign: 'center'
-                        }}>
-                          <CircularProgress size={32} sx={{ mr: 2, flexShrink: 0 }} />
-                          <Box>
-                            <Typography variant="h6" fontWeight={600} sx={{ 
-                              fontSize: '1.1rem', 
-                              lineHeight: 1.3,
-                              color: 'primary.main'
-                            }}>
-                              {getEnhancedStatusMessage(jobStatus, statusMessage)}
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        {/* Estimated time */}
-                        <Box sx={{ 
-                          textAlign: 'center', 
-                          mt: 3, 
-                          pt: 2, 
-                          borderTop: '1px solid', 
-                          borderColor: 'primary.200' 
-                        }}>
-                          <Typography variant="body1" color="textSecondary" sx={{ fontWeight: 500 }}>
-                            ⏱️ Estimated time remaining: 30-45 seconds
-                          </Typography>
-                        </Box>
-                      </Paper>
-
-                      {/* Educational Tips - Below */}
+                      {/* Educational Tips - Moved up */}
                       <Paper 
                         variant="outlined" 
                         sx={{ 
