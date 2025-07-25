@@ -25,7 +25,18 @@ import {
   LinearProgress,
   useTheme,
   ThemeProvider,
-  createTheme
+  createTheme,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Card,
+  CardContent
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon,
@@ -36,34 +47,81 @@ import {
   ArrowForward as ArrowForwardIcon,
   CheckCircle as CheckCircleIcon,
   Schedule as ScheduleIcon,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  Person as PersonIcon,
+  Settings as SettingsIcon,
+  AccountCircle as AccountCircleIcon,
+  History as HistoryIcon,
+  Security as SecurityIcon,
+  Notifications as NotificationsIcon,
+  Help as HelpIcon,
+  MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 
-// Create a custom theme
+// Create a professional black and orange theme
 const theme = createTheme({
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#3f51b5',
+      main: '#ff6b35', // Orange
+      light: '#ff8a65',
+      dark: '#e64a19',
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: '#f50057',
+      main: '#ff9800', // Amber orange
+      light: '#ffb74d',
+      dark: '#f57c00',
+      contrastText: '#000000',
     },
     background: {
-      default: '#f5f7fa',
+      default: '#121212', // Dark background
+      paper: '#1e1e1e', // Slightly lighter for cards
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: '#b0b0b0',
+    },
+    error: {
+      main: '#f44336',
+    },
+    warning: {
+      main: '#ff9800',
+    },
+    info: {
+      main: '#2196f3',
+    },
+    success: {
+      main: '#4caf50',
     },
   },
   typography: {
     fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
       fontWeight: 700,
+      color: '#ffffff',
     },
     h2: {
       fontWeight: 600,
+      color: '#ffffff',
     },
     h3: {
       fontWeight: 600,
+      color: '#ffffff',
+    },
+    h4: {
+      fontWeight: 600,
+      color: '#ffffff',
+    },
+    h5: {
+      fontWeight: 600,
+      color: '#ffffff',
+    },
+    h6: {
+      fontWeight: 600,
+      color: '#ffffff',
     },
   },
   shape: {
@@ -75,21 +133,198 @@ const theme = createTheme({
         root: {
           textTransform: 'none',
           fontWeight: 600,
-          padding: '10px 24px',
+          padding: '12px 28px',
+          borderRadius: '8px',
+        },
+        contained: {
+          background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+          boxShadow: '0 4px 20px rgba(255, 107, 53, 0.3)',
+          '&:hover': {
+            background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+            boxShadow: '0 6px 25px rgba(255, 107, 53, 0.4)',
+          },
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+          backgroundImage: 'none',
+          backgroundColor: '#1e1e1e',
+          border: '1px solid rgba(255, 107, 53, 0.1)',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#000000',
+          borderBottom: '2px solid #ff6b35',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            '& fieldset': {
+              borderColor: 'rgba(255, 107, 53, 0.3)',
+            },
+            '&:hover fieldset': {
+              borderColor: '#ff6b35',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#ff6b35',
+            },
+          },
         },
       },
     },
   },
 });
 
-// File upload component with drag and drop
+// Profile Dialog Component
+function ProfileDialog({ open, onClose, user, userProfile, setUserProfile }) {
+  const handleSave = () => {
+    // Here you would typically save to backend
+    console.log('Saving profile:', userProfile);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ 
+        background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <PersonIcon sx={{ mr: 1 }} />
+        Profile Settings
+      </DialogTitle>
+      <DialogContent sx={{ mt: 2 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Full Name"
+              value={userProfile.name}
+              onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
+              variant="outlined"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Email"
+              value={userProfile.email || user?.attributes?.email || ''}
+              onChange={(e) => setUserProfile({...userProfile, email: e.target.value})}
+              variant="outlined"
+              disabled
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Company"
+              value={userProfile.company}
+              onChange={(e) => setUserProfile({...userProfile, company: e.target.value})}
+              variant="outlined"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Job Title"
+              value={userProfile.jobTitle}
+              onChange={(e) => setUserProfile({...userProfile, jobTitle: e.target.value})}
+              variant="outlined"
+            />
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions sx={{ p: 3 }}>
+        <Button onClick={onClose} variant="outlined">
+          Cancel
+        </Button>
+        <Button onClick={handleSave} variant="contained">
+          Save Changes
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// Settings Dialog Component
+function SettingsDialog({ open, onClose, userProfile, setUserProfile }) {
+  const handleSave = () => {
+    // Here you would typically save to backend
+    console.log('Saving settings:', userProfile);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ 
+        background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <SettingsIcon sx={{ mr: 1 }} />
+        Settings
+      </DialogTitle>
+      <DialogContent sx={{ mt: 2 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <NotificationsIcon sx={{ mr: 1 }} />
+                  Notifications
+                </Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                  Manage your notification preferences
+                </Typography>
+                <Button
+                  variant={userProfile.notifications ? "contained" : "outlined"}
+                  onClick={() => setUserProfile({...userProfile, notifications: !userProfile.notifications})}
+                  startIcon={<NotificationsIcon />}
+                >
+                  {userProfile.notifications ? 'Notifications On' : 'Notifications Off'}
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12}>
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <SecurityIcon sx={{ mr: 1 }} />
+                  Security
+                </Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                  Manage your account security settings
+                </Typography>
+                <Button variant="outlined" startIcon={<SecurityIcon />}>
+                  Change Password
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions sx={{ p: 3 }}>
+        <Button onClick={onClose} variant="outlined">
+          Cancel
+        </Button>
+        <Button onClick={handleSave} variant="contained">
+          Save Settings
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } = useDropzone({
     accept: acceptedFileTypes,
@@ -250,6 +485,19 @@ function App() {
   // Enhanced UX state for processing
   const [processingStep, setProcessingStep] = useState(0);
   const [currentTip, setCurrentTip] = useState(0);
+  
+  // Profile and Settings state
+  const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    name: '',
+    email: '',
+    company: '',
+    jobTitle: '',
+    notifications: true,
+    theme: 'dark'
+  });
   
   // Educational tips to show during processing
   const educationalTips = [
@@ -782,7 +1030,7 @@ function App() {
     resetProcessingState();
   };
 
-  // Custom form fields for the Authenticator
+  // Custom form fields for the Authenticator with professional styling
   const formFields = {
     signIn: {
       username: {
@@ -805,42 +1053,188 @@ function App() {
     },
   };
 
+  // Custom components for Authenticator
+  const components = {
+    Header() {
+      return (
+        <Box sx={{ 
+          textAlign: 'center', 
+          py: 4,
+          background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
+          borderRadius: '12px 12px 0 0'
+        }}>
+          <AutoAwesomeIcon sx={{ fontSize: 48, color: '#ff6b35', mb: 2 }} />
+          <Typography variant="h4" sx={{ 
+            fontWeight: 700,
+            background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            mb: 1
+          }}>
+            Resume Optimizer Pro
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#b0b0b0' }}>
+            Professional AI-Powered Resume Enhancement
+          </Typography>
+        </Box>
+      );
+    },
+  };
+
   // Wrap the app with Authenticator for user authentication
   return (
     <ThemeProvider theme={theme}>
       <Authenticator 
         loginMechanisms={['username']}
         formFields={formFields}
+        components={components}
+        theme={{
+          name: 'resume-optimizer-theme',
+          tokens: {
+            colors: {
+              background: {
+                primary: '#121212',
+                secondary: '#1e1e1e',
+              },
+              font: {
+                primary: '#ffffff',
+                secondary: '#b0b0b0',
+              },
+              brand: {
+                primary: {
+                  10: '#ff6b35',
+                  80: '#ff6b35',
+                  90: '#ff6b35',
+                  100: '#ff6b35',
+                },
+              },
+            },
+            components: {
+              authenticator: {
+                router: {
+                  boxShadow: '0 8px 32px rgba(255, 107, 53, 0.2)',
+                  borderRadius: '12px',
+                  backgroundColor: '#1e1e1e',
+                  border: '1px solid rgba(255, 107, 53, 0.3)',
+                },
+              },
+              button: {
+                primary: {
+                  backgroundColor: '#ff6b35',
+                  _hover: {
+                    backgroundColor: '#e64a19',
+                  },
+                },
+              },
+              fieldcontrol: {
+                _focus: {
+                  borderColor: '#ff6b35',
+                },
+              },
+            },
+          },
+        }}
       >
         {({ signOut, user }) => (
           <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-            <AppBar position="static" color="primary" elevation={0}>
-              <Toolbar>
+            <AppBar position="static" elevation={0} sx={{ 
+              background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
+              borderBottom: '2px solid #ff6b35'
+            }}>
+              <Toolbar sx={{ py: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <AutoAwesomeIcon sx={{ mr: 1 }} />
-                  <Typography variant="h6" component="div">
-                    Resume Optimizer
+                  <AutoAwesomeIcon sx={{ mr: 2, color: '#ff6b35', fontSize: 28 }} />
+                  <Typography variant="h5" component="div" sx={{ 
+                    fontWeight: 700,
+                    background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>
+                    Resume Optimizer Pro
                   </Typography>
                 </Box>
                 <Box sx={{ flexGrow: 1 }} />
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar 
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography variant="body2" sx={{ 
+                    color: '#b0b0b0',
+                    display: { xs: 'none', sm: 'block' }
+                  }}>
+                    Welcome, {user.username}
+                  </Typography>
+                  <IconButton
+                    onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
                     sx={{ 
-                      bgcolor: 'secondary.main',
-                      width: 32,
-                      height: 32,
-                      fontSize: '0.875rem',
-                      mr: 1
+                      p: 0,
+                      border: '2px solid #ff6b35',
+                      '&:hover': {
+                        border: '2px solid #ff9800',
+                      }
                     }}
                   >
-                    {user.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                  <Typography variant="body2" sx={{ mr: 2 }}>
-                    {user.username}
-                  </Typography>
-                  <IconButton color="inherit" onClick={signOut} size="small">
-                    <LogoutIcon />
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                        width: 40,
+                        height: 40,
+                        fontSize: '1rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      {user.username.charAt(0).toUpperCase()}
+                    </Avatar>
                   </IconButton>
+                  
+                  {/* Profile Menu */}
+                  <Menu
+                    anchorEl={profileMenuAnchor}
+                    open={Boolean(profileMenuAnchor)}
+                    onClose={() => setProfileMenuAnchor(null)}
+                    PaperProps={{
+                      sx: {
+                        bgcolor: '#1e1e1e',
+                        border: '1px solid #ff6b35',
+                        mt: 1,
+                        minWidth: 200
+                      }
+                    }}
+                  >
+                    <MenuItem onClick={() => {
+                      setProfileDialogOpen(true);
+                      setProfileMenuAnchor(null);
+                    }}>
+                      <ListItemIcon>
+                        <PersonIcon sx={{ color: '#ff6b35' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="Profile" />
+                    </MenuItem>
+                    <MenuItem onClick={() => {
+                      setSettingsDialogOpen(true);
+                      setProfileMenuAnchor(null);
+                    }}>
+                      <ListItemIcon>
+                        <SettingsIcon sx={{ color: '#ff6b35' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="Settings" />
+                    </MenuItem>
+                    <MenuItem>
+                      <ListItemIcon>
+                        <HistoryIcon sx={{ color: '#ff6b35' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="History" />
+                    </MenuItem>
+                    <Divider sx={{ borderColor: 'rgba(255, 107, 53, 0.2)' }} />
+                    <MenuItem onClick={() => {
+                      setProfileMenuAnchor(null);
+                      signOut();
+                    }}>
+                      <ListItemIcon>
+                        <LogoutIcon sx={{ color: '#ff6b35' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="Sign Out" />
+                    </MenuItem>
+                  </Menu>
                 </Box>
               </Toolbar>
             </AppBar>
@@ -852,18 +1246,20 @@ function App() {
                 transition={{ duration: 0.5 }}
               >
                 <Typography 
-                  variant="h3" 
+                  variant="h2" 
                   component="h1" 
                   align="center" 
                   gutterBottom
                   sx={{ 
                     mb: 1,
-                    background: 'linear-gradient(45deg, #3f51b5 30%, #f50057 90%)',
+                    fontWeight: 800,
+                    background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
                     WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
                   }}
                 >
-                  AI Resume Optimizer
+                  AI-Powered Resume Optimization
                 </Typography>
                 <Typography 
                   variant="h6" 
@@ -871,9 +1267,9 @@ function App() {
                   align="center" 
                   color="textSecondary"
                   gutterBottom
-                  sx={{ mb: 4, fontWeight: 400 }}
+                  sx={{ mb: 4, fontWeight: 400, color: '#b0b0b0' }}
                 >
-                  Tailor your resume to match job descriptions with AI
+                  Transform your resume with intelligent AI matching for maximum ATS compatibility
                 </Typography>
               </motion.div>
               
@@ -1318,16 +1714,33 @@ function App() {
               </motion.div>
               
               <Box sx={{ mt: 6, textAlign: 'center' }}>
-                <Divider sx={{ mb: 3 }} />
-                <Typography variant="body2" color="textSecondary">
-                  Resume Optimizer uses AI to tailor your resume to specific job descriptions,
-                  increasing your chances of getting past Applicant Tracking Systems (ATS).
+                <Divider sx={{ mb: 3, borderColor: 'rgba(255, 107, 53, 0.2)' }} />
+                <Typography variant="body2" color="textSecondary" sx={{ color: '#b0b0b0' }}>
+                  Resume Optimizer Pro uses advanced AI to tailor your resume to specific job descriptions,
+                  significantly increasing your chances of getting past Applicant Tracking Systems (ATS).
                 </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                  Your data is processed securely and not stored permanently.
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 1, color: '#b0b0b0' }}>
+                  Your data is processed securely with enterprise-grade encryption and not stored permanently.
                 </Typography>
               </Box>
             </Container>
+            
+            {/* Profile Dialog */}
+            <ProfileDialog
+              open={profileDialogOpen}
+              onClose={() => setProfileDialogOpen(false)}
+              user={user}
+              userProfile={userProfile}
+              setUserProfile={setUserProfile}
+            />
+            
+            {/* Settings Dialog */}
+            <SettingsDialog
+              open={settingsDialogOpen}
+              onClose={() => setSettingsDialogOpen(false)}
+              userProfile={userProfile}
+              setUserProfile={setUserProfile}
+            />
             
             <Snackbar
               open={snackbarOpen}
