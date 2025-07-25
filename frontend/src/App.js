@@ -943,6 +943,7 @@ function App() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5 }}
+                      style={{ position: 'relative', zIndex: 1 }}
                     >
                       <Typography variant="h5" gutterBottom>
                         Enter Job Description
@@ -963,10 +964,19 @@ function App() {
                         sx={{ mb: 3 }}
                       />
                       
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, position: 'relative', zIndex: 1 }}>
                         <Button 
                           variant="outlined" 
-                          onClick={() => setActiveStep(0)}
+                          onClick={() => {
+                            setActiveStep(0);
+                            // Reset any processing state when going back
+                            setIsPolling(false);
+                            setIsSubmitting(false);
+                            setJobStatus(null);
+                            setStatusMessage('');
+                            resetProcessingState();
+                          }}
+                          sx={{ position: 'relative', zIndex: 2 }}
                         >
                           Back
                         </Button>
@@ -1074,21 +1084,49 @@ function App() {
                           maxWidth: 700
                         }}
                       >
-                        {/* Status Message and Progress Bar in Grid Layout */}
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 4, alignItems: 'center' }}>
+                        {/* Single Container with Status and Progress Side by Side */}
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 4,
+                          '@media (max-width: 768px)': {
+                            flexDirection: 'column',
+                            gap: 3
+                          }
+                        }}>
                           {/* Status Message - Left Side */}
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <CircularProgress size={32} sx={{ mr: 2 }} />
-                            <Box>
-                              <Typography variant="body1" fontWeight={600} sx={{ fontSize: '1rem', lineHeight: 1.3 }}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center',
+                            flex: '1 1 auto',
+                            minWidth: 0
+                          }}>
+                            <CircularProgress size={32} sx={{ mr: 2, flexShrink: 0 }} />
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="body1" fontWeight={600} sx={{ 
+                                fontSize: '1rem', 
+                                lineHeight: 1.3,
+                                wordBreak: 'break-word'
+                              }}>
                                 {getEnhancedStatusMessage(jobStatus, statusMessage)}
                               </Typography>
                             </Box>
                           </Box>
                           
-                          {/* Progress Bar - Right Side (Emphasized) */}
-                          <Box>
-                            <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
+                          {/* Progress Bar - Right Side */}
+                          <Box sx={{ 
+                            flex: '1 1 auto',
+                            minWidth: 200,
+                            '@media (max-width: 768px)': {
+                              width: '100%',
+                              minWidth: 'auto'
+                            }
+                          }}>
+                            <Typography variant="h6" gutterBottom sx={{ 
+                              textAlign: 'center', 
+                              mb: 2,
+                              fontSize: '1.1rem'
+                            }}>
                               Overall Progress
                             </Typography>
                             <LinearProgress 
@@ -1104,14 +1142,25 @@ function App() {
                                 }
                               }}
                             />
-                            <Typography variant="h5" color="primary" sx={{ mt: 2, textAlign: 'center', fontWeight: 700 }}>
+                            <Typography variant="h5" color="primary" sx={{ 
+                              mt: 2, 
+                              textAlign: 'center', 
+                              fontWeight: 700,
+                              fontSize: '1.5rem'
+                            }}>
                               {Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100)}% Complete
                             </Typography>
                           </Box>
                         </Box>
 
-                        {/* Estimated time */}
-                        <Box sx={{ textAlign: 'center', mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'primary.200' }}>
+                        {/* Estimated time - Full width below */}
+                        <Box sx={{ 
+                          textAlign: 'center', 
+                          mt: 3, 
+                          pt: 2, 
+                          borderTop: '1px solid', 
+                          borderColor: 'primary.200' 
+                        }}>
                           <Typography variant="body1" color="textSecondary" sx={{ fontWeight: 500 }}>
                             ⏱️ Estimated time remaining: 30-45 seconds
                           </Typography>
@@ -1179,12 +1228,14 @@ function App() {
                         <Button 
                           variant="outlined" 
                           onClick={() => {
-                            // Reset processing state and go back
+                            // Reset processing state and go back to job description step
                             setIsPolling(false);
                             setIsSubmitting(false);
                             setJobStatus(null);
                             setStatusMessage('');
+                            setJobId(null);
                             resetProcessingState();
+                            // Stay on step 1 but show job description form instead of processing
                           }}
                           disabled={isSubmitting}
                         >
