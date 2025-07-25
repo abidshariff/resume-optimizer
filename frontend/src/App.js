@@ -1137,7 +1137,7 @@ function App() {
                               mt: 2,
                               fontWeight: 500
                             }}>
-                              ⏱️ Estimated time: 15-30 seconds
+                              ⏱️ Time to complete: 30-45 seconds
                             </Typography>
                           </Box>
                         </Box>
