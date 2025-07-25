@@ -509,9 +509,9 @@ def lambda_handler(event, context):
         
         # Call Amazon Bedrock
         try:
-            # Call Amazon Bedrock with Claude 3 Sonnet
+            # Call Amazon Bedrock with Claude 3.5 Sonnet (active model)
             response = bedrock_runtime.invoke_model(
-                modelId='anthropic.claude-3-sonnet-20240229-v1:0',
+                modelId='anthropic.claude-3-5-sonnet-20240620-v1:0',
                 body=json.dumps({
                     "anthropic_version": "bedrock-2023-05-31",
                     "max_tokens": 4000,
