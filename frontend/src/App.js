@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { get, post } from 'aws-amplify/api';
+import { get } from 'aws-amplify/api';
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react/styles.css';
@@ -460,67 +460,53 @@ function App() {
         console.log("Submitting job to API...");
         console.log("API endpoint:", 'https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev/optimize');
         
-        const responseData = await post({
-          apiName: 'resumeOptimizer',
-          path: '/optimize',
-          options: {
-            body: payload,
-            headers: {
-              'Authorization': idToken,
-              'Content-Type': 'application/json'
-            }
-          }
+        // Use direct fetch instead of Amplify post to avoid response wrapping issues
+        const response = await fetch('https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev/optimize', {
+          method: 'POST',
+          headers: {
+            'Authorization': idToken,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
         });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("API request failed:", response.status, errorText);
+          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
+        
+        const responseData = await response.json();
         
         console.log("API response received:", responseData);
         console.log("Response type:", typeof responseData);
         console.log("Response keys:", responseData ? Object.keys(responseData) : 'null');
         console.log("Raw response JSON:", JSON.stringify(responseData, null, 2));
         
-        // Handle different response formats more robustly
-        let actualResponse = responseData;
-        
-        // Handle string responses
-        if (typeof responseData === 'string') {
-          try {
-            actualResponse = JSON.parse(responseData);
-            console.log("Parsed string response:", actualResponse);
-          } catch (e) {
-            console.error("Failed to parse string response:", e);
-            throw new Error(`Invalid response format: ${responseData}`);
-          }
-        }
-        
-        // If the response is wrapped in a 'response' object, unwrap it
-        if (actualResponse && actualResponse.response && typeof actualResponse.response === 'object') {
-          actualResponse = actualResponse.response;
-          console.log("Unwrapped response:", actualResponse);
-        }
-        
         // Validate response structure
-        if (!actualResponse || typeof actualResponse !== 'object') {
+        if (!responseData || typeof responseData !== 'object') {
           throw new Error(`Invalid response structure: ${JSON.stringify(responseData)}`);
         }
         
         // Check if we have a jobId in the response
-        if (actualResponse && actualResponse.jobId) {
-          console.log("Job ID found:", actualResponse.jobId);
-          setJobId(actualResponse.jobId);
-          setJobStatus(actualResponse.status || 'PROCESSING');
-          setStatusMessage(actualResponse.message || 'Job submitted and processing started');
+        if (responseData && responseData.jobId) {
+          console.log("Job ID found:", responseData.jobId);
+          setJobId(responseData.jobId);
+          setJobStatus(responseData.status || 'PROCESSING');
+          setStatusMessage(responseData.message || 'Job submitted and processing started');
           setIsPolling(true);
           setIsSubmitting(false);
         } else {
           console.error("Invalid API response - no jobId found");
           console.error("Full response:", JSON.stringify(responseData, null, 2));
-          console.error("Actual response:", JSON.stringify(actualResponse, null, 2));
           
           // Check if there's an error message in the response
           let errorMessage = 'No job ID returned from the API';
-          if (actualResponse && actualResponse.error) {
-            errorMessage = actualResponse.error;
-          } else if (actualResponse && actualResponse.message) {
-            errorMessage = actualResponse.message;
+          if (responseData && responseData.error) {
+            errorMessage = responseData.error;
+          } else if (responseData && responseData.message) {
+            errorMessage = responseData.message;
           } else if (responseData && responseData.error) {
             errorMessage = responseData.error;
           } else if (responseData && responseData.message) {
