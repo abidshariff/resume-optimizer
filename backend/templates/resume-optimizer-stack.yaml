@@ -232,7 +232,7 @@ Resources:
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET,PUT,DELETE'"
-              method.response.header.Access-Control-Allow-Origin: "'https://main.d16ci5rhuvcide.amplifyapp.com'"
+              method.response.header.Access-Control-Allow-Origin: "'https://main.d3tjpmlvy19b2l.amplifyapp.com'"
             ResponseTemplates:
               application/json: '{}'
         PassthroughBehavior: WHEN_NO_MATCH

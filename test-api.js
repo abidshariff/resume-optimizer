@@ -4,7 +4,7 @@ console.log("================================");
 
 // Configuration values from .env
 const config = {
-  apiEndpoint: "https://3bemzv60ge.execute-api.us-east-1.amazonaws.com/dev",
+  apiEndpoint: "https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev",
   userPoolId: "us-east-1_Hgs2gd3iK",
   userPoolWebClientId: "6ql99bmnbe2fr2dcl8n5cda3de"
 };

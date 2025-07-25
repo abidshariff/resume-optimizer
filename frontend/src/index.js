@@ -7,7 +7,7 @@ import { CssBaseline } from '@mui/material';
 import config from './config';
 
 // Get API endpoint from environment variables or config
-const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || 'https://3bemzv60ge.execute-api.us-east-1.amazonaws.com/dev';
+const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || 'https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev';
 const userPoolId = process.env.REACT_APP_USER_POOL_ID || 'us-east-1_Hgs2gd3iK';
 const userPoolWebClientId = process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || '6ql99bmnbe2fr2dcl8n5cda3de';
 

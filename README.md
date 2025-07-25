@@ -195,7 +195,7 @@ This will start a development server at http://localhost:3000.
 The application is currently deployed with the following resources:
 
 - **Frontend URL**: https://main.d16ci5rhuvcide.amplifyapp.com
-- **API Endpoint**: https://dqypjuueic.execute-api.us-east-1.amazonaws.com/dev/optimize
+- **API Endpoint**: https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev/optimize
 - **User Pool ID**: us-east-1_WFZ10DH6I
 - **User Pool Client ID**: 6bhk08l5egdqjgimmaau0jmrd6
 
