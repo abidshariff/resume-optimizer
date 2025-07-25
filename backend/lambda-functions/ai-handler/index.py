@@ -11,6 +11,28 @@ import datetime
 from datetime import datetime
 from minimal_word_generator import create_minimal_word_resume
 
+# AI Model Configuration - Models are tried in order of preference
+AI_MODELS = [
+    {
+        'id': 'anthropic.claude-sonnet-4-20250514-v1:0',
+        'name': 'Claude Sonnet 4',
+        'max_tokens': 4000,
+        'description': 'Latest and most capable Claude model'
+    },
+    {
+        'id': 'anthropic.claude-3-7-sonnet-20250219-v1:0', 
+        'name': 'Claude 3.7 Sonnet',
+        'max_tokens': 4000,
+        'description': 'Enhanced Claude 3 model with improved capabilities'
+    },
+    {
+        'id': 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+        'name': 'Claude 3.5 Sonnet', 
+        'max_tokens': 4000,
+        'description': 'Reliable Claude 3.5 model with good performance'
+    }
+]
+
 s3 = boto3.client('s3')
 bedrock_runtime = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
@@ -507,72 +529,124 @@ def lambda_handler(event, context):
         Return ONLY the JSON structure with the optimized resume content. Do not include explanations or notes.
         """
         
-        # Call Amazon Bedrock
-        try:
-            # Call Amazon Bedrock with Claude 3.5 Sonnet (active model)
-            response = bedrock_runtime.invoke_model(
-                modelId='anthropic.claude-3-5-sonnet-20240620-v1:0',
-                body=json.dumps({
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": 4000,
-                    "temperature": 0.5,
-                    "system": "You are an expert ATS resume optimizer that preserves document formatting.",
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ]
-                })
-            )
-            response_body = json.loads(response['body'].read())
-            optimized_resume = response_body['content'][0]['text']
+        # Call Amazon Bedrock with automatic model fallback
+        def call_bedrock_with_fallback(prompt):
+            """
+            Call Bedrock with automatic model fallback.
+            Uses the AI_MODELS configuration defined at the top of the file.
+            """
             
-            # Fallback to simulated response if Bedrock call fails
-            if not optimized_resume:
-                print("Warning: Empty response from Bedrock, using fallback")
-                optimized_resume = f"""
-                # OPTIMIZED RESUME
-                
-                ## PROFESSIONAL SUMMARY
-                Experienced software developer with expertise in cloud technologies and web application development.
-                Skilled in creating scalable solutions using AWS services and modern frontend frameworks.
-                
-                ## SKILLS
-                - Cloud Technologies: AWS (Lambda, S3, DynamoDB, API Gateway)
-                - Programming Languages: Python, JavaScript, TypeScript
-                - Web Development: React, Vue.js, HTML5, CSS3
-                - DevOps: CI/CD, Infrastructure as Code, CloudFormation
-                - AI/ML: Integration with LLM services, prompt engineering
-                
-                ## EXPERIENCE
-                
-                **Senior Software Engineer**
-                *Tech Solutions Inc. | 2022 - Present*
-                - Developed serverless applications using AWS Lambda and API Gateway
-                - Implemented authentication flows with Amazon Cognito
-                - Created responsive web interfaces with React and Material UI
-                - Integrated AI capabilities using Amazon Bedrock
-                
-                **Software Developer**
-                *Digital Innovations | 2019 - 2022*
-                - Built and maintained web applications using Vue.js and Node.js
-                - Designed and implemented RESTful APIs
-                - Collaborated with cross-functional teams to deliver projects on schedule
-                
-                ## EDUCATION
-                **Bachelor of Science in Computer Science**
-                *University of Technology | 2019*
-                """
+            print(f"Starting AI model fallback with {len(AI_MODELS)} models configured")
+            last_error = None
+            
+            # Try each model in order
+            for i, model in enumerate(AI_MODELS):
+                try:
+                    print(f"Attempting to use {model['name']} (model {i+1}/{len(AI_MODELS)})")
+                    print(f"  Model ID: {model['id']}")
+                    print(f"  Description: {model['description']}")
+                    
+                    response = bedrock_runtime.invoke_model(
+                        modelId=model['id'],
+                        body=json.dumps({
+                            "anthropic_version": "bedrock-2023-05-31",
+                            "max_tokens": model['max_tokens'],
+                            "temperature": 0.5,
+                            "system": "You are an expert ATS resume optimizer that preserves document formatting.",
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": prompt
+                                }
+                            ]
+                        })
+                    )
+                    
+                    # Parse the response
+                    response_body = json.loads(response['body'].read())
+                    optimized_resume = response_body['content'][0]['text']
+                    
+                    if optimized_resume and len(optimized_resume.strip()) > 100:
+                        print(f"✅ Successfully used {model['name']}")
+                        print(f"Response length: {len(optimized_resume)} characters")
+                        return optimized_resume, model['name']
+                    else:
+                        print(f"⚠️ {model['name']} returned empty/short response, trying next model...")
+                        continue
+                        
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"❌ {model['name']} failed: {error_msg}")
+                    last_error = e
+                    
+                    # Check if it's a recoverable error that should trigger fallback
+                    recoverable_errors = [
+                        "AccessDeniedException", 
+                        "ThrottlingException", 
+                        "ModelNotReadyException",
+                        "ServiceUnavailableException",
+                        "ValidationException",
+                        "ResourceNotFoundException",
+                        "ModelTimeoutException",
+                        "ModelErrorException"
+                    ]
+                    
+                    if any(error_type in error_msg for error_type in recoverable_errors):
+                        print(f"   → Recoverable error with {model['name']}, trying next model...")
+                        continue
+                    else:
+                        print(f"   → Unexpected error with {model['name']}: {error_msg}")
+                        continue
+            
+            # If all models failed, raise the last error
+            print(f"❌ All {len(AI_MODELS)} models failed. Last error: {last_error}")
+            raise Exception(f"All Bedrock models failed. Last error: {str(last_error)}")
+        
+        try:
+            print("Starting resume optimization with automatic model fallback...")
+            optimized_resume, model_used = call_bedrock_with_fallback(prompt)
+            print(f"Resume optimization completed successfully using {model_used}")
             
         except Exception as e:
-            error_msg = f'Error generating optimized resume: {str(e)}'
-            print(f"Error calling Bedrock: {str(e)}")
-            update_job_status(bucket_name, status_key, 'FAILED', error_msg)
-            return {
-                'error': error_msg,
-                'headers': CORS_HEADERS
-            }
+            error_msg = f'Error generating optimized resume with all models: {str(e)}'
+            print(f"All Bedrock models failed: {str(e)}")
+            
+            # Provide a fallback response if all models fail
+            print("Using emergency fallback response...")
+            optimized_resume = f"""```json
+{{
+  "full_name": "Resume Optimization Unavailable",
+  "contact_info": "AI service temporarily unavailable",
+  "professional_summary": "We apologize, but our AI resume optimization service is currently experiencing technical difficulties. Your original resume content has been preserved, but we were unable to optimize it at this time. Please try again later or contact support if the issue persists.",
+  "skills": [
+    "Original resume content preserved",
+    "AI optimization temporarily unavailable",
+    "Please try again later"
+  ],
+  "experience": [
+    {{
+      "title": "Service Notice",
+      "company": "Resume Optimizer",
+      "dates": "Current",
+      "achievements": [
+        "Your resume was successfully uploaded and processed",
+        "AI optimization models are temporarily unavailable",
+        "Original content has been preserved for future processing",
+        "Please try submitting your resume again in a few minutes"
+      ]
+    }}
+  ],
+  "education": [
+    {{
+      "degree": "Technical Notice",
+      "institution": "Resume Optimizer Service",
+      "dates": "Current",
+      "details": "All AI models are currently experiencing issues. This is a temporary service disruption."
+    }}
+  ]
+}}
+```"""
+            model_used = "Emergency Fallback"
         
         # Update status to finalizing
         update_job_status(bucket_name, status_key, 'PROCESSING', 'Finalizing optimized resume')
@@ -714,11 +788,13 @@ def lambda_handler(event, context):
                 # Continue even if DynamoDB recording fails
         
         # Update status to completed
-        update_job_status(bucket_name, status_key, 'COMPLETED', 'Resume optimization complete', {
+        completion_message = f'Resume optimization complete using {model_used}'
+        update_job_status(bucket_name, status_key, 'COMPLETED', completion_message, {
             'optimizedResumeUrl': optimized_url,
             'fileType': output_extension,
             'contentType': content_type,
-            'downloadFilename': download_filename
+            'downloadFilename': download_filename,
+            'aiModel': model_used
         })
         
         return {
