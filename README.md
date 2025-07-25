@@ -196,8 +196,8 @@ The application is currently deployed with the following resources:
 
 - **Frontend URL**: https://main.d16ci5rhuvcide.amplifyapp.com
 - **API Endpoint**: https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev/optimize
-- **User Pool ID**: us-east-1_WFZ10DH6I
-- **User Pool Client ID**: 6bhk08l5egdqjgimmaau0jmrd6
+- **User Pool ID**: us-east-1_RFsEVrGxp
+- **User Pool Client ID**: 4gpgj1rubf5v84kptlfhi8j6c6
 
 ## Cleanup
 
