@@ -247,6 +247,134 @@ function App() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [outputFormat, setOutputFormat] = useState('word'); // Default to Word format
   
+  // Enhanced UX state for processing
+  const [processingStep, setProcessingStep] = useState(0);
+  const [currentTip, setCurrentTip] = useState(0);
+  
+  // Educational tips to show during processing
+  const educationalTips = [
+    {
+      icon: "🎯",
+      title: "ATS Optimization",
+      text: "ATS systems scan for exact keyword matches from job descriptions. We're strategically placing relevant keywords throughout your resume."
+    },
+    {
+      icon: "📊", 
+      title: "Recruiter Insights",
+      text: "Recruiters spend only 6 seconds on initial resume review. We're optimizing your content for maximum impact in those crucial first moments."
+    },
+    {
+      icon: "✨",
+      title: "Achievement Focus", 
+      text: "Quantified achievements increase interview chances by 40%. We're highlighting your measurable accomplishments and impact."
+    },
+    {
+      icon: "🚀",
+      title: "Action Verbs",
+      text: "Action verbs like 'implemented', 'optimized', and 'achieved' catch recruiter attention. We're enhancing your experience descriptions."
+    },
+    {
+      icon: "🔍",
+      title: "Keyword Density",
+      text: "The right keyword density helps your resume rank higher in ATS searches while maintaining natural readability."
+    },
+    {
+      icon: "📝",
+      title: "Professional Format",
+      text: "Clean, professional formatting ensures your resume looks great both in ATS systems and to human recruiters."
+    }
+  ];
+
+  // Processing milestones
+  const processingMilestones = [
+    { id: 0, label: "Analyzing your resume", icon: "📄", completed: false },
+    { id: 1, label: "Extracting key skills and experience", icon: "🔍", completed: false },
+    { id: 2, label: "Matching with job requirements", icon: "🎯", completed: false },
+    { id: 3, label: "AI optimization in progress", icon: "🤖", completed: false },
+    { id: 4, label: "Generating optimized document", icon: "📝", completed: false },
+    { id: 5, label: "Finalizing your resume", icon: "✨", completed: false }
+  ];
+
+  const [milestones, setMilestones] = useState(processingMilestones);
+
+  // Enhanced status messages based on actual backend status
+  const getEnhancedStatusMessage = (status, message) => {
+    switch (status) {
+      case 'PROCESSING':
+        if (message.includes('Processing resume')) {
+          return "Reading your resume content and extracting key information...";
+        } else if (message.includes('Generating optimized resume')) {
+          return "Claude AI is optimizing your experience and skills sections...";
+        } else if (message.includes('Finalizing')) {
+          return "Creating your professionally formatted Word document...";
+        }
+        return "AI optimization in progress...";
+      case 'COMPLETED':
+        return "🎉 Your optimized resume is ready for download!";
+      case 'FAILED':
+        return message || "Optimization failed. Please try again.";
+      default:
+        return message || "Processing your resume...";
+    }
+  };
+
+  // Rotate educational tips every 4 seconds during processing
+  useEffect(() => {
+    let tipInterval;
+    if (isPolling) {
+      tipInterval = setInterval(() => {
+        setCurrentTip((prev) => (prev + 1) % educationalTips.length);
+      }, 4000);
+    }
+    return () => {
+      if (tipInterval) clearInterval(tipInterval);
+    };
+  }, [isPolling, educationalTips.length]);
+
+  // Update processing milestones based on status
+  useEffect(() => {
+    if (isPolling && jobStatus) {
+      const newMilestones = [...milestones];
+      
+      // Progress milestones based on status and time
+      if (jobStatus === 'PROCESSING') {
+        // Complete first 3 milestones immediately
+        newMilestones[0].completed = true;
+        newMilestones[1].completed = true;
+        newMilestones[2].completed = true;
+        
+        // Progress through remaining milestones over time
+        setTimeout(() => {
+          setMilestones(prev => {
+            const updated = [...prev];
+            updated[3].completed = true;
+            return updated;
+          });
+        }, 8000);
+        
+        setTimeout(() => {
+          setMilestones(prev => {
+            const updated = [...prev];
+            updated[4].completed = true;
+            return updated;
+          });
+        }, 20000);
+      } else if (jobStatus === 'COMPLETED') {
+        // Complete all milestones
+        newMilestones.forEach(milestone => milestone.completed = true);
+      }
+      
+      setMilestones(newMilestones);
+    }
+  }, [jobStatus, isPolling]);
+
+  // Reset milestones when starting new job
+  const resetProcessingState = () => {
+    setMilestones(processingMilestones.map(m => ({ ...m, completed: false })));
+    setCurrentTip(0);
+    setProcessingStep(0);
+  };
+
   // Legacy variables for backward compatibility with existing UI
   const isProcessing = isSubmitting || isPolling;
   const optimizedResume = result ? 'Resume ready for download' : null;
@@ -372,6 +500,9 @@ function App() {
     setError(null);
     setJobStatus('SUBMITTING');
     setStatusMessage('Submitting your resume for optimization...');
+    
+    // Reset processing state for new job
+    resetProcessingState();
     
     try {
       console.log("Starting resume optimization...");
@@ -638,6 +769,9 @@ function App() {
     setResume(null);
     setResumeName('');
     setJobDescription('');
+    
+    // Reset processing state
+    resetProcessingState();
   };
 
   // Custom form fields for the Authenticator
@@ -842,6 +976,164 @@ function App() {
                             </>
                           ) : 'Optimize Resume'}
                         </Button>
+                      </Box>
+                    </motion.div>
+                  )}
+                  
+                  {/* Processing Screen - Show when job is being processed */}
+                  {isProcessing && !result && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <Box sx={{ textAlign: 'center', mb: 4 }}>
+                        <Typography variant="h5" gutterBottom>
+                          🤖 Optimizing Your Resume
+                        </Typography>
+                        <Typography variant="body1" color="textSecondary" paragraph>
+                          Our AI is analyzing your resume and tailoring it to the job description.
+                        </Typography>
+                      </Box>
+
+                      {/* Progress Milestones */}
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+                          Progress
+                        </Typography>
+                        {milestones.map((milestone, index) => (
+                          <Box 
+                            key={milestone.id}
+                            sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              mb: 2,
+                              opacity: milestone.completed ? 1 : 0.6
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                backgroundColor: milestone.completed ? 'success.main' : 'grey.300',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mr: 2,
+                                transition: 'all 0.3s ease'
+                              }}
+                            >
+                              {milestone.completed ? (
+                                <CheckCircleIcon sx={{ color: 'white', fontSize: 20 }} />
+                              ) : (
+                                <Typography sx={{ fontSize: 16 }}>{milestone.icon}</Typography>
+                              )}
+                            </Box>
+                            <Typography 
+                              variant="body1" 
+                              sx={{ 
+                                fontWeight: milestone.completed ? 600 : 400,
+                                color: milestone.completed ? 'text.primary' : 'text.secondary'
+                              }}
+                            >
+                              {milestone.label}
+                              {milestone.completed && ' ✅'}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+
+                      {/* Enhanced Status Message */}
+                      <Paper 
+                        variant="outlined" 
+                        sx={{ 
+                          p: 3, 
+                          mb: 4,
+                          bgcolor: 'primary.50',
+                          borderColor: 'primary.200'
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <CircularProgress size={24} sx={{ mr: 2 }} />
+                          <Typography variant="body1" fontWeight={600}>
+                            {getEnhancedStatusMessage(jobStatus, statusMessage)}
+                          </Typography>
+                        </Box>
+                        
+                        {/* Progress Bar */}
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={(milestones.filter(m => m.completed).length / milestones.length) * 100}
+                          sx={{ 
+                            height: 8, 
+                            borderRadius: 4,
+                            backgroundColor: 'grey.200',
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: 4
+                            }
+                          }}
+                        />
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                          {Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100)}% Complete
+                        </Typography>
+                      </Paper>
+
+                      {/* Educational Tips */}
+                      <Paper 
+                        variant="outlined" 
+                        sx={{ 
+                          p: 3,
+                          bgcolor: 'info.50',
+                          borderColor: 'info.200',
+                          minHeight: 120
+                        }}
+                      >
+                        <motion.div
+                          key={currentTip}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                            <Typography sx={{ fontSize: 32, mr: 2 }}>
+                              {educationalTips[currentTip].icon}
+                            </Typography>
+                            <Box>
+                              <Typography variant="h6" gutterBottom>
+                                💡 {educationalTips[currentTip].title}
+                              </Typography>
+                              <Typography variant="body2" color="textSecondary">
+                                {educationalTips[currentTip].text}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </motion.div>
+                        
+                        {/* Tip indicators */}
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                          {educationalTips.map((_, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                backgroundColor: index === currentTip ? 'info.main' : 'grey.300',
+                                mx: 0.5,
+                                transition: 'all 0.3s ease'
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      </Paper>
+
+                      {/* Estimated time */}
+                      <Box sx={{ textAlign: 'center', mt: 3 }}>
+                        <Typography variant="body2" color="textSecondary">
+                          ⏱️ Estimated time remaining: 30-45 seconds
+                        </Typography>
                       </Box>
                     </motion.div>
                   )}
