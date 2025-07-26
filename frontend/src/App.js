@@ -2260,9 +2260,42 @@ function App() {
   // Main app structure with proper authentication flow
   return (
     <ThemeProvider theme={theme}>
-      <Authenticator 
-        loginMechanisms={['email']} // Changed to email only for better compatibility
-        formFields={formFields}
+      {/* Show landing page when not in auth mode */}
+      {!showAuth ? (
+        <LandingPage 
+          onGetStarted={handleGetStarted}
+          onSignIn={handleSignIn}
+        />
+      ) : (
+        /* Show Authenticator when user wants to sign in/up */
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+          {/* Back to Landing Page Button */}
+          <Box sx={{ 
+            position: 'absolute', 
+            top: 20, 
+            left: 20, 
+            zIndex: 1000 
+          }}>
+            <Button
+              variant="outlined"
+              onClick={() => setShowAuth(false)}
+              sx={{
+                borderColor: '#0A66C2',
+                color: '#0A66C2',
+                '&:hover': {
+                  borderColor: '#666666',
+                  color: '#666666',
+                  backgroundColor: 'rgba(10, 102, 194, 0.1)'
+                }
+              }}
+            >
+              ← Back to Home
+            </Button>
+          </Box>
+
+          <Authenticator 
+            loginMechanisms={['email']} // Changed to email only for better compatibility
+            formFields={formFields}
           components={components}
           initialState={authMode}
           signUpAttributes={[
@@ -3156,17 +3189,10 @@ function App() {
                 </Box>
               );
             }
-              
-              // If user is not authenticated, show landing page
-              return (
-                <LandingPage 
-                  onGetStarted={() => setAuthMode('signUp')}
-                  onSignIn={() => setAuthMode('signIn')}
-                />
-              );
-            }
           }}
         </Authenticator>
+        </Box>
+      )}
     </ThemeProvider>
   );
 }
