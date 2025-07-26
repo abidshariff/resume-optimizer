@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAuthSession } from 'aws-amplify/auth';
+import { fetchAuthSession, deleteUser } from 'aws-amplify/auth';
 import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react/styles.css';
@@ -63,7 +63,8 @@ import {
   TrendingUp as TrendingUpIcon,
   Speed as SpeedIcon,
   Shield as ShieldIcon,
-  Psychology as PsychologyIcon
+  Psychology as PsychologyIcon,
+  DeleteForever as DeleteForeverIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -1336,6 +1337,9 @@ function App() {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [userProfile, setUserProfile] = useState({
     firstName: '',
     lastName: '',
@@ -1495,6 +1499,51 @@ function App() {
   const handleSignIn = () => {
     setAuthMode('signIn');
     setShowAuth(true);
+  };
+
+  // Handle profile deletion
+  const handleDeleteProfile = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      setSnackbarMessage('Please type "DELETE" to confirm account deletion');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      // Delete the user account from Cognito
+      await deleteUser();
+      
+      // Show success message
+      setSnackbarMessage('Account successfully deleted. You will be signed out.');
+      setSnackbarOpen(true);
+      
+      // Close the dialog
+      setDeleteConfirmDialogOpen(false);
+      setDeleteConfirmText('');
+      
+      // Note: The user will be automatically signed out after account deletion
+      // The Authenticator component will handle the redirect to the sign-in page
+      
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setSnackbarMessage(`Error deleting account: ${error.message}`);
+      setSnackbarOpen(true);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle delete confirmation dialog
+  const handleOpenDeleteDialog = () => {
+    setDeleteConfirmDialogOpen(true);
+    setProfileMenuAnchor(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteConfirmDialogOpen(false);
+    setDeleteConfirmText('');
+    setIsDeleting(false);
   };
 
   // Save optimization to history (in real app, this would save to backend)
@@ -2501,6 +2550,12 @@ function App() {
                       <ListItemText primary="History" />
                     </MenuItem>
                     <Divider sx={{ borderColor: 'rgba(10, 102, 194, 0.2)' }} />
+                    <MenuItem onClick={handleOpenDeleteDialog}>
+                      <ListItemIcon>
+                        <DeleteForeverIcon sx={{ color: '#CC1016' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="Delete Account" sx={{ color: '#CC1016' }} />
+                    </MenuItem>
                     <MenuItem onClick={() => {
                       setProfileMenuAnchor(null);
                       signOut();
@@ -3041,6 +3096,86 @@ function App() {
               userProfile={userProfile}
               setUserProfile={setUserProfile}
             />
+            
+            {/* Delete Account Confirmation Dialog */}
+            <Dialog 
+              open={deleteConfirmDialogOpen} 
+              onClose={handleCloseDeleteDialog} 
+              maxWidth="sm" 
+              fullWidth
+            >
+              <DialogTitle sx={{ 
+                background: 'linear-gradient(45deg, #CC1016 30%, #FF4444 90%)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <DeleteForeverIcon sx={{ mr: 1 }} />
+                Delete Account
+              </DialogTitle>
+              <DialogContent sx={{ mt: 2 }}>
+                <Typography variant="body1" sx={{ mb: 3, fontWeight: 500 }}>
+                  ⚠️ This action cannot be undone. Deleting your account will:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, mb: 3 }}>
+                  <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                    Permanently delete your profile and account data
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                    Remove all your resume optimization history
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                    Cancel any active subscriptions or services
+                  </Typography>
+                  <Typography component="li" variant="body2">
+                    Sign you out of all devices immediately
+                  </Typography>
+                </Box>
+                <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
+                  To confirm deletion, please type <strong>DELETE</strong> in the field below:
+                </Typography>
+                <TextField
+                  fullWidth
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type DELETE to confirm"
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#CC1016',
+                      },
+                    },
+                  }}
+                />
+              </DialogContent>
+              <DialogActions sx={{ p: 3 }}>
+                <Button 
+                  onClick={handleCloseDeleteDialog} 
+                  variant="outlined"
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleDeleteProfile} 
+                  variant="contained"
+                  disabled={deleteConfirmText !== 'DELETE' || isDeleting}
+                  sx={{
+                    backgroundColor: '#CC1016',
+                    '&:hover': {
+                      backgroundColor: '#AA0E14',
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#CCCCCC',
+                    }
+                  }}
+                  startIcon={isDeleting ? <CircularProgress size={20} color="inherit" /> : <DeleteForeverIcon />}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Account'}
+                </Button>
+              </DialogActions>
+            </Dialog>
             
             <Snackbar
               open={snackbarOpen}
