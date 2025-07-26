@@ -24,6 +24,63 @@ code {
     monospace;
 }
 
+/* Hide ONLY the default Authenticator container styling, but keep form fields visible */
+.amplify-authenticator {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.amplify-authenticator__router {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Hide default tabs since we have custom navigation */
+.amplify-tabs {
+  display: none !important;
+}
+
+/* Hide ONLY the main heading, not form labels */
+.amplify-authenticator .amplify-heading:first-child {
+  display: none !important;
+}
+
+/* Hide default form container styling but keep form fields */
+.amplify-authenticator > .amplify-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Hide only the first descriptive text, not form elements */
+.amplify-authenticator .amplify-text:first-of-type {
+  display: none !important;
+}
+
+/* Ensure form fields are visible and properly styled */
+.amplify-field-group {
+  display: block !important;
+  margin-bottom: 16px !important;
+}
+
+.amplify-field {
+  display: block !important;
+  width: 100% !important;
+}
+
+.amplify-field-group__field-wrapper {
+  display: block !important;
+  margin-bottom: 16px !important;
+}
+
 /* LinkedIn-style scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -44,37 +101,63 @@ code {
   background: #999999;
 }
 
-/* Amplify UI customizations with LinkedIn theme */
-.amplify-button[data-variation='primary'] {
-  background: #0A66C2 !important; /* LinkedIn Blue */
-  border-color: #0A66C2 !important;
+/* Custom button styling to match LinkedIn */
+.amplify-button[data-variation="primary"] {
+  background-color: #0A66C2 !important;
+  border: 1px solid #0A66C2 !important;
   border-radius: 24px !important;
   font-weight: 600 !important;
-  padding: 8px 16px !important;
+  height: 52px !important;
+  width: 100% !important;
+  text-transform: none !important;
+  font-size: 16px !important;
+  display: block !important;
+  margin-top: 16px !important;
 }
 
-.amplify-button[data-variation='primary']:hover {
-  background: #004182 !important;
+.amplify-button[data-variation="primary"]:hover {
+  background-color: #004182 !important;
   border-color: #004182 !important;
 }
 
-.amplify-tabs {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08);
-  background-color: #FFFFFF;
+/* Custom input styling to match LinkedIn */
+.amplify-input {
+  height: 52px !important;
+  border: 1px solid #666666 !important;
+  border-radius: 4px !important;
+  padding: 14px 12px !important;
+  font-size: 16px !important;
+  background-color: #ffffff !important;
+  color: rgba(0,0,0,.9) !important;
+  width: 100% !important;
+  display: block !important;
 }
 
-.amplify-tabs-item[data-state='active'] {
-  color: #0A66C2 !important; /* LinkedIn Blue */
-  border-color: #0A66C2 !important;
+.amplify-input:focus {
+  border: 2px solid #0A66C2 !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
+/* Custom label styling */
+.amplify-label {
+  color: rgba(0,0,0,.9) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+  display: block !important;
+}
+
+/* Ensure form elements are visible */
 .amplify-field__control {
   border-radius: 4px !important;
-  border-color: #CCCCCC !important;
+  border: 1px solid #666666 !important;
   background-color: #FFFFFF !important;
-  font-size: 14px !important;
+  font-size: 16px !important;
+  height: 52px !important;
+  padding: 14px 12px !important;
+  width: 100% !important;
+  display: block !important;
 }
 
 .amplify-field__control:focus {
@@ -83,10 +166,17 @@ code {
   box-shadow: none !important;
 }
 
+/* Ensure buttons are visible */
 .amplify-button {
   border-radius: 24px !important;
   font-weight: 600 !important;
   text-transform: none !important;
+  display: block !important;
+}
+
+/* Make sure form groups are visible */
+.amplify-form {
+  display: block !important;
 }
 
 /* LinkedIn-style card shadows */

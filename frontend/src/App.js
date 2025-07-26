@@ -2042,152 +2042,149 @@ function App() {
     resetProcessingState();
   };
 
-  // Custom form fields for the Authenticator with professional styling
+  // Custom form fields for the Authenticator with LinkedIn styling
   const formFields = {
     signIn: {
       username: {
-        placeholder: 'Enter your email address',
-        label: 'Email Address *',
+        placeholder: 'Email',
+        label: 'Email',
         isRequired: true,
       },
       password: {
-        placeholder: 'Enter your password',
-        label: 'Password *',
+        placeholder: 'Password',
+        label: 'Password',
         isRequired: true,
       },
     },
     signUp: {
       username: {
-        placeholder: 'Enter your email address',
-        label: 'Email Address *',
+        placeholder: 'Email',
+        label: 'Email',
         isRequired: true,
         order: 1,
       },
       password: {
-        placeholder: 'Create a strong password',
-        label: 'Password *',
+        placeholder: 'Password (6+ characters)',
+        label: 'Password',
         isRequired: true,
         order: 2,
       },
       confirm_password: {
-        placeholder: 'Confirm your password',
-        label: 'Confirm Password *',
+        placeholder: 'Confirm password',
+        label: 'Confirm password',
         isRequired: true,
         order: 3,
       },
       given_name: {
-        placeholder: 'Enter your first name',
-        label: 'First Name *',
+        placeholder: 'First name',
+        label: 'First name',
+        isRequired: true,
+        order: 4,
+      },
+      family_name: {
+        placeholder: 'Last name',
+        label: 'Last name',
         isRequired: true,
         order: 5,
       },
-      family_name: {
-        placeholder: 'Enter your last name',
-        label: 'Last Name *',
-        isRequired: true,
-        order: 6,
-      },
       phone_number: {
-        placeholder: '+1 (555) 123-4567',
-        label: 'Phone Number',
+        placeholder: 'Phone number (optional)',
+        label: 'Phone number',
         isRequired: false,
-        order: 7,
+        order: 6,
       },
     },
     confirmSignUp: {
       confirmation_code: {
-        placeholder: 'Enter the 6-digit code',
-        label: 'Verification Code *',
+        placeholder: 'Enter 6-digit code',
+        label: 'Verification code',
         isRequired: true,
       },
     },
     resetPassword: {
       username: {
-        placeholder: 'Enter your username or email',
-        label: 'Username or Email *',
+        placeholder: 'Email',
+        label: 'Email',
         isRequired: true,
       },
     },
     confirmResetPassword: {
       confirmation_code: {
-        placeholder: 'Enter the verification code',
-        label: 'Verification Code *',
+        placeholder: 'Enter verification code',
+        label: 'Verification code',
         isRequired: true,
       },
       password: {
-        placeholder: 'Enter your new password',
-        label: 'New Password *',
+        placeholder: 'New password',
+        label: 'New password',
         isRequired: true,
       },
       confirm_password: {
-        placeholder: 'Confirm your new password',
-        label: 'Confirm New Password *',
+        placeholder: 'Confirm new password',
+        label: 'Confirm new password',
         isRequired: true,
       },
     },
   };
 
-  // Custom components for Authenticator
+  // Custom components for Authenticator with LinkedIn styling
   const components = {
     Header() {
-      return (
-        <Box sx={{ 
-          textAlign: 'center', 
-          py: 4,
-          background: '#FFFFFF',
-          borderRadius: '12px 12px 0 0'
-        }}>
-          <AutoAwesomeIcon sx={{ fontSize: 48, color: '#0A66C2', mb: 2 }} />
-          <Typography variant="h4" sx={{ 
-            fontWeight: 700,
-            background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            mb: 1
-          }}>
-            Resume Optimizer Pro
-          </Typography>
-          <Typography variant="body1" sx={{ color: '#b0b0b0' }}>
-            Professional AI-Powered Resume Enhancement
-          </Typography>
-        </Box>
-      );
+      return null; // Remove default header since we have our own
     },
     SignIn: {
       Header() {
-        return (
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 600, 
-              color: '#000000', // Changed to black for visibility
-              mb: 1 
-            }}>
-              Welcome Back
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
-              Sign in to optimize your resume with AI
-            </Typography>
-          </Box>
-        );
+        return null; // Remove default header
       },
       Footer() {
         return (
-          <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
-              Don't have an account?{' '}
-              <Typography 
-                component="span" 
-                onClick={() => setAuthMode('signUp')}
-                sx={{ 
-                  color: '#0A66C2', 
-                  cursor: 'pointer',
-                  '&:hover': { color: '#004182' } // Darker blue on hover
-                }}
-              >
-                Sign up for free
+          <Box sx={{ mt: 3 }}>
+            {/* Divider */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              my: 3,
+              '&::before, &::after': {
+                content: '""',
+                flex: 1,
+                height: '1px',
+                backgroundColor: '#d0d0d0'
+              }
+            }}>
+              <Typography sx={{ 
+                px: 2, 
+                color: 'rgba(0,0,0,.6)', 
+                fontSize: '14px' 
+              }}>
+                or
               </Typography>
-            </Typography>
+            </Box>
+            
+            {/* Sign up link */}
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" sx={{ 
+                color: 'rgba(0,0,0,.9)', 
+                fontSize: '16px',
+                mb: 1
+              }}>
+                New to Resume Optimizer?{' '}
+                <Typography 
+                  component="span" 
+                  onClick={() => setAuthMode('signUp')}
+                  sx={{ 
+                    color: '#0A66C2', 
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    '&:hover': { 
+                      color: '#004182',
+                      textDecoration: 'underline'
+                    }
+                  }}
+                >
+                  Join now
+                </Typography>
+              </Typography>
+            </Box>
           </Box>
         );
       },
@@ -2196,44 +2193,66 @@ function App() {
       Header() {
         return (
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 600, 
-              color: '#000000', // Changed to black for visibility
-              mb: 1 
+            <Typography variant="h4" sx={{ 
+              fontWeight: 400,
+              color: 'rgba(0,0,0,.9)',
+              fontSize: '32px',
+              lineHeight: 1.25,
+              mb: 1
             }}>
-              Create Your Account
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
-              Join thousands of professionals optimizing their resumes
+              Make the most of your professional life
             </Typography>
           </Box>
         );
       },
       Footer() {
         return (
-          <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
-              Already have an account?{' '}
-              <Typography 
-                component="span" 
-                onClick={() => setAuthMode('signIn')}
-                sx={{ 
-                  color: '#0A66C2', 
-                  cursor: 'pointer',
-                  '&:hover': { color: '#004182' } // Darker blue on hover
-                }}
-              >
-                Sign in here
-              </Typography>
-            </Typography>
-            <Typography variant="caption" sx={{ 
-              color: '#888', 
-              display: 'block', 
-              mt: 2,
-              fontSize: '0.75rem'
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="body2" sx={{ 
+              color: 'rgba(0,0,0,.6)', 
+              fontSize: '12px',
+              textAlign: 'center',
+              lineHeight: 1.33,
+              mb: 2
             }}>
-              By signing up, you agree to our Terms of Service and Privacy Policy
+              By clicking Agree & Join, you agree to the Resume Optimizer{' '}
+              <Typography component="span" sx={{ color: '#0A66C2', cursor: 'pointer' }}>
+                User Agreement
+              </Typography>
+              ,{' '}
+              <Typography component="span" sx={{ color: '#0A66C2', cursor: 'pointer' }}>
+                Privacy Policy
+              </Typography>
+              , and{' '}
+              <Typography component="span" sx={{ color: '#0A66C2', cursor: 'pointer' }}>
+                Cookie Policy
+              </Typography>
+              .
             </Typography>
+            
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" sx={{ 
+                color: 'rgba(0,0,0,.9)', 
+                fontSize: '16px'
+              }}>
+                Already on Resume Optimizer?{' '}
+                <Typography 
+                  component="span" 
+                  onClick={() => setAuthMode('signIn')}
+                  sx={{ 
+                    color: '#0A66C2', 
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    '&:hover': { 
+                      color: '#004182',
+                      textDecoration: 'underline'
+                    }
+                  }}
+                >
+                  Sign in
+                </Typography>
+              </Typography>
+            </Box>
           </Box>
         );
       },
@@ -2242,14 +2261,19 @@ function App() {
       Header() {
         return (
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 600, 
-              color: '#000000', // Changed to black for visibility
-              mb: 1 
+            <Typography variant="h4" sx={{ 
+              fontWeight: 400,
+              color: 'rgba(0,0,0,.9)',
+              fontSize: '32px',
+              lineHeight: 1.25,
+              mb: 1
             }}>
-              Verify Your Email
+              Verify your email
             </Typography>
-            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
+            <Typography variant="body1" sx={{ 
+              color: 'rgba(0,0,0,.6)',
+              fontSize: '16px'
+            }}>
               We've sent a verification code to your email address
             </Typography>
           </Box>
@@ -2258,14 +2282,21 @@ function App() {
       Footer() {
         return (
           <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
+            <Typography variant="body2" sx={{ 
+              color: 'rgba(0,0,0,.6)', 
+              fontSize: '14px'
+            }}>
               Didn't receive the code?{' '}
               <Typography 
                 component="span" 
                 sx={{ 
                   color: '#0A66C2', 
                   cursor: 'pointer',
-                  '&:hover': { color: '#666666' }
+                  fontWeight: '600',
+                  '&:hover': { 
+                    color: '#004182',
+                    textDecoration: 'underline'
+                  }
                 }}
               >
                 Resend code
@@ -2279,15 +2310,20 @@ function App() {
       Header() {
         return (
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 600, 
-              color: '#000000', // Changed to black for visibility
-              mb: 1 
+            <Typography variant="h4" sx={{ 
+              fontWeight: 400,
+              color: 'rgba(0,0,0,.9)',
+              fontSize: '32px',
+              lineHeight: 1.25,
+              mb: 1
             }}>
-              Reset Password
+              Reset your password
             </Typography>
-            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
-              Enter your username or email to reset your password
+            <Typography variant="body1" sx={{ 
+              color: 'rgba(0,0,0,.6)',
+              fontSize: '16px'
+            }}>
+              Enter your email to reset your password
             </Typography>
           </Box>
         );
@@ -2297,14 +2333,19 @@ function App() {
       Header() {
         return (
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 600, 
-              color: '#000000', // Changed to black for visibility
-              mb: 1 
+            <Typography variant="h4" sx={{ 
+              fontWeight: 400,
+              color: 'rgba(0,0,0,.9)',
+              fontSize: '32px',
+              lineHeight: 1.25,
+              mb: 1
             }}>
-              Create New Password
+              Create new password
             </Typography>
-            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
+            <Typography variant="body1" sx={{ 
+              color: 'rgba(0,0,0,.6)',
+              fontSize: '16px'
+            }}>
               Enter the verification code and your new password
             </Typography>
           </Box>
@@ -2366,181 +2407,186 @@ function App() {
             </Toolbar>
           </AppBar>
 
-          {/* Centered Authentication Container */}
+          {/* LinkedIn-style Authentication Container */}
           <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center',
             minHeight: 'calc(100vh - 64px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: '#f3f2ef', // LinkedIn background
             p: 2
           }}>
-            <Paper elevation={2} sx={{ 
-              p: 4, 
-              maxWidth: 400, 
-              width: '100%',
-              borderRadius: 2
-            }}>
-              <Authenticator 
-            loginMechanisms={['email']} // Changed to email only for better compatibility
-            formFields={formFields}
-          components={components}
-          initialState={authMode}
-          signUpAttributes={[
-            'email',
-            'given_name', 
-            'family_name',
-            'phone_number'
-          ]}
-          theme={{
-            name: 'resume-optimizer-theme',
-            tokens: {
-              colors: {
-                background: {
-                  primary: '#121212',
-                  secondary: '#1e1e1e',
-                },
-                font: {
-                  primary: '#ffffff',
-                  secondary: '#b0b0b0',
-                  tertiary: '#888888',
-                },
-                brand: {
-                  primary: {
-                    10: '#0A66C2',
-                    20: '#0A66C2',
-                    40: '#0A66C2',
-                    60: '#0A66C2',
-                    80: '#0A66C2',
-                    90: '#0A66C2',
-                    100: '#0A66C2',
-                  },
-                  secondary: {
-                    10: '#666666',
-                    20: '#666666',
-                    40: '#666666',
-                    60: '#666666',
-                    80: '#666666',
-                    90: '#666666',
-                    100: '#666666',
-                  },
-                },
-                border: {
-                  primary: 'rgba(10, 102, 194, 0.3)',
-                  secondary: 'rgba(10, 102, 194, 0.1)',
-                  focus: '#0A66C2',
-                },
-              },
-              components: {
-                authenticator: {
-                  router: {
-                    boxShadow: '0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08)', // LinkedIn shadow
-                    borderRadius: '8px',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #E0E0E0', // LinkedIn border
-                    maxWidth: '400px',
-                    margin: '2rem auto',
-                    padding: '32px',
-                  },
-                },
-                button: {
-                  primary: {
-                    backgroundColor: '#0A66C2', // LinkedIn Blue
-                    color: '#ffffff',
-                    borderRadius: '24px', // LinkedIn pill shape
-                    fontWeight: '600',
-                    padding: '12px 24px',
-                    fontSize: '16px',
-                    border: 'none',
-                    boxShadow: 'none',
-                    _hover: {
-                      backgroundColor: '#004182', // Darker LinkedIn blue
-                      boxShadow: 'inset 0 0 0 1px #0A66C2, inset 0 0 0 2px #ffffff',
-                      transform: 'none',
+            <Container maxWidth="sm">
+              <Box sx={{ 
+                bgcolor: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08)',
+                p: { xs: 3, sm: 4 },
+                maxWidth: 400,
+                mx: 'auto'
+              }}>
+                {/* Logo and Title */}
+                <Box sx={{ textAlign: 'center', mb: 4 }}>
+                  <WorkIcon sx={{ fontSize: 40, color: '#0A66C2', mb: 2 }} />
+                  <Typography variant="h4" sx={{ 
+                    fontWeight: 400,
+                    color: 'rgba(0,0,0,.9)',
+                    fontSize: '32px',
+                    lineHeight: 1.25,
+                    mb: 1
+                  }}>
+                    Sign in
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    color: 'rgba(0,0,0,.6)',
+                    fontSize: '16px'
+                  }}>
+                    Stay updated on your professional world
+                  </Typography>
+                </Box>
+
+                <Authenticator 
+                  loginMechanisms={['email']}
+                  formFields={formFields}
+                  components={components}
+                  initialState={authMode}
+                  signUpAttributes={[
+                    'email',
+                    'given_name', 
+                    'family_name',
+                    'phone_number'
+                  ]}
+                  theme={{
+                    name: 'linkedin-theme',
+                    tokens: {
+                      colors: {
+                        background: {
+                          primary: 'transparent',
+                          secondary: 'transparent',
+                        },
+                        font: {
+                          primary: 'rgba(0,0,0,.9)',
+                          secondary: 'rgba(0,0,0,.6)',
+                          tertiary: 'rgba(0,0,0,.4)',
+                        },
+                        brand: {
+                          primary: {
+                            10: '#0A66C2',
+                            20: '#0A66C2',
+                            40: '#0A66C2',
+                            60: '#0A66C2',
+                            80: '#0A66C2',
+                            90: '#0A66C2',
+                            100: '#0A66C2',
+                          },
+                        },
+                        border: {
+                          primary: '#666666',
+                          secondary: '#d0d0d0',
+                          focus: '#0A66C2',
+                        },
+                      },
+                      components: {
+                        authenticator: {
+                          router: {
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            boxShadow: 'none',
+                            borderRadius: '0',
+                            padding: '0',
+                            margin: '0',
+                            maxWidth: 'none',
+                            width: '100%',
+                          },
+                        },
+                        button: {
+                          primary: {
+                            backgroundColor: '#0A66C2',
+                            color: '#ffffff',
+                            borderRadius: '24px',
+                            fontWeight: '600',
+                            padding: '12px 24px',
+                            fontSize: '16px',
+                            border: 'none',
+                            boxShadow: 'inset 0 0 0 1px #0A66C2',
+                            width: '100%',
+                            height: '52px',
+                            textTransform: 'none',
+                            _hover: {
+                              backgroundColor: '#004182',
+                              boxShadow: 'inset 0 0 0 1px #004182',
+                            },
+                            _focus: {
+                              backgroundColor: '#0A66C2',
+                              boxShadow: '0 0 0 2px rgba(10, 102, 194, 0.3)',
+                            },
+                          },
+                          link: {
+                            color: '#0A66C2',
+                            fontWeight: '600',
+                            fontSize: '16px',
+                            textDecoration: 'none',
+                            _hover: {
+                              color: '#004182',
+                              textDecoration: 'underline',
+                            },
+                          },
+                        },
+                        fieldcontrol: {
+                          backgroundColor: '#ffffff',
+                          borderColor: '#666666',
+                          borderRadius: '4px',
+                          borderWidth: '1px',
+                          color: 'rgba(0,0,0,.9)',
+                          padding: '14px 12px',
+                          fontSize: '16px',
+                          height: '52px',
+                          width: '100%',
+                          _focus: {
+                            borderColor: '#0A66C2',
+                            borderWidth: '2px',
+                            boxShadow: 'none',
+                            outline: 'none',
+                          },
+                          _hover: {
+                            borderColor: '#0A66C2',
+                          },
+                          _error: {
+                            borderColor: '#d11124',
+                            boxShadow: 'none',
+                          },
+                        },
+                        fieldmessages: {
+                          color: '#d11124',
+                          fontSize: '14px',
+                          marginTop: '4px',
+                          fontWeight: '400',
+                        },
+                        text: {
+                          primary: {
+                            color: 'rgba(0,0,0,.9)',
+                            fontSize: '16px',
+                            fontWeight: '400',
+                          },
+                          secondary: {
+                            color: 'rgba(0,0,0,.6)',
+                            fontSize: '14px',
+                          },
+                        },
+                        label: {
+                          color: 'rgba(0,0,0,.9)',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          marginBottom: '4px',
+                        },
+                      },
                     },
-                    _focus: {
-                      backgroundColor: '#0A66C2',
-                      boxShadow: '0 0 0 2px rgba(10, 102, 194, 0.3)',
-                      outline: 'none',
-                    },
-                    _active: {
-                      backgroundColor: '#004182',
-                      transform: 'none',
-                    },
-                  },
-                  link: {
-                    color: '#0A66C2',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    _hover: {
-                      color: '#004182',
-                      textDecoration: 'underline',
-                    },
-                  },
-                },
-                fieldcontrol: {
-                  backgroundColor: '#FFFFFF', // White background for inputs
-                  borderColor: '#CCCCCC', // Light gray border
-                  borderRadius: '4px',
-                  color: '#000000', // Black text
-                  padding: '12px 16px',
-                  fontSize: '14px',
-                  _focus: {
-                    borderColor: '#0A66C2',
-                    borderWidth: '2px',
-                    boxShadow: 'none',
-                    backgroundColor: '#FFFFFF',
-                    outline: 'none',
-                  },
-                  _hover: {
-                    borderColor: '#0A66C2',
-                    backgroundColor: '#FFFFFF',
-                  },
-                  _error: {
-                    borderColor: '#CC1016', // LinkedIn red
-                    boxShadow: 'none',
-                    backgroundColor: '#FFFFFF',
-                  },
-                },
-                fieldmessages: {
-                  color: '#CC1016', // LinkedIn red for errors
-                  fontSize: '12px',
-                  marginTop: '4px',
-                },
-                text: {
-                  primary: {
-                    color: '#000000', // Black text
-                    fontSize: '14px',
-                  },
-                  secondary: {
-                    color: '#666666', // LinkedIn gray
-                    fontSize: '12px',
-                  },
-                },
-                tabs: {
-                  item: {
-                    color: '#666666', // LinkedIn gray
-                    borderColor: 'transparent',
-                    fontWeight: '600',
-                    fontSize: '16px',
-                    padding: '12px 16px',
-                    _active: {
-                      color: '#0A66C2', // LinkedIn blue when active
-                      borderColor: '#0A66C2',
-                      borderBottomWidth: '2px',
-                    },
-                    _hover: {
-                      color: '#0A66C2',
-                    },
-                  },
-                },
-              },
-            },
-          }}
-        >
-          {({ signOut, user }) => {
-            // If user is authenticated, show main app directly (no landing page)
-            if (user) {
-              return (
+                  }}
+                >
+                  {({ signOut, user }) => {
+                    // If user is authenticated, show main app directly (no landing page)
+                    if (user) {
+                      return (
                 <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
                   <AppBar position="static" elevation={0} sx={{ 
                     background: '#FFFFFF',
@@ -3274,11 +3320,12 @@ function App() {
               </Alert>
             </Snackbar>
                 </Box>
-              );
-            }
-          }}
-        </Authenticator>
-            </Paper>
+                      );
+                    }
+                  }}
+                </Authenticator>
+              </Box>
+            </Container>
           </Box>
         </Box>
       )}
