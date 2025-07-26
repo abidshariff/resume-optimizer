@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import {
   Box,
@@ -15,7 +16,8 @@ import {
 } from '@mui/material';
 import { WorkOutline as WorkIcon } from '@mui/icons-material';
 
-function SimpleAuth({ onAuthSuccess, onCancel }) {
+function SimpleAuth() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState('signIn'); // signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword
   const [formData, setFormData] = useState({
     email: '',
@@ -50,7 +52,7 @@ function SimpleAuth({ onAuthSuccess, onCancel }) {
       });
       
       if (result.isSignedIn) {
-        onAuthSuccess(result);
+        navigate('/app');
       }
     } catch (err) {
       console.error('Sign in error:', err);
@@ -84,7 +86,7 @@ function SimpleAuth({ onAuthSuccess, onCancel }) {
       });
       
       if (result.isSignUpComplete) {
-        onAuthSuccess(result);
+        navigate('/app');
       } else {
         setMode('confirmSignUp');
         setMessage('Please check your email for the verification code');
@@ -115,7 +117,7 @@ function SimpleAuth({ onAuthSuccess, onCancel }) {
       });
       
       if (signInResult.isSignedIn) {
-        onAuthSuccess(signInResult);
+        navigate('/app');
       }
     } catch (err) {
       console.error('Confirm sign up error:', err);
@@ -610,7 +612,7 @@ function SimpleAuth({ onAuthSuccess, onCancel }) {
           
           <Button
             variant="outlined"
-            onClick={onCancel}
+            onClick={() => navigate('/')}
             sx={{
               color: '#666',
               borderColor: '#ddd',
