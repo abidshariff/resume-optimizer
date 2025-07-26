@@ -300,7 +300,205 @@ function ProfileDialog({ open, onClose, user, userProfile, setUserProfile, setSn
   );
 }
 
-// Settings Dialog Component
+// History Dialog Component
+function HistoryDialog({ open, onClose, user }) {
+  const [historyItems, setHistoryItems] = useState([
+    // Mock data - in real app, this would come from backend
+    {
+      id: 1,
+      date: '2024-01-15',
+      jobTitle: 'Senior Software Engineer',
+      company: 'Google',
+      status: 'Completed',
+      resumeName: 'John_Doe_Resume_v1.pdf',
+      optimizedAt: '2024-01-15T10:30:00Z'
+    },
+    {
+      id: 2,
+      date: '2024-01-10',
+      jobTitle: 'Product Manager',
+      company: 'Microsoft',
+      status: 'Completed',
+      resumeName: 'John_Doe_Resume_PM.pdf',
+      optimizedAt: '2024-01-10T14:20:00Z'
+    },
+    {
+      id: 3,
+      date: '2024-01-05',
+      jobTitle: 'Data Scientist',
+      company: 'Amazon',
+      status: 'Failed',
+      resumeName: 'John_Doe_Resume_DS.pdf',
+      optimizedAt: '2024-01-05T09:15:00Z'
+    }
+  ]);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Completed':
+        return '#4caf50';
+      case 'Failed':
+        return '#f44336';
+      case 'Processing':
+        return '#ff9800';
+      default:
+        return '#b0b0b0';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Completed':
+        return <CheckCircleIcon sx={{ color: '#4caf50' }} />;
+      case 'Failed':
+        return <ErrorIcon sx={{ color: '#f44336' }} />;
+      case 'Processing':
+        return <ScheduleIcon sx={{ color: '#ff9800' }} />;
+      default:
+        return <ScheduleIcon sx={{ color: '#b0b0b0' }} />;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleDownload = (item) => {
+    // In real app, this would download the optimized resume
+    console.log('Downloading:', item.resumeName);
+    // Mock download functionality
+    alert(`Downloading ${item.resumeName} (optimized for ${item.jobTitle} at ${item.company})`);
+  };
+
+  const handleReOptimize = (item) => {
+    // In real app, this would re-run the optimization
+    console.log('Re-optimizing:', item);
+    alert(`Re-optimizing resume for ${item.jobTitle} at ${item.company}`);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ 
+        background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <HistoryIcon sx={{ mr: 1 }} />
+        Optimization History
+      </DialogTitle>
+      <DialogContent sx={{ mt: 2, p: 0 }}>
+        {historyItems.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <HistoryIcon sx={{ fontSize: 64, color: '#666', mb: 2 }} />
+            <Typography variant="h6" sx={{ color: '#b0b0b0', mb: 1 }}>
+              No History Yet
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#888' }}>
+              Your resume optimization history will appear here after you optimize your first resume.
+            </Typography>
+          </Box>
+        ) : (
+          <Box>
+            {historyItems.map((item, index) => (
+              <Box key={item.id}>
+                <Box sx={{ p: 3, display: 'flex', alignItems: 'center' }}>
+                  <Box sx={{ mr: 3 }}>
+                    {getStatusIcon(item.status)}
+                  </Box>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" sx={{ 
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      mb: 0.5
+                    }}>
+                      {item.jobTitle}
+                    </Typography>
+                    <Typography variant="body2" sx={{ 
+                      color: '#ff6b35',
+                      mb: 0.5
+                    }}>
+                      {item.company}
+                    </Typography>
+                    <Typography variant="caption" sx={{ 
+                      color: '#b0b0b0',
+                      display: 'block'
+                    }}>
+                      {formatDate(item.optimizedAt)} • {item.resumeName}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {item.status === 'Completed' && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => handleDownload(item)}
+                        sx={{
+                          borderColor: '#ff6b35',
+                          color: '#ff6b35',
+                          '&:hover': {
+                            borderColor: '#ff9800',
+                            color: '#ff9800',
+                            backgroundColor: 'rgba(255, 107, 53, 0.1)'
+                          }
+                        }}
+                      >
+                        Download
+                      </Button>
+                    )}
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<AutoAwesomeIcon />}
+                      onClick={() => handleReOptimize(item)}
+                      sx={{
+                        background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+                        }
+                      }}
+                    >
+                      Re-optimize
+                    </Button>
+                  </Box>
+                </Box>
+                {index < historyItems.length - 1 && (
+                  <Divider sx={{ borderColor: 'rgba(255, 107, 53, 0.2)' }} />
+                )}
+              </Box>
+            ))}
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255, 107, 53, 0.2)' }}>
+        <Button onClick={onClose} variant="outlined">
+          Close
+        </Button>
+        <Button 
+          variant="contained"
+          startIcon={<AutoAwesomeIcon />}
+          onClick={onClose}
+          sx={{
+            background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+            '&:hover': {
+              background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+            }
+          }}
+        >
+          Optimize New Resume
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 function SettingsDialog({ open, onClose, userProfile, setUserProfile }) {
   const handleSave = () => {
     // Here you would typically save to backend
@@ -1030,6 +1228,7 @@ function App() {
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [userProfile, setUserProfile] = useState({
     firstName: '',
     lastName: '',
@@ -1050,6 +1249,51 @@ function App() {
   const handleSignIn = () => {
     setAuthMode('signIn');
     setShowAuth(true);
+  };
+
+  // Save optimization to history (in real app, this would save to backend)
+  const saveToHistory = (jobDescription, resumeName, result) => {
+    // Extract job title and company from job description (basic parsing)
+    const lines = jobDescription.split('\n');
+    let jobTitle = 'Unknown Position';
+    let company = 'Unknown Company';
+    
+    // Try to extract job title and company from first few lines
+    for (let i = 0; i < Math.min(5, lines.length); i++) {
+      const line = lines[i].trim();
+      if (line && !jobTitle.includes('Unknown')) {
+        jobTitle = line.length > 50 ? line.substring(0, 50) + '...' : line;
+        break;
+      }
+    }
+    
+    // Look for company name patterns
+    const companyPatterns = [
+      /at\s+([A-Z][a-zA-Z\s&]+)/i,
+      /([A-Z][a-zA-Z\s&]+)\s+is\s+looking/i,
+      /join\s+([A-Z][a-zA-Z\s&]+)/i
+    ];
+    
+    for (const pattern of companyPatterns) {
+      const match = jobDescription.match(pattern);
+      if (match && match[1]) {
+        company = match[1].trim();
+        break;
+      }
+    }
+    
+    const historyItem = {
+      id: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      jobTitle: jobTitle,
+      company: company,
+      status: result ? 'Completed' : 'Failed',
+      resumeName: resumeName || 'resume.pdf',
+      optimizedAt: new Date().toISOString()
+    };
+    
+    console.log('Saving to history:', historyItem);
+    // In real app, you would save this to backend/localStorage
   };
 
   // If not showing auth, show landing page
@@ -1288,6 +1532,9 @@ function App() {
             setIsPolling(false);
             setResult(actualResponse);
             setActiveStep(2);
+            
+            // Save to history
+            saveToHistory(jobDescription, resumeName, actualResponse);
           } else if (currentStatus === 'FAILED') {
             setIsPolling(false);
             setError(actualResponse.message || 'Job failed');
@@ -2146,7 +2393,10 @@ function App() {
                       </ListItemIcon>
                       <ListItemText primary="Settings" />
                     </MenuItem>
-                    <MenuItem>
+                    <MenuItem onClick={() => {
+                      setHistoryDialogOpen(true);
+                      setProfileMenuAnchor(null);
+                    }}>
                       <ListItemIcon>
                         <HistoryIcon sx={{ color: '#ff6b35' }} />
                       </ListItemIcon>
@@ -2652,6 +2902,13 @@ function App() {
                 </Typography>
               </Box>
             </Container>
+            
+            {/* History Dialog */}
+            <HistoryDialog
+              open={historyDialogOpen}
+              onClose={() => setHistoryDialogOpen(false)}
+              user={user}
+            />
             
             {/* Profile Dialog */}
             <ProfileDialog
