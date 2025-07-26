@@ -64,7 +64,8 @@ import {
   Speed as SpeedIcon,
   Shield as ShieldIcon,
   Psychology as PsychologyIcon,
-  DeleteForever as DeleteForeverIcon
+  DeleteForever as DeleteForeverIcon,
+  Work as WorkIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -2328,8 +2329,58 @@ function App() {
         />
       ) : (
         /* Show Authenticator when user wants to sign in/up */
-        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-          <Authenticator 
+        <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+          {/* Header with Logo and Cancel Button */}
+          <AppBar position="static" elevation={0} sx={{ 
+            bgcolor: 'white',
+            borderBottom: '1px solid #e0e0e0'
+          }}>
+            <Toolbar sx={{ justifyContent: 'space-between' }}>
+              {/* Logo */}
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <WorkIcon sx={{ color: '#1976d2', mr: 1, fontSize: 28 }} />
+                <Typography variant="h6" sx={{ 
+                  color: '#1976d2', 
+                  fontWeight: 600,
+                  fontSize: '1.1rem'
+                }}>
+                  Resume Optimizer
+                </Typography>
+              </Box>
+              
+              {/* Cancel Button */}
+              <Button
+                variant="outlined"
+                onClick={() => setShowAuth(false)}
+                sx={{
+                  color: '#666',
+                  borderColor: '#ddd',
+                  '&:hover': {
+                    borderColor: '#999',
+                    bgcolor: '#f9f9f9'
+                  }
+                }}
+              >
+                Cancel
+              </Button>
+            </Toolbar>
+          </AppBar>
+
+          {/* Centered Authentication Container */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            minHeight: 'calc(100vh - 64px)',
+            p: 2
+          }}>
+            <Paper elevation={2} sx={{ 
+              p: 4, 
+              maxWidth: 400, 
+              width: '100%',
+              borderRadius: 2
+            }}>
+              <Authenticator 
             loginMechanisms={['email']} // Changed to email only for better compatibility
             formFields={formFields}
           components={components}
@@ -3227,6 +3278,8 @@ function App() {
             }
           }}
         </Authenticator>
+            </Paper>
+          </Box>
         </Box>
       )}
     </ThemeProvider>
