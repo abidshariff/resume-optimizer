@@ -257,16 +257,6 @@ const theme = createTheme({
         },
       },
     },
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            '& fieldset': {
-              borderColor: 'rgba(13, 71, 161, 0.3)',
-            },
   },
 });
 
