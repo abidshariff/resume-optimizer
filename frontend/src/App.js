@@ -1670,19 +1670,6 @@ function App() {
     };
   }, [isPolling, jobId, jobDescription, resumeName]);
 
-  // If not showing auth, show landing page
-  if (!showAuth) {
-    return (
-      <ThemeProvider theme={theme}>
-        <LandingPage 
-          onGetStarted={handleGetStarted}
-          onSignIn={handleSignIn}
-        />
-      </ThemeProvider>
-    );
-  }
-  
-
   const handleResumeChange = (file) => {
     if (file) {
       // Check file size (5MB limit to account for base64 encoding)
