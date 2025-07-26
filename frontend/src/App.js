@@ -1059,6 +1059,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
 }
 
 // File upload component with drag and drop
+function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } = useDropzone({
     accept: acceptedFileTypes,
     onDrop: files => {
@@ -1240,6 +1241,145 @@ function App() {
     theme: 'dark'
   });
 
+  // Educational tips to show during processing
+  const educationalTips = [
+    {
+      icon: "🎯",
+      title: "ATS Optimization",
+      text: "ATS systems scan for exact keyword matches from job descriptions. We're strategically placing relevant keywords throughout your resume."
+    },
+    {
+      icon: "📊", 
+      title: "Recruiter Insights",
+      text: "Recruiters spend only 6 seconds on initial resume review. We're optimizing your content for maximum impact in those crucial first moments."
+    },
+    {
+      icon: "✨",
+      title: "Achievement Focus", 
+      text: "Quantified achievements increase interview chances by 40%. We're highlighting your measurable accomplishments and impact."
+    },
+    {
+      icon: "🚀",
+      title: "Action Verbs",
+      text: "Action verbs like 'implemented', 'optimized', and 'achieved' catch recruiter attention. We're enhancing your experience descriptions."
+    },
+    {
+      icon: "🔍",
+      title: "Keyword Density",
+      text: "The right keyword density helps your resume rank higher in ATS searches while maintaining natural readability."
+    },
+    {
+      icon: "📝",
+      title: "Professional Format",
+      text: "Clean, professional formatting ensures your resume looks great both in ATS systems and to human recruiters."
+    }
+  ];
+
+  // Processing milestones
+  const processingMilestones = [
+    { id: 0, label: "Analyzing your resume", icon: "📄", completed: false },
+    { id: 1, label: "Extracting key skills and experience", icon: "🔍", completed: false },
+    { id: 2, label: "Matching with job requirements", icon: "🎯", completed: false },
+    { id: 3, label: "AI optimization in progress", icon: "🤖", completed: false },
+    { id: 4, label: "Generating optimized document", icon: "📝", completed: false },
+    { id: 5, label: "Finalizing your resume", icon: "✨", completed: false }
+  ];
+
+  const [milestones, setMilestones] = useState(processingMilestones);
+
+  // Enhanced status messages based on actual backend status
+  const getEnhancedStatusMessage = (status, message) => {
+    switch (status) {
+      case 'PROCESSING':
+        if (message.includes('Processing resume')) {
+          return "Reading your resume content and extracting key information...";
+        } else if (message.includes('Generating optimized resume')) {
+          return "Claude AI is optimizing your experience and skills sections...";
+        } else if (message.includes('Finalizing')) {
+          return "Creating your professionally formatted Word document...";
+        }
+        return "AI optimization in progress...";
+      case 'COMPLETED':
+        return "🎉 Your optimized resume is ready for download!";
+      case 'FAILED':
+        return message || "Optimization failed. Please try again.";
+      default:
+        return message || "Processing your resume...";
+    }
+  };
+
+  // Rotate educational tips every 4 seconds during processing
+  useEffect(() => {
+    let tipInterval;
+    if (isPolling) {
+      tipInterval = setInterval(() => {
+        setCurrentTip((prev) => (prev + 1) % educationalTips.length);
+      }, 4000);
+    }
+    return () => {
+      if (tipInterval) clearInterval(tipInterval);
+    };
+  }, [isPolling, educationalTips.length]);
+
+  // Update processing milestones based on status
+  useEffect(() => {
+    if (isPolling && jobStatus) {
+      const newMilestones = [...milestones];
+      
+      // Progress milestones based on status and time
+      if (jobStatus === 'PROCESSING') {
+        // Complete first 3 milestones immediately
+        newMilestones[0].completed = true;
+        newMilestones[1].completed = true;
+        newMilestones[2].completed = true;
+        
+        // Progress through remaining milestones over time
+        setTimeout(() => {
+          setMilestones(prev => {
+            const updated = [...prev];
+            updated[3].completed = true;
+            return updated;
+          });
+        }, 8000);
+        
+        setTimeout(() => {
+          setMilestones(prev => {
+            const updated = [...prev];
+            updated[4].completed = true;
+            return updated;
+          });
+        }, 20000);
+      } else if (jobStatus === 'COMPLETED') {
+        // Complete all milestones
+        newMilestones.forEach(milestone => milestone.completed = true);
+      }
+      
+      setMilestones(newMilestones);
+    }
+  }, [jobStatus, isPolling, milestones]);
+
+  // Reset milestones when starting new job
+  const resetProcessingState = () => {
+    setMilestones(processingMilestones.map(m => ({ ...m, completed: false })));
+    setCurrentTip(0);
+    setProcessingStep(0);
+  };
+
+  // Legacy variables for backward compatibility with existing UI
+  const isProcessing = isSubmitting || isPolling;
+  const optimizedResume = result ? 'Resume ready for download' : null;
+  const optimizedResumeType = result?.contentType || 'text/plain';
+
+  // Scroll to top when processing starts
+  useEffect(() => {
+    if (isProcessing && !result) {
+      // Smooth scroll to top when processing screen appears
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isProcessing, result]);
+
+  const steps = ['Upload Resume', 'Enter Job Description', 'Get Optimized Resume'];
+
   // Handle landing page actions
   const handleGetStarted = () => {
     setAuthMode('signUp');
@@ -1295,6 +1435,85 @@ function App() {
     console.log('Saving to history:', historyItem);
     // In real app, you would save this to backend/localStorage
   };
+
+  // Poll for job status
+  useEffect(() => {
+    let intervalId;
+    
+    if (isPolling && jobId) {
+      // For local development, we don't need to poll as we're using mock data
+      if (window.location.hostname === 'localhost' && jobId.startsWith('local-test-')) {
+        console.log('Local development detected, using mock status polling');
+        return;
+      }
+      
+      intervalId = setInterval(async () => {
+        try {
+          // Get the current auth session to include the JWT token
+          const { tokens } = await fetchAuthSession();
+          const idToken = tokens.idToken.toString();
+          
+          // Use direct fetch for status polling to avoid response wrapping issues
+          const statusResponse = await fetch(`https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev/status?jobId=${encodeURIComponent(jobId)}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': idToken,
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!statusResponse.ok) {
+            const errorText = await statusResponse.text();
+            console.error("Status API request failed:", statusResponse.status, errorText);
+            throw new Error(`Status API request failed: ${statusResponse.status} ${statusResponse.statusText}`);
+          }
+          
+          const actualResponse = await statusResponse.json();
+          
+          console.log('Status response received:', actualResponse);
+          console.log('Status response type:', typeof actualResponse);
+          console.log('Status response keys:', actualResponse ? Object.keys(actualResponse) : 'null');
+          console.log('Status response JSON:', JSON.stringify(actualResponse, null, 2));
+          
+          // Extract status
+          const currentStatus = actualResponse.status;
+          if (!currentStatus) {
+            throw new Error(`No status in response: ${JSON.stringify(actualResponse)}`);
+          }
+          
+          console.log('Current job status:', currentStatus);
+          setJobStatus(currentStatus);
+          setStatusMessage(actualResponse.message || '');
+          
+          // If job is complete, stop polling and set result
+          if (currentStatus === 'COMPLETED') {
+            setIsPolling(false);
+            setResult(actualResponse);
+            setActiveStep(2);
+            
+            // Save to history
+            saveToHistory(jobDescription, resumeName, actualResponse);
+          } else if (currentStatus === 'FAILED') {
+            setIsPolling(false);
+            setError(actualResponse.message || 'Job failed');
+            setSnackbarMessage(`Error: ${actualResponse.message || 'Job failed'}`);
+            setSnackbarOpen(true);
+          }
+        } catch (err) {
+          console.error('Error checking job status:', err);
+          setError(`Error checking job status: ${err.message || 'Unknown error'}`);
+          setIsPolling(false);
+          setJobStatus('FAILED');
+          setSnackbarMessage(`Error checking status: ${err.message || 'Unknown error'}`);
+          setSnackbarOpen(true);
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isPolling, jobId, jobDescription, resumeName]);
 
   // If not showing auth, show landing page
   if (!showAuth) {
