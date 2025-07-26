@@ -498,7 +498,7 @@ function HistoryDialog({ open, onClose, user }) {
         {historyItems.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <HistoryIcon sx={{ fontSize: 64, color: '#666', mb: 2 }} />
-            <Typography variant="h6" sx={{ color: '#b0b0b0', mb: 1 }}>
+            <Typography variant="h6" sx={{ color: '#666666', mb: 1 }}> {/* Changed to LinkedIn gray */}
               No History Yet
             </Typography>
             <Typography variant="body2" sx={{ color: '#888' }}>
@@ -528,7 +528,7 @@ function HistoryDialog({ open, onClose, user }) {
                       {item.company}
                     </Typography>
                     <Typography variant="caption" sx={{ 
-                      color: '#b0b0b0',
+                      color: '#666666', // Changed to LinkedIn gray
                       display: 'block'
                     }}>
                       {formatDate(item.optimizedAt)} • {item.resumeName}
@@ -743,7 +743,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
             <Button 
               color="inherit" 
               onClick={onSignIn}
-              sx={{ color: '#b0b0b0', '&:hover': { color: '#0A66C2' } }}
+              sx={{ color: '#666666', '&:hover': { color: '#0A66C2' } }} // Changed to LinkedIn gray
             >
               Sign In
             </Button>
@@ -803,7 +803,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
                   Land Your Dream Job with AI-Optimized Resumes
                 </Typography>
                 <Typography variant="h5" sx={{ 
-                  color: '#b0b0b0', 
+                  color: '#666666', // Changed to LinkedIn gray for better visibility
                   mb: 4, 
                   fontWeight: 400,
                   lineHeight: 1.4
@@ -880,7 +880,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
                     }}>
                       🚀 Ready in 60 Seconds
                     </Typography>
-                    <Typography variant="body1" sx={{ color: '#b0b0b0', mb: 3 }}>
+                    <Typography variant="body1" sx={{ color: '#666666', mb: 3 }}> {/* Changed to LinkedIn gray */}
                       Upload your resume, paste the job description, and get an AI-optimized resume instantly.
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
@@ -923,7 +923,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
             Why Choose Resume Optimizer Pro?
           </Typography>
           <Typography variant="h6" align="center" sx={{ 
-            color: '#b0b0b0', 
+            color: '#666666', // Changed to LinkedIn gray for better visibility
             mb: 8,
             maxWidth: 600,
             mx: 'auto'
@@ -943,12 +943,13 @@ function LandingPage({ onGetStarted, onSignIn }) {
               >
                 <Card sx={{ 
                   height: '100%',
-                  background: 'linear-gradient(135deg, #FFFFFF 0%, #F3F2EF 100%)',
-                  border: '1px solid rgba(10, 102, 194, 0.2)',
+                  background: '#FFFFFF', // Pure white background
+                  border: '1px solid #E0E0E0', // LinkedIn border color
+                  boxShadow: '0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08)', // LinkedIn shadow
+                  borderRadius: '8px',
                   '&:hover': {
-                    border: '1px solid #0A66C2',
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 10px 30px rgba(10, 102, 194, 0.2)'
+                    boxShadow: '0 0 0 1px rgba(0,0,0,.08), 0 4px 8px rgba(0,0,0,.12)', // LinkedIn hover shadow
+                    transform: 'translateY(-2px)', // Subtle lift on hover
                   },
                   transition: 'all 0.3s ease'
                 }}>
@@ -959,12 +960,12 @@ function LandingPage({ onGetStarted, onSignIn }) {
                     <Typography variant="h6" sx={{ 
                       mb: 2, 
                       fontWeight: 600,
-                      color: '#ffffff'
+                      color: '#000000' // Changed to black for visibility on white cards
                     }}>
                       {feature.title}
                     </Typography>
                     <Typography variant="body2" sx={{ 
-                      color: '#b0b0b0',
+                      color: '#666666', // Changed to LinkedIn gray for visibility
                       lineHeight: 1.6
                     }}>
                       {feature.description}
@@ -1133,7 +1134,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ 
-                color: '#b0b0b0',
+                color: '#666666', // Changed to LinkedIn gray
                 mb: 2,
                 maxWidth: 400
               }}>
@@ -2455,7 +2456,7 @@ function App() {
                 <Box sx={{ flexGrow: 1 }} />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Typography variant="body2" sx={{ 
-                    color: '#b0b0b0',
+                    color: '#666666', // Changed to LinkedIn gray
                     display: { xs: 'none', sm: 'block' }
                   }}>
                     Welcome, {user.username}
@@ -2567,7 +2568,7 @@ function App() {
                   align="center" 
                   color="textSecondary"
                   gutterBottom
-                  sx={{ mb: 4, fontWeight: 400, color: '#b0b0b0' }}
+                  sx={{ mb: 4, fontWeight: 400, color: '#666666' }} // Changed to LinkedIn gray
                 >
                   Transform your resume with intelligent AI matching for maximum ATS compatibility
                 </Typography>
@@ -3030,11 +3031,11 @@ function App() {
               
               <Box sx={{ mt: 6, textAlign: 'center' }}>
                 <Divider sx={{ mb: 3, borderColor: 'rgba(10, 102, 194, 0.2)' }} />
-                <Typography variant="body2" color="textSecondary" sx={{ color: '#b0b0b0' }}>
+                <Typography variant="body2" color="textSecondary" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
                   Resume Optimizer Pro uses advanced AI to tailor your resume to specific job descriptions,
                   significantly increasing your chances of getting past Applicant Tracking Systems (ATS).
                 </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mt: 1, color: '#b0b0b0' }}>
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 1, color: '#666666' }}> {/* Changed to LinkedIn gray */}
                   Your data is processed securely with enterprise-grade encryption and not stored permanently.
                 </Typography>
               </Box>
