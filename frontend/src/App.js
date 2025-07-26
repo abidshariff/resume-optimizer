@@ -979,7 +979,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
 
       {/* Testimonials Section */}
       <Box sx={{ 
-        background: 'linear-gradient(135deg, #1a1a1a 0%, #000000 100%)',
+        background: '#F3F2EF', // LinkedIn background color
         py: 12
       }}>
         <Container maxWidth="lg">
@@ -992,12 +992,12 @@ function LandingPage({ onGetStarted, onSignIn }) {
             <Typography variant="h2" align="center" sx={{ 
               mb: 2,
               fontWeight: 700,
-              color: '#ffffff'
+              color: '#000000' // Changed to black for visibility on light background
             }}>
               Success Stories
             </Typography>
             <Typography variant="h6" align="center" sx={{ 
-              color: '#b0b0b0', 
+              color: '#666666', // Changed to LinkedIn gray 
               mb: 8
             }}>
               See how Resume Optimizer Pro helped professionals land their dream jobs
@@ -1015,13 +1015,18 @@ function LandingPage({ onGetStarted, onSignIn }) {
                 >
                   <Card sx={{ 
                     height: '100%',
-                    background: 'linear-gradient(135deg, #FFFFFF 0%, #F3F2EF 100%)',
-                    border: '1px solid rgba(10, 102, 194, 0.2)'
+                    background: '#FFFFFF', // Pure white background
+                    border: '1px solid #E0E0E0', // LinkedIn border color
+                    boxShadow: '0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08)', // LinkedIn shadow
+                    borderRadius: '8px',
+                    '&:hover': {
+                      boxShadow: '0 0 0 1px rgba(0,0,0,.08), 0 4px 8px rgba(0,0,0,.12)', // LinkedIn hover shadow
+                    }
                   }}>
                     <CardContent sx={{ p: 4 }}>
                       <Rating value={testimonial.rating} readOnly sx={{ mb: 2 }} />
                       <Typography variant="body1" sx={{ 
-                        color: '#ffffff',
+                        color: '#000000', // Changed to black for visibility on white cards
                         mb: 3,
                         fontStyle: 'italic',
                         lineHeight: 1.6
@@ -1039,12 +1044,12 @@ function LandingPage({ onGetStarted, onSignIn }) {
                         </Avatar>
                         <Box>
                           <Typography variant="h6" sx={{ 
-                            color: '#ffffff',
+                            color: '#000000', // Changed to black for visibility
                             fontWeight: 600
                           }}>
                             {testimonial.name}
                           </Typography>
-                          <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                          <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
                             {testimonial.role} at {testimonial.company}
                           </Typography>
                         </Box>
