@@ -593,6 +593,12 @@ def lambda_handler(event, context):
            - Ensure keyword density is high but natural
            - Format for maximum ATS compatibility
 
+        7. **EDUCATION PRESERVATION**:
+           - **DO NOT MODIFY THE EDUCATION SECTION**
+           - Keep all education entries exactly as they appear in the original resume
+           - Do not add coursework, projects, or details that weren't in the original
+           - Preserve original degree names, institution names, dates, and any existing details
+
         TRANSFORMATION EXAMPLES:
         - Original: "Developed web applications" → "Built responsive React.js applications with Node.js backend and AWS deployment"
         - Original: "Worked with databases" → "Designed and optimized PostgreSQL databases, implemented complex queries for data analytics"
@@ -628,10 +634,10 @@ def lambda_handler(event, context):
           ],
           "education": [
             {{
-              "degree": "Degree Name",
-              "institution": "Institution Name", 
-              "dates": "Graduation Year",
-              "details": "Add relevant coursework/projects if they align with job requirements (optional)"
+              "degree": "EXACT degree name from original resume - DO NOT CHANGE",
+              "institution": "EXACT institution name from original resume - DO NOT CHANGE", 
+              "dates": "EXACT dates from original resume - DO NOT CHANGE",
+              "details": "EXACT details from original resume if any existed - DO NOT ADD NEW CONTENT"
             }}
           ]
         }}
@@ -643,8 +649,9 @@ def lambda_handler(event, context):
         - Candidate should sound like the ideal fit based on resume content
         - Maintain truthfulness - enhance and reframe, don't fabricate experiences
         - Final resume should be significantly different from original while staying factual
+        - **EDUCATION SECTION MUST REMAIN COMPLETELY UNCHANGED FROM ORIGINAL**
 
-        **REMEMBER**: This is not just editing - this is a complete strategic transformation to make this candidate irresistible for this specific role.
+        **REMEMBER**: This is not just editing - this is a complete strategic transformation to make this candidate irresistible for this specific role. However, the education section should be preserved exactly as it appears in the original resume.
 
         Return ONLY the JSON structure with the completely optimized resume content. No explanations or notes.
         """
