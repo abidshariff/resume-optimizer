@@ -23,10 +23,10 @@ Amplify.configure({
       userPoolId: userPoolId,
       userPoolClientId: userPoolWebClientId,
       loginWith: {
-        username: true,
-        email: true
+        email: true,
+        username: false // Disable username login to simplify
       },
-      signUpVerificationMethod: 'code',
+      signUpVerificationMethod: 'code', // Explicitly set verification method
       userAttributes: {
         email: {
           required: true

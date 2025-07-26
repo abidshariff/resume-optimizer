@@ -1954,8 +1954,8 @@ function App() {
   const formFields = {
     signIn: {
       username: {
-        placeholder: 'Enter your username or email',
-        label: 'Username or Email *',
+        placeholder: 'Enter your email address',
+        label: 'Email Address *',
         isRequired: true,
       },
       password: {
@@ -1966,28 +1966,22 @@ function App() {
     },
     signUp: {
       username: {
-        placeholder: 'Choose a unique username',
-        label: 'Username *',
-        isRequired: true,
-        order: 1,
-      },
-      email: {
-        placeholder: 'Enter your professional email',
+        placeholder: 'Enter your email address',
         label: 'Email Address *',
         isRequired: true,
-        order: 2,
+        order: 1,
       },
       password: {
         placeholder: 'Create a strong password',
         label: 'Password *',
         isRequired: true,
-        order: 3,
+        order: 2,
       },
       confirm_password: {
         placeholder: 'Confirm your password',
         label: 'Confirm Password *',
         isRequired: true,
-        order: 4,
+        order: 3,
       },
       given_name: {
         placeholder: 'Enter your first name',
@@ -2256,31 +2250,10 @@ function App() {
         </Box>
 
         <Authenticator 
-          loginMechanisms={['username']}
+          loginMechanisms={['email']} // Changed to email only for better compatibility
           formFields={formFields}
           components={components}
           initialState={authMode}
-          services={{
-            async handleSignUp(formData) {
-              let { username, password, email, phone_number, given_name, family_name } = formData;
-              // Format phone number if provided
-              if (phone_number && !phone_number.startsWith('+')) {
-                phone_number = `+1${phone_number.replace(/\D/g, '')}`;
-              }
-              return {
-                username,
-                password,
-                options: {
-                  userAttributes: {
-                    email,
-                    phone_number,
-                    given_name,
-                    family_name,
-                  },
-                },
-              };
-            },
-          }}
           signUpAttributes={[
             'email',
             'given_name', 
