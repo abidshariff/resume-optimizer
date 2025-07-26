@@ -2152,12 +2152,12 @@ function App() {
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography variant="h5" sx={{ 
               fontWeight: 600, 
-              color: '#ffffff',
+              color: '#000000', // Changed to black for visibility
               mb: 1 
             }}>
               Verify Your Email
             </Typography>
-            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
               We've sent a verification code to your email address
             </Typography>
           </Box>
@@ -2166,7 +2166,7 @@ function App() {
       Footer() {
         return (
           <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
               Didn't receive the code?{' '}
               <Typography 
                 component="span" 
@@ -2189,12 +2189,12 @@ function App() {
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography variant="h5" sx={{ 
               fontWeight: 600, 
-              color: '#ffffff',
+              color: '#000000', // Changed to black for visibility
               mb: 1 
             }}>
               Reset Password
             </Typography>
-            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
               Enter your username or email to reset your password
             </Typography>
           </Box>
@@ -2207,12 +2207,12 @@ function App() {
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography variant="h5" sx={{ 
               fontWeight: 600, 
-              color: '#ffffff',
+              color: '#000000', // Changed to black for visibility
               mb: 1 
             }}>
               Create New Password
             </Typography>
-            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
               Enter the verification code and your new password
             </Typography>
           </Box>
@@ -2406,8 +2406,7 @@ function App() {
             },
           }}
         >
-      >
-        {({ signOut, user }) => (
+          {({ signOut, user }) => (
           <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             <AppBar position="static" elevation={0} sx={{ 
               background: '#FFFFFF',
