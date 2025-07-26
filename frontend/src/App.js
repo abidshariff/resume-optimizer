@@ -3182,54 +3182,12 @@ function App() {
                 );
               }
               
-              // If user is not authenticated, show landing page or authentication forms
+              // If user is not authenticated, show landing page
               return (
-                <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-                  {/* Back to Landing Page Button - only show during authentication */}
-                  {showAuth && (
-                    <Box sx={{ 
-                      position: 'absolute', 
-                      top: 20, 
-                      left: 20, 
-                      zIndex: 1000 
-                    }}>
-                      <Button
-                        variant="outlined"
-                        onClick={() => setShowAuth(false)}
-                        sx={{
-                          borderColor: '#0A66C2',
-                          color: '#0A66C2',
-                          '&:hover': {
-                            borderColor: '#666666',
-                            color: '#666666',
-                            backgroundColor: 'rgba(10, 102, 194, 0.1)'
-                          }
-                        }}
-                      >
-                        ← Back to Home
-                      </Button>
-                    </Box>
-                  )}
-                  
-                  {/* Show landing page or authentication forms based on showAuth state */}
-                  {!showAuth ? (
-                    <LandingPage 
-                      onGetStarted={handleGetStarted}
-                      onSignIn={handleSignIn}
-                    />
-                  ) : (
-                    // Authentication forms are handled by Authenticator component
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      alignItems: 'center', 
-                      minHeight: '100vh',
-                      pt: 8 // Add padding to avoid overlap with back button
-                    }}>
-                      {/* Authenticator component will render the forms here */}
-                    </Box>
-                  )}
-                </Box>
+                <LandingPage 
+                  onGetStarted={() => setAuthMode('signUp')}
+                  onSignIn={() => setAuthMode('signIn')}
+                />
               );
             }
           }}
