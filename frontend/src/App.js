@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { Authenticator } from '@aws-amplify/ui-react';
+import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react/styles.css';
 import { 
@@ -36,7 +36,9 @@ import {
   DialogActions,
   Grid,
   Card,
-  CardContent
+  CardContent,
+  Stack,
+  Rating
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon,
@@ -55,7 +57,13 @@ import {
   Security as SecurityIcon,
   Notifications as NotificationsIcon,
   Help as HelpIcon,
-  MoreVert as MoreVertIcon
+  MoreVert as MoreVertIcon,
+  PlayArrow as PlayArrowIcon,
+  Star as StarIcon,
+  TrendingUp as TrendingUpIcon,
+  Speed as SpeedIcon,
+  Shield as ShieldIcon,
+  Psychology as PsychologyIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -362,7 +370,497 @@ function SettingsDialog({ open, onClose, userProfile, setUserProfile }) {
     </Dialog>
   );
 }
-function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
+
+// Professional Landing Page Component
+function LandingPage({ onGetStarted, onSignIn }) {
+  const features = [
+    {
+      icon: <PsychologyIcon sx={{ fontSize: 40, color: '#ff6b35' }} />,
+      title: 'AI-Powered Optimization',
+      description: 'Advanced AI analyzes your resume and optimizes it for specific job descriptions and ATS systems.'
+    },
+    {
+      icon: <TrendingUpIcon sx={{ fontSize: 40, color: '#ff6b35' }} />,
+      title: '3x More Interviews',
+      description: 'Our users get 3x more interview calls with professionally optimized resumes.'
+    },
+    {
+      icon: <SpeedIcon sx={{ fontSize: 40, color: '#ff6b35' }} />,
+      title: 'Instant Results',
+      description: 'Get your optimized resume in under 60 seconds with our lightning-fast AI processing.'
+    },
+    {
+      icon: <ShieldIcon sx={{ fontSize: 40, color: '#ff6b35' }} />,
+      title: 'ATS Compatible',
+      description: 'Ensure your resume passes Applicant Tracking Systems with our ATS optimization technology.'
+    }
+  ];
+
+  const testimonials = [
+    {
+      name: 'Sarah Johnson',
+      role: 'Software Engineer',
+      company: 'Google',
+      rating: 5,
+      text: 'Resume Optimizer Pro helped me land my dream job at Google. The AI optimization was incredible!'
+    },
+    {
+      name: 'Michael Chen',
+      role: 'Marketing Manager',
+      company: 'Microsoft',
+      rating: 5,
+      text: 'I got 5 interview calls in the first week after using this service. Absolutely worth it!'
+    },
+    {
+      name: 'Emily Rodriguez',
+      role: 'Data Scientist',
+      company: 'Amazon',
+      rating: 5,
+      text: 'The ATS optimization feature is a game-changer. My resume now gets past all screening systems.'
+    }
+  ];
+
+  return (
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Navigation Header */}
+      <AppBar position="static" elevation={0} sx={{ 
+        background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
+        borderBottom: '2px solid #ff6b35'
+      }}>
+        <Toolbar sx={{ py: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <AutoAwesomeIcon sx={{ mr: 2, color: '#ff6b35', fontSize: 28 }} />
+            <Typography variant="h5" component="div" sx={{ 
+              fontWeight: 700,
+              background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Resume Optimizer Pro
+            </Typography>
+          </Box>
+          <Box sx={{ flexGrow: 1 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Button 
+              color="inherit" 
+              onClick={onSignIn}
+              sx={{ color: '#b0b0b0', '&:hover': { color: '#ff6b35' } }}
+            >
+              Sign In
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={onGetStarted}
+              sx={{
+                background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+                }
+              }}
+            >
+              Get Started Free
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* Hero Section */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2a2a2a 100%)',
+        py: 12,
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Background Pattern */}
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: 'radial-gradient(circle at 25% 25%, #ff6b35 0%, transparent 50%), radial-gradient(circle at 75% 75%, #ff9800 0%, transparent 50%)',
+          opacity: 0.1,
+          zIndex: 0
+        }} />
+        
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+          <Grid container spacing={6} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <Typography variant="h1" sx={{ 
+                  fontSize: { xs: '2.5rem', md: '3.5rem' },
+                  fontWeight: 800,
+                  background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  mb: 3,
+                  lineHeight: 1.2
+                }}>
+                  Land Your Dream Job with AI-Optimized Resumes
+                </Typography>
+                <Typography variant="h5" sx={{ 
+                  color: '#b0b0b0', 
+                  mb: 4, 
+                  fontWeight: 400,
+                  lineHeight: 1.4
+                }}>
+                  Transform your resume in seconds with our advanced AI technology. 
+                  Get past ATS systems and land 3x more interviews.
+                </Typography>
+                <Stack direction="row" spacing={3} sx={{ mb: 4 }}>
+                  <Button 
+                    variant="contained" 
+                    size="large"
+                    onClick={onGetStarted}
+                    endIcon={<PlayArrowIcon />}
+                    sx={{
+                      py: 2,
+                      px: 4,
+                      fontSize: '1.1rem',
+                      background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                      boxShadow: '0 8px 32px rgba(255, 107, 53, 0.3)',
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+                        boxShadow: '0 12px 40px rgba(255, 107, 53, 0.4)',
+                        transform: 'translateY(-2px)'
+                      }
+                    }}
+                  >
+                    Start Optimizing Now
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    size="large"
+                    sx={{
+                      py: 2,
+                      px: 4,
+                      fontSize: '1.1rem',
+                      borderColor: '#ff6b35',
+                      color: '#ff6b35',
+                      '&:hover': {
+                        borderColor: '#ff9800',
+                        color: '#ff9800',
+                        backgroundColor: 'rgba(255, 107, 53, 0.1)'
+                      }
+                    }}
+                  >
+                    Watch Demo
+                  </Button>
+                </Stack>
+                <Typography variant="body2" sx={{ color: '#888', fontSize: '0.9rem' }}>
+                  ✓ Free to start • ✓ No credit card required • ✓ 30-second setup
+                </Typography>
+              </motion.div>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <Box sx={{ 
+                  position: 'relative',
+                  textAlign: 'center'
+                }}>
+                  <Paper sx={{
+                    p: 4,
+                    background: 'linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%)',
+                    border: '2px solid #ff6b35',
+                    borderRadius: 4,
+                    boxShadow: '0 20px 60px rgba(255, 107, 53, 0.2)'
+                  }}>
+                    <Typography variant="h4" sx={{ 
+                      color: '#ff6b35', 
+                      mb: 2,
+                      fontWeight: 700
+                    }}>
+                      🚀 Ready in 60 Seconds
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#b0b0b0', mb: 3 }}>
+                      Upload your resume, paste the job description, and get an AI-optimized resume instantly.
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
+                      <Chip label="Upload" color="primary" />
+                      <ArrowForwardIcon sx={{ color: '#ff6b35', alignSelf: 'center' }} />
+                      <Chip label="Optimize" color="primary" />
+                      <ArrowForwardIcon sx={{ color: '#ff6b35', alignSelf: 'center' }} />
+                      <Chip label="Download" color="primary" />
+                    </Box>
+                    <Typography variant="h6" sx={{ 
+                      color: '#4caf50',
+                      fontWeight: 600
+                    }}>
+                      3x More Interview Calls Guaranteed
+                    </Typography>
+                  </Paper>
+                </Box>
+              </motion.div>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Features Section */}
+      <Container maxWidth="lg" sx={{ py: 12 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <Typography variant="h2" align="center" sx={{ 
+            mb: 2,
+            fontWeight: 700,
+            background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            Why Choose Resume Optimizer Pro?
+          </Typography>
+          <Typography variant="h6" align="center" sx={{ 
+            color: '#b0b0b0', 
+            mb: 8,
+            maxWidth: 600,
+            mx: 'auto'
+          }}>
+            Join thousands of professionals who have transformed their careers with our AI-powered resume optimization
+          </Typography>
+        </motion.div>
+
+        <Grid container spacing={4}>
+          {features.map((feature, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <Card sx={{ 
+                  height: '100%',
+                  background: 'linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%)',
+                  border: '1px solid rgba(255, 107, 53, 0.2)',
+                  '&:hover': {
+                    border: '1px solid #ff6b35',
+                    transform: 'translateY(-5px)',
+                    boxShadow: '0 10px 30px rgba(255, 107, 53, 0.2)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}>
+                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                    <Box sx={{ mb: 3 }}>
+                      {feature.icon}
+                    </Box>
+                    <Typography variant="h6" sx={{ 
+                      mb: 2, 
+                      fontWeight: 600,
+                      color: '#ffffff'
+                    }}>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ 
+                      color: '#b0b0b0',
+                      lineHeight: 1.6
+                    }}>
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* Testimonials Section */}
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #1a1a1a 0%, #000000 100%)',
+        py: 12
+      }}>
+        <Container maxWidth="lg">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <Typography variant="h2" align="center" sx={{ 
+              mb: 2,
+              fontWeight: 700,
+              color: '#ffffff'
+            }}>
+              Success Stories
+            </Typography>
+            <Typography variant="h6" align="center" sx={{ 
+              color: '#b0b0b0', 
+              mb: 8
+            }}>
+              See how Resume Optimizer Pro helped professionals land their dream jobs
+            </Typography>
+          </motion.div>
+
+          <Grid container spacing={4}>
+            {testimonials.map((testimonial, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.2 }}
+                  viewport={{ once: true }}
+                >
+                  <Card sx={{ 
+                    height: '100%',
+                    background: 'linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%)',
+                    border: '1px solid rgba(255, 107, 53, 0.2)'
+                  }}>
+                    <CardContent sx={{ p: 4 }}>
+                      <Rating value={testimonial.rating} readOnly sx={{ mb: 2 }} />
+                      <Typography variant="body1" sx={{ 
+                        color: '#ffffff',
+                        mb: 3,
+                        fontStyle: 'italic',
+                        lineHeight: 1.6
+                      }}>
+                        "{testimonial.text}"
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar sx={{ 
+                          bgcolor: '#ff6b35',
+                          mr: 2,
+                          width: 50,
+                          height: 50
+                        }}>
+                          {testimonial.name.charAt(0)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" sx={{ 
+                            color: '#ffffff',
+                            fontWeight: 600
+                          }}>
+                            {testimonial.name}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                            {testimonial.role} at {testimonial.company}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* CTA Section */}
+      <Container maxWidth="lg" sx={{ py: 12 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <Paper sx={{
+            p: 8,
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #ff6b35 0%, #ff9800 100%)',
+            color: 'white'
+          }}>
+            <Typography variant="h2" sx={{ 
+              mb: 3,
+              fontWeight: 700
+            }}>
+              Ready to Transform Your Career?
+            </Typography>
+            <Typography variant="h6" sx={{ 
+              mb: 4,
+              opacity: 0.9,
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
+              Join over 50,000 professionals who have successfully optimized their resumes and landed their dream jobs
+            </Typography>
+            <Button 
+              variant="contained" 
+              size="large"
+              onClick={onGetStarted}
+              sx={{
+                py: 2,
+                px: 6,
+                fontSize: '1.2rem',
+                backgroundColor: '#000000',
+                color: '#ffffff',
+                '&:hover': {
+                  backgroundColor: '#1a1a1a',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+                }
+              }}
+            >
+              Start Your Free Optimization Now
+            </Button>
+          </Paper>
+        </motion.div>
+      </Container>
+
+      {/* Footer */}
+      <Box sx={{ 
+        background: '#000000',
+        py: 6,
+        borderTop: '2px solid #ff6b35'
+      }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <AutoAwesomeIcon sx={{ mr: 2, color: '#ff6b35', fontSize: 28 }} />
+                <Typography variant="h6" sx={{ 
+                  fontWeight: 700,
+                  color: '#ff6b35'
+                }}>
+                  Resume Optimizer Pro
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ 
+                color: '#b0b0b0',
+                mb: 2,
+                maxWidth: 400
+              }}>
+                The most advanced AI-powered resume optimization platform. 
+                Transform your career with professional resume enhancement.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" sx={{ 
+                color: '#888',
+                textAlign: { xs: 'left', md: 'right' }
+              }}>
+                © 2024 Resume Optimizer Pro. All rights reserved.
+              </Typography>
+              <Typography variant="body2" sx={{ 
+                color: '#888',
+                textAlign: { xs: 'left', md: 'right' },
+                mt: 1
+              }}>
+                Privacy Policy • Terms of Service • Contact Us
+              </Typography>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+    </Box>
+  );
+}
+
+// File upload component with drag and drop
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } = useDropzone({
     accept: acceptedFileTypes,
     onDrop: files => {
@@ -504,6 +1002,11 @@ function StatusIndicator({ status, message, progress }) {
 }
 
 function App() {
+  // Authentication state
+  const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState('signIn'); // 'signIn' or 'signUp'
+  
+  // Resume optimization state
   const [resume, setResume] = useState(null);
   const [resumeName, setResumeName] = useState('');
   const [jobDescription, setJobDescription] = useState('');
@@ -528,13 +1031,38 @@ function App() {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [userProfile, setUserProfile] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
+    phone: '',
     company: '',
     jobTitle: '',
     notifications: true,
     theme: 'dark'
   });
+
+  // Handle landing page actions
+  const handleGetStarted = () => {
+    setAuthMode('signUp');
+    setShowAuth(true);
+  };
+
+  const handleSignIn = () => {
+    setAuthMode('signIn');
+    setShowAuth(true);
+  };
+
+  // If not showing auth, show landing page
+  if (!showAuth) {
+    return (
+      <ThemeProvider theme={theme}>
+        <LandingPage 
+          onGetStarted={handleGetStarted}
+          onSignIn={handleSignIn}
+        />
+      </ThemeProvider>
+    );
+  }
   
   // Educational tips to show during processing
   const educationalTips = [
@@ -1345,169 +1873,196 @@ function App() {
   // Wrap the app with Authenticator for user authentication
   return (
     <ThemeProvider theme={theme}>
-      <Authenticator 
-        loginMechanisms={['username']}
-        formFields={formFields}
-        components={components}
-        services={{
-          async handleSignUp(formData) {
-            let { username, password, email, phone_number, given_name, family_name } = formData;
-            // Format phone number if provided
-            if (phone_number && !phone_number.startsWith('+')) {
-              phone_number = `+1${phone_number.replace(/\D/g, '')}`;
-            }
-            return {
-              username,
-              password,
-              options: {
-                userAttributes: {
-                  email,
-                  phone_number,
-                  given_name,
-                  family_name,
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        {/* Back to Landing Page Button */}
+        <Box sx={{ 
+          position: 'absolute', 
+          top: 20, 
+          left: 20, 
+          zIndex: 1000 
+        }}>
+          <Button
+            variant="outlined"
+            onClick={() => setShowAuth(false)}
+            sx={{
+              borderColor: '#ff6b35',
+              color: '#ff6b35',
+              '&:hover': {
+                borderColor: '#ff9800',
+                color: '#ff9800',
+                backgroundColor: 'rgba(255, 107, 53, 0.1)'
+              }
+            }}
+          >
+            ← Back to Home
+          </Button>
+        </Box>
+
+        <Authenticator 
+          loginMechanisms={['username']}
+          formFields={formFields}
+          components={components}
+          initialState={authMode}
+          services={{
+            async handleSignUp(formData) {
+              let { username, password, email, phone_number, given_name, family_name } = formData;
+              // Format phone number if provided
+              if (phone_number && !phone_number.startsWith('+')) {
+                phone_number = `+1${phone_number.replace(/\D/g, '')}`;
+              }
+              return {
+                username,
+                password,
+                options: {
+                  userAttributes: {
+                    email,
+                    phone_number,
+                    given_name,
+                    family_name,
+                  },
                 },
-              },
-            };
-          },
-        }}
-        signUpAttributes={[
-          'email',
-          'given_name', 
-          'family_name',
-          'phone_number'
-        ]}
-        theme={{
-          name: 'resume-optimizer-theme',
-          tokens: {
-            colors: {
-              background: {
-                primary: '#121212',
-                secondary: '#1e1e1e',
-              },
-              font: {
-                primary: '#ffffff',
-                secondary: '#b0b0b0',
-                tertiary: '#888888',
-              },
-              brand: {
-                primary: {
-                  10: '#ff6b35',
-                  20: '#ff6b35',
-                  40: '#ff6b35',
-                  60: '#ff6b35',
-                  80: '#ff6b35',
-                  90: '#ff6b35',
-                  100: '#ff6b35',
-                },
-                secondary: {
-                  10: '#ff9800',
-                  20: '#ff9800',
-                  40: '#ff9800',
-                  60: '#ff9800',
-                  80: '#ff9800',
-                  90: '#ff9800',
-                  100: '#ff9800',
-                },
-              },
-              border: {
-                primary: 'rgba(255, 107, 53, 0.3)',
-                secondary: 'rgba(255, 107, 53, 0.1)',
-                focus: '#ff6b35',
-              },
+              };
             },
-            components: {
-              authenticator: {
-                router: {
-                  boxShadow: '0 8px 32px rgba(255, 107, 53, 0.2)',
-                  borderRadius: '12px',
-                  backgroundColor: '#1e1e1e',
-                  border: '1px solid rgba(255, 107, 53, 0.3)',
-                  maxWidth: '480px',
-                  margin: '2rem auto',
+          }}
+          signUpAttributes={[
+            'email',
+            'given_name', 
+            'family_name',
+            'phone_number'
+          ]}
+          theme={{
+            name: 'resume-optimizer-theme',
+            tokens: {
+              colors: {
+                background: {
+                  primary: '#121212',
+                  secondary: '#1e1e1e',
+                },
+                font: {
+                  primary: '#ffffff',
+                  secondary: '#b0b0b0',
+                  tertiary: '#888888',
+                },
+                brand: {
+                  primary: {
+                    10: '#ff6b35',
+                    20: '#ff6b35',
+                    40: '#ff6b35',
+                    60: '#ff6b35',
+                    80: '#ff6b35',
+                    90: '#ff6b35',
+                    100: '#ff6b35',
+                  },
+                  secondary: {
+                    10: '#ff9800',
+                    20: '#ff9800',
+                    40: '#ff9800',
+                    60: '#ff9800',
+                    80: '#ff9800',
+                    90: '#ff9800',
+                    100: '#ff9800',
+                  },
+                },
+                border: {
+                  primary: 'rgba(255, 107, 53, 0.3)',
+                  secondary: 'rgba(255, 107, 53, 0.1)',
+                  focus: '#ff6b35',
                 },
               },
-              button: {
-                primary: {
-                  backgroundColor: '#ff6b35',
-                  color: '#ffffff',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  padding: '12px 24px',
-                  fontSize: '1rem',
-                  background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
-                  boxShadow: '0 4px 20px rgba(255, 107, 53, 0.3)',
-                  _hover: {
-                    backgroundColor: '#e64a19',
-                    background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
-                    boxShadow: '0 6px 25px rgba(255, 107, 53, 0.4)',
-                    transform: 'translateY(-1px)',
+              components: {
+                authenticator: {
+                  router: {
+                    boxShadow: '0 8px 32px rgba(255, 107, 53, 0.2)',
+                    borderRadius: '12px',
+                    backgroundColor: '#1e1e1e',
+                    border: '1px solid rgba(255, 107, 53, 0.3)',
+                    maxWidth: '480px',
+                    margin: '2rem auto',
                   },
-                  _focus: {
+                },
+                button: {
+                  primary: {
                     backgroundColor: '#ff6b35',
-                    boxShadow: '0 0 0 2px rgba(255, 107, 53, 0.5)',
+                    color: '#ffffff',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    padding: '12px 24px',
+                    fontSize: '1rem',
+                    background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                    boxShadow: '0 4px 20px rgba(255, 107, 53, 0.3)',
+                    _hover: {
+                      backgroundColor: '#e64a19',
+                      background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+                      boxShadow: '0 6px 25px rgba(255, 107, 53, 0.4)',
+                      transform: 'translateY(-1px)',
+                    },
+                    _focus: {
+                      backgroundColor: '#ff6b35',
+                      boxShadow: '0 0 0 2px rgba(255, 107, 53, 0.5)',
+                    },
+                    _active: {
+                      backgroundColor: '#d84315',
+                      transform: 'translateY(0px)',
+                    },
                   },
-                  _active: {
-                    backgroundColor: '#d84315',
-                    transform: 'translateY(0px)',
-                  },
-                },
-                link: {
-                  color: '#ff6b35',
-                  _hover: {
-                    color: '#ff9800',
-                    textDecoration: 'underline',
-                  },
-                },
-              },
-              fieldcontrol: {
-                backgroundColor: '#2a2a2a',
-                borderColor: 'rgba(255, 107, 53, 0.3)',
-                borderRadius: '8px',
-                color: '#ffffff',
-                padding: '12px 16px',
-                fontSize: '1rem',
-                _focus: {
-                  borderColor: '#ff6b35',
-                  boxShadow: '0 0 0 2px rgba(255, 107, 53, 0.2)',
-                  backgroundColor: '#333333',
-                },
-                _hover: {
-                  borderColor: '#ff6b35',
-                },
-                _error: {
-                  borderColor: '#f44336',
-                  boxShadow: '0 0 0 2px rgba(244, 67, 54, 0.2)',
-                },
-              },
-              fieldmessages: {
-                color: '#f44336',
-                fontSize: '0.875rem',
-                marginTop: '4px',
-              },
-              text: {
-                primary: {
-                  color: '#ffffff',
-                },
-                secondary: {
-                  color: '#b0b0b0',
-                },
-              },
-              tabs: {
-                item: {
-                  color: '#b0b0b0',
-                  borderColor: 'transparent',
-                  _active: {
+                  link: {
                     color: '#ff6b35',
+                    _hover: {
+                      color: '#ff9800',
+                      textDecoration: 'underline',
+                    },
+                  },
+                },
+                fieldcontrol: {
+                  backgroundColor: '#2a2a2a',
+                  borderColor: 'rgba(255, 107, 53, 0.3)',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  padding: '12px 16px',
+                  fontSize: '1rem',
+                  _focus: {
+                    borderColor: '#ff6b35',
+                    boxShadow: '0 0 0 2px rgba(255, 107, 53, 0.2)',
+                    backgroundColor: '#333333',
+                  },
+                  _hover: {
                     borderColor: '#ff6b35',
                   },
-                  _hover: {
-                    color: '#ff9800',
+                  _error: {
+                    borderColor: '#f44336',
+                    boxShadow: '0 0 0 2px rgba(244, 67, 54, 0.2)',
+                  },
+                },
+                fieldmessages: {
+                  color: '#f44336',
+                  fontSize: '0.875rem',
+                  marginTop: '4px',
+                },
+                text: {
+                  primary: {
+                    color: '#ffffff',
+                  },
+                  secondary: {
+                    color: '#b0b0b0',
+                  },
+                },
+                tabs: {
+                  item: {
+                    color: '#b0b0b0',
+                    borderColor: 'transparent',
+                    _active: {
+                      color: '#ff6b35',
+                      borderColor: '#ff6b35',
+                    },
+                    _hover: {
+                      color: '#ff9800',
+                    },
                   },
                 },
               },
             },
-          },
-        }}
+          }}
+        >
       >
         {({ signOut, user }) => (
           <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -2134,6 +2689,7 @@ function App() {
           </Box>
         )}
       </Authenticator>
+      </Box>
     </ThemeProvider>
   );
 }
