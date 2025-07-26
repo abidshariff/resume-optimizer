@@ -68,72 +68,87 @@ import {
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 
-// Create a professional black and orange theme
+// Create a corporate, modern, and innovative theme
 const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
-      main: '#ff6b35', // Orange
-      light: '#ff8a65',
-      dark: '#e64a19',
+      main: '#0D47A1', // Deep Corporate Blue
+      light: '#5472D3',
+      dark: '#002171',
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#ff9800', // Amber orange
-      light: '#ffb74d',
-      dark: '#f57c00',
-      contrastText: '#000000',
+      main: '#37474F', // Modern Slate
+      light: '#62727B',
+      dark: '#102027',
+      contrastText: '#ffffff',
     },
     background: {
-      default: '#121212', // Dark background
-      paper: '#1e1e1e', // Slightly lighter for cards
+      default: '#FFFFFF', // Pure White
+      paper: '#F8F9FA', // Light Gray for cards
     },
     text: {
-      primary: '#ffffff',
-      secondary: '#b0b0b0',
+      primary: '#424242', // Dark gray for body text
+      secondary: '#37474F', // Modern Slate for headers
     },
     error: {
-      main: '#f44336',
+      main: '#D32F2F', // Professional red
     },
     warning: {
-      main: '#ff9800',
+      main: '#FF6F00', // Warning orange
     },
     info: {
-      main: '#2196f3',
+      main: '#00BCD4', // Innovation Accent (cyan)
     },
     success: {
-      main: '#4caf50',
+      main: '#00C853', // Success green
+    },
+    // Custom colors for specific use cases
+    accent: {
+      main: '#00BCD4', // Innovation Accent
+      light: '#62EFFF',
+      dark: '#008BA3',
+      contrastText: '#ffffff',
     },
   },
   typography: {
-    fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
       fontWeight: 700,
-      color: '#ffffff',
+      color: '#37474F', // Modern Slate for headers
+      letterSpacing: '-0.02em',
     },
     h2: {
       fontWeight: 600,
-      color: '#ffffff',
+      color: '#37474F',
+      letterSpacing: '-0.01em',
     },
     h3: {
       fontWeight: 600,
-      color: '#ffffff',
+      color: '#37474F',
     },
     h4: {
       fontWeight: 600,
-      color: '#ffffff',
+      color: '#37474F',
     },
     h5: {
       fontWeight: 600,
-      color: '#ffffff',
+      color: '#37474F',
     },
     h6: {
       fontWeight: 600,
-      color: '#ffffff',
+      color: '#37474F',
+    },
+    body1: {
+      color: '#424242', // Dark gray for body text
+    },
+    body2: {
+      color: '#424242',
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 8, // Modern, clean corners
   },
   components: {
     MuiButton: {
@@ -143,13 +158,32 @@ const theme = createTheme({
           fontWeight: 600,
           padding: '12px 28px',
           borderRadius: '8px',
+          boxShadow: 'none',
         },
         contained: {
-          background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
-          boxShadow: '0 4px 20px rgba(255, 107, 53, 0.3)',
+          '&.MuiButton-containedPrimary': {
+            background: '#0D47A1', // Deep Corporate Blue
+            color: '#ffffff',
+            '&:hover': {
+              background: '#002171',
+              boxShadow: '0 4px 12px rgba(13, 71, 161, 0.3)',
+            },
+          },
+          '&.MuiButton-containedSecondary': {
+            background: '#37474F', // Modern Slate
+            color: '#ffffff',
+            '&:hover': {
+              background: '#102027',
+              boxShadow: '0 4px 12px rgba(55, 71, 79, 0.3)',
+            },
+          },
+        },
+        outlined: {
+          borderColor: '#0D47A1',
+          color: '#0D47A1',
           '&:hover': {
-            background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
-            boxShadow: '0 6px 25px rgba(255, 107, 53, 0.4)',
+            borderColor: '#002171',
+            backgroundColor: 'rgba(13, 71, 161, 0.04)',
           },
         },
       },
@@ -158,16 +192,71 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          backgroundColor: '#1e1e1e',
-          border: '1px solid rgba(255, 107, 53, 0.1)',
+          backgroundColor: '#F8F9FA', // Light Gray
+          border: '1px solid rgba(13, 71, 161, 0.08)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: '#000000',
-          borderBottom: '2px solid #ff6b35',
+          backgroundColor: '#0D47A1', // Deep Corporate Blue
+          color: '#ffffff',
+          boxShadow: '0 2px 8px rgba(13, 71, 161, 0.15)',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#FFFFFF', // Pure White for cards
+          border: '1px solid rgba(13, 71, 161, 0.08)',
+          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+          '&:hover': {
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          '&.MuiChip-filled': {
+            backgroundColor: '#00BCD4', // Innovation Accent
+            color: '#ffffff',
+          },
+        },
+      },
+    },
+    MuiLinearProgress: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'rgba(0, 188, 212, 0.2)',
+          '& .MuiLinearProgress-bar': {
+            backgroundColor: '#00BCD4', // Innovation Accent
+          },
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: '#FFFFFF',
+            '& fieldset': {
+              borderColor: 'rgba(13, 71, 161, 0.2)',
+            },
+            '&:hover fieldset': {
+              borderColor: '#0D47A1',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#00BCD4', // Innovation Accent for focus
+            },
+          },
+        },
+      },
+    },
         },
       },
     },
@@ -176,20 +265,18 @@ const theme = createTheme({
         root: {
           '& .MuiOutlinedInput-root': {
             '& fieldset': {
-              borderColor: 'rgba(255, 107, 53, 0.3)',
+              borderColor: 'rgba(13, 71, 161, 0.3)',
             },
-            '&:hover fieldset': {
-              borderColor: '#ff6b35',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#ff6b35',
-            },
-          },
-        },
-      },
-    },
   },
 });
+
+// Add custom button variant for innovation accent
+theme.palette.accent = {
+  main: '#00BCD4',
+  light: '#62EFFF', 
+  dark: '#008BA3',
+  contrastText: '#ffffff',
+};
 
 // Profile Dialog Component
 function ProfileDialog({ open, onClose, user, userProfile, setUserProfile, setSnackbarMessage, setSnackbarOpen }) {
@@ -207,7 +294,7 @@ function ProfileDialog({ open, onClose, user, userProfile, setUserProfile, setSn
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ 
-        background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+        background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)', // Corporate blue to innovation accent
         color: 'white',
         display: 'flex',
         alignItems: 'center'
@@ -340,7 +427,7 @@ function HistoryDialog({ open, onClose, user }) {
       case 'Failed':
         return '#f44336';
       case 'Processing':
-        return '#ff9800';
+        return '#37474F';
       default:
         return '#b0b0b0';
     }
@@ -353,7 +440,7 @@ function HistoryDialog({ open, onClose, user }) {
       case 'Failed':
         return <ErrorIcon sx={{ color: '#f44336' }} />;
       case 'Processing':
-        return <ScheduleIcon sx={{ color: '#ff9800' }} />;
+        return <ScheduleIcon sx={{ color: '#37474F' }} />;
       default:
         return <ScheduleIcon sx={{ color: '#b0b0b0' }} />;
     }
@@ -386,7 +473,7 @@ function HistoryDialog({ open, onClose, user }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ 
-        background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+        background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
         color: 'white',
         display: 'flex',
         alignItems: 'center'
@@ -422,7 +509,7 @@ function HistoryDialog({ open, onClose, user }) {
                       {item.jobTitle}
                     </Typography>
                     <Typography variant="body2" sx={{ 
-                      color: '#ff6b35',
+                      color: '#00BCD4',
                       mb: 0.5
                     }}>
                       {item.company}
@@ -442,12 +529,12 @@ function HistoryDialog({ open, onClose, user }) {
                         startIcon={<DownloadIcon />}
                         onClick={() => handleDownload(item)}
                         sx={{
-                          borderColor: '#ff6b35',
-                          color: '#ff6b35',
+                          borderColor: '#00BCD4',
+                          color: '#00BCD4',
                           '&:hover': {
-                            borderColor: '#ff9800',
-                            color: '#ff9800',
-                            backgroundColor: 'rgba(255, 107, 53, 0.1)'
+                            borderColor: '#37474F',
+                            color: '#37474F',
+                            backgroundColor: 'rgba(0, 188, 212, 0.1)'
                           }
                         }}
                       >
@@ -460,9 +547,9 @@ function HistoryDialog({ open, onClose, user }) {
                       startIcon={<AutoAwesomeIcon />}
                       onClick={() => handleReOptimize(item)}
                       sx={{
-                        background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                        background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
                         '&:hover': {
-                          background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+                          background: 'linear-gradient(45deg, #002171 30%, #008BA3 90%)',
                         }
                       }}
                     >
@@ -471,14 +558,14 @@ function HistoryDialog({ open, onClose, user }) {
                   </Box>
                 </Box>
                 {index < historyItems.length - 1 && (
-                  <Divider sx={{ borderColor: 'rgba(255, 107, 53, 0.2)' }} />
+                  <Divider sx={{ borderColor: 'rgba(0, 188, 212, 0.2)' }} />
                 )}
               </Box>
             ))}
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255, 107, 53, 0.2)' }}>
+      <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(0, 188, 212, 0.2)' }}>
         <Button onClick={onClose} variant="outlined">
           Close
         </Button>
@@ -487,9 +574,9 @@ function HistoryDialog({ open, onClose, user }) {
           startIcon={<AutoAwesomeIcon />}
           onClick={onClose}
           sx={{
-            background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+            background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
             '&:hover': {
-              background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+              background: 'linear-gradient(45deg, #002171 30%, #008BA3 90%)',
             }
           }}
         >
@@ -509,7 +596,7 @@ function SettingsDialog({ open, onClose, userProfile, setUserProfile }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ 
-        background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+        background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
         color: 'white',
         display: 'flex',
         alignItems: 'center'
@@ -573,22 +660,22 @@ function SettingsDialog({ open, onClose, userProfile, setUserProfile }) {
 function LandingPage({ onGetStarted, onSignIn }) {
   const features = [
     {
-      icon: <PsychologyIcon sx={{ fontSize: 40, color: '#ff6b35' }} />,
+      icon: <PsychologyIcon sx={{ fontSize: 40, color: '#00BCD4' }} />,
       title: 'AI-Powered Optimization',
       description: 'Advanced AI analyzes your resume and optimizes it for specific job descriptions and ATS systems.'
     },
     {
-      icon: <TrendingUpIcon sx={{ fontSize: 40, color: '#ff6b35' }} />,
+      icon: <TrendingUpIcon sx={{ fontSize: 40, color: '#00BCD4' }} />,
       title: '3x More Interviews',
       description: 'Our users get 3x more interview calls with professionally optimized resumes.'
     },
     {
-      icon: <SpeedIcon sx={{ fontSize: 40, color: '#ff6b35' }} />,
+      icon: <SpeedIcon sx={{ fontSize: 40, color: '#00BCD4' }} />,
       title: 'Instant Results',
       description: 'Get your optimized resume in under 60 seconds with our lightning-fast AI processing.'
     },
     {
-      icon: <ShieldIcon sx={{ fontSize: 40, color: '#ff6b35' }} />,
+      icon: <ShieldIcon sx={{ fontSize: 40, color: '#00BCD4' }} />,
       title: 'ATS Compatible',
       description: 'Ensure your resume passes Applicant Tracking Systems with our ATS optimization technology.'
     }
@@ -622,15 +709,15 @@ function LandingPage({ onGetStarted, onSignIn }) {
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Navigation Header */}
       <AppBar position="static" elevation={0} sx={{ 
-        background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
-        borderBottom: '2px solid #ff6b35'
+        background: 'linear-gradient(135deg, #0D47A1 0%, #002171 100%)',
+        borderBottom: '2px solid #00BCD4'
       }}>
         <Toolbar sx={{ py: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <AutoAwesomeIcon sx={{ mr: 2, color: '#ff6b35', fontSize: 28 }} />
+            <AutoAwesomeIcon sx={{ mr: 2, color: '#00BCD4', fontSize: 28 }} />
             <Typography variant="h5" component="div" sx={{ 
               fontWeight: 700,
-              background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+              background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
@@ -643,7 +730,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
             <Button 
               color="inherit" 
               onClick={onSignIn}
-              sx={{ color: '#b0b0b0', '&:hover': { color: '#ff6b35' } }}
+              sx={{ color: '#b0b0b0', '&:hover': { color: '#00BCD4' } }}
             >
               Sign In
             </Button>
@@ -651,9 +738,9 @@ function LandingPage({ onGetStarted, onSignIn }) {
               variant="contained" 
               onClick={onGetStarted}
               sx={{
-                background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
+                  background: 'linear-gradient(45deg, #002171 30%, #008BA3 90%)',
                 }
               }}
             >
@@ -677,7 +764,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: 'radial-gradient(circle at 25% 25%, #ff6b35 0%, transparent 50%), radial-gradient(circle at 75% 75%, #ff9800 0%, transparent 50%)',
+          backgroundImage: 'radial-gradient(circle at 25% 25%, #00BCD4 0%, transparent 50%), radial-gradient(circle at 75% 75%, #37474F 0%, transparent 50%)',
           opacity: 0.1,
           zIndex: 0
         }} />
@@ -693,7 +780,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
                 <Typography variant="h1" sx={{ 
                   fontSize: { xs: '2.5rem', md: '3.5rem' },
                   fontWeight: 800,
-                  background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                  background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -721,11 +808,11 @@ function LandingPage({ onGetStarted, onSignIn }) {
                       py: 2,
                       px: 4,
                       fontSize: '1.1rem',
-                      background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
-                      boxShadow: '0 8px 32px rgba(255, 107, 53, 0.3)',
+                      background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
+                      boxShadow: '0 8px 32px rgba(13, 71, 161, 0.3)',
                       '&:hover': {
-                        background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
-                        boxShadow: '0 12px 40px rgba(255, 107, 53, 0.4)',
+                        background: 'linear-gradient(45deg, #002171 30%, #008BA3 90%)',
+                        boxShadow: '0 12px 40px rgba(0, 188, 212, 0.4)',
                         transform: 'translateY(-2px)'
                       }
                     }}
@@ -739,12 +826,12 @@ function LandingPage({ onGetStarted, onSignIn }) {
                       py: 2,
                       px: 4,
                       fontSize: '1.1rem',
-                      borderColor: '#ff6b35',
-                      color: '#ff6b35',
+                      borderColor: '#00BCD4',
+                      color: '#00BCD4',
                       '&:hover': {
-                        borderColor: '#ff9800',
-                        color: '#ff9800',
-                        backgroundColor: 'rgba(255, 107, 53, 0.1)'
+                        borderColor: '#37474F',
+                        color: '#37474F',
+                        backgroundColor: 'rgba(0, 188, 212, 0.1)'
                       }
                     }}
                   >
@@ -768,13 +855,13 @@ function LandingPage({ onGetStarted, onSignIn }) {
                 }}>
                   <Paper sx={{
                     p: 4,
-                    background: 'linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%)',
-                    border: '2px solid #ff6b35',
+                    background: 'linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%)',
+                    border: '2px solid #00BCD4',
                     borderRadius: 4,
-                    boxShadow: '0 20px 60px rgba(255, 107, 53, 0.2)'
+                    boxShadow: '0 20px 60px rgba(0, 188, 212, 0.2)'
                   }}>
                     <Typography variant="h4" sx={{ 
-                      color: '#ff6b35', 
+                      color: '#00BCD4', 
                       mb: 2,
                       fontWeight: 700
                     }}>
@@ -785,9 +872,9 @@ function LandingPage({ onGetStarted, onSignIn }) {
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
                       <Chip label="Upload" color="primary" />
-                      <ArrowForwardIcon sx={{ color: '#ff6b35', alignSelf: 'center' }} />
+                      <ArrowForwardIcon sx={{ color: '#00BCD4', alignSelf: 'center' }} />
                       <Chip label="Optimize" color="primary" />
-                      <ArrowForwardIcon sx={{ color: '#ff6b35', alignSelf: 'center' }} />
+                      <ArrowForwardIcon sx={{ color: '#00BCD4', alignSelf: 'center' }} />
                       <Chip label="Download" color="primary" />
                     </Box>
                     <Typography variant="h6" sx={{ 
@@ -815,7 +902,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
           <Typography variant="h2" align="center" sx={{ 
             mb: 2,
             fontWeight: 700,
-            background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+            background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
@@ -843,12 +930,12 @@ function LandingPage({ onGetStarted, onSignIn }) {
               >
                 <Card sx={{ 
                   height: '100%',
-                  background: 'linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%)',
-                  border: '1px solid rgba(255, 107, 53, 0.2)',
+                  background: 'linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%)',
+                  border: '1px solid rgba(0, 188, 212, 0.2)',
                   '&:hover': {
-                    border: '1px solid #ff6b35',
+                    border: '1px solid #00BCD4',
                     transform: 'translateY(-5px)',
-                    boxShadow: '0 10px 30px rgba(255, 107, 53, 0.2)'
+                    boxShadow: '0 10px 30px rgba(0, 188, 212, 0.2)'
                   },
                   transition: 'all 0.3s ease'
                 }}>
@@ -915,8 +1002,8 @@ function LandingPage({ onGetStarted, onSignIn }) {
                 >
                   <Card sx={{ 
                     height: '100%',
-                    background: 'linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%)',
-                    border: '1px solid rgba(255, 107, 53, 0.2)'
+                    background: 'linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%)',
+                    border: '1px solid rgba(0, 188, 212, 0.2)'
                   }}>
                     <CardContent sx={{ p: 4 }}>
                       <Rating value={testimonial.rating} readOnly sx={{ mb: 2 }} />
@@ -930,7 +1017,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Avatar sx={{ 
-                          bgcolor: '#ff6b35',
+                          bgcolor: '#00BCD4',
                           mr: 2,
                           width: 50,
                           height: 50
@@ -969,7 +1056,7 @@ function LandingPage({ onGetStarted, onSignIn }) {
           <Paper sx={{
             p: 8,
             textAlign: 'center',
-            background: 'linear-gradient(135deg, #ff6b35 0%, #ff9800 100%)',
+            background: 'linear-gradient(135deg, #00BCD4 0%, #37474F 100%)',
             color: 'white'
           }}>
             <Typography variant="h2" sx={{ 
@@ -1011,18 +1098,18 @@ function LandingPage({ onGetStarted, onSignIn }) {
 
       {/* Footer */}
       <Box sx={{ 
-        background: '#000000',
+        background: '#37474F',
         py: 6,
-        borderTop: '2px solid #ff6b35'
+        borderTop: '2px solid #00BCD4'
       }}>
         <Container maxWidth="lg">
           <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AutoAwesomeIcon sx={{ mr: 2, color: '#ff6b35', fontSize: 28 }} />
+                <AutoAwesomeIcon sx={{ mr: 2, color: '#00BCD4', fontSize: 28 }} />
                 <Typography variant="h6" sx={{ 
                   fontWeight: 700,
-                  color: '#ff6b35'
+                  color: '#00BCD4'
                 }}>
                   Resume Optimizer Pro
                 </Typography>
@@ -1942,13 +2029,13 @@ function App() {
         <Box sx={{ 
           textAlign: 'center', 
           py: 4,
-          background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
+          background: 'linear-gradient(135deg, #0D47A1 0%, #002171 100%)',
           borderRadius: '12px 12px 0 0'
         }}>
-          <AutoAwesomeIcon sx={{ fontSize: 48, color: '#ff6b35', mb: 2 }} />
+          <AutoAwesomeIcon sx={{ fontSize: 48, color: '#00BCD4', mb: 2 }} />
           <Typography variant="h4" sx={{ 
             fontWeight: 700,
-            background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+            background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -1987,9 +2074,9 @@ function App() {
               <Typography 
                 component="span" 
                 sx={{ 
-                  color: '#ff6b35', 
+                  color: '#00BCD4', 
                   cursor: 'pointer',
-                  '&:hover': { color: '#ff9800' }
+                  '&:hover': { color: '#37474F' }
                 }}
               >
                 Sign up for free
@@ -2024,9 +2111,9 @@ function App() {
               <Typography 
                 component="span" 
                 sx={{ 
-                  color: '#ff6b35', 
+                  color: '#00BCD4', 
                   cursor: 'pointer',
-                  '&:hover': { color: '#ff9800' }
+                  '&:hover': { color: '#37474F' }
                 }}
               >
                 Sign in here
@@ -2069,9 +2156,9 @@ function App() {
               <Typography 
                 component="span" 
                 sx={{ 
-                  color: '#ff6b35', 
+                  color: '#00BCD4', 
                   cursor: 'pointer',
-                  '&:hover': { color: '#ff9800' }
+                  '&:hover': { color: '#37474F' }
                 }}
               >
                 Resend code
@@ -2134,12 +2221,12 @@ function App() {
             variant="outlined"
             onClick={() => setShowAuth(false)}
             sx={{
-              borderColor: '#ff6b35',
-              color: '#ff6b35',
+              borderColor: '#00BCD4',
+              color: '#00BCD4',
               '&:hover': {
-                borderColor: '#ff9800',
-                color: '#ff9800',
-                backgroundColor: 'rgba(255, 107, 53, 0.1)'
+                borderColor: '#37474F',
+                color: '#37474F',
+                backgroundColor: 'rgba(0, 188, 212, 0.1)'
               }
             }}
           >
@@ -2194,60 +2281,60 @@ function App() {
                 },
                 brand: {
                   primary: {
-                    10: '#ff6b35',
-                    20: '#ff6b35',
-                    40: '#ff6b35',
-                    60: '#ff6b35',
-                    80: '#ff6b35',
-                    90: '#ff6b35',
-                    100: '#ff6b35',
+                    10: '#00BCD4',
+                    20: '#00BCD4',
+                    40: '#00BCD4',
+                    60: '#00BCD4',
+                    80: '#00BCD4',
+                    90: '#00BCD4',
+                    100: '#00BCD4',
                   },
                   secondary: {
-                    10: '#ff9800',
-                    20: '#ff9800',
-                    40: '#ff9800',
-                    60: '#ff9800',
-                    80: '#ff9800',
-                    90: '#ff9800',
-                    100: '#ff9800',
+                    10: '#37474F',
+                    20: '#37474F',
+                    40: '#37474F',
+                    60: '#37474F',
+                    80: '#37474F',
+                    90: '#37474F',
+                    100: '#37474F',
                   },
                 },
                 border: {
-                  primary: 'rgba(255, 107, 53, 0.3)',
-                  secondary: 'rgba(255, 107, 53, 0.1)',
-                  focus: '#ff6b35',
+                  primary: 'rgba(13, 71, 161, 0.3)',
+                  secondary: 'rgba(0, 188, 212, 0.1)',
+                  focus: '#00BCD4',
                 },
               },
               components: {
                 authenticator: {
                   router: {
-                    boxShadow: '0 8px 32px rgba(255, 107, 53, 0.2)',
+                    boxShadow: '0 8px 32px rgba(0, 188, 212, 0.2)',
                     borderRadius: '12px',
-                    backgroundColor: '#1e1e1e',
-                    border: '1px solid rgba(255, 107, 53, 0.3)',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid rgba(13, 71, 161, 0.3)',
                     maxWidth: '480px',
                     margin: '2rem auto',
                   },
                 },
                 button: {
                   primary: {
-                    backgroundColor: '#ff6b35',
+                    backgroundColor: '#00BCD4',
                     color: '#ffffff',
                     borderRadius: '8px',
                     fontWeight: '600',
                     padding: '12px 24px',
                     fontSize: '1rem',
-                    background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
-                    boxShadow: '0 4px 20px rgba(255, 107, 53, 0.3)',
+                    background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
+                    boxShadow: '0 4px 20px rgba(13, 71, 161, 0.3)',
                     _hover: {
-                      backgroundColor: '#e64a19',
-                      background: 'linear-gradient(45deg, #e64a19 30%, #f57c00 90%)',
-                      boxShadow: '0 6px 25px rgba(255, 107, 53, 0.4)',
+                      backgroundColor: '#002171',
+                      background: 'linear-gradient(45deg, #002171 30%, #008BA3 90%)',
+                      boxShadow: '0 6px 25px rgba(0, 188, 212, 0.4)',
                       transform: 'translateY(-1px)',
                     },
                     _focus: {
-                      backgroundColor: '#ff6b35',
-                      boxShadow: '0 0 0 2px rgba(255, 107, 53, 0.5)',
+                      backgroundColor: '#00BCD4',
+                      boxShadow: '0 0 0 2px rgba(0, 188, 212, 0.5)',
                     },
                     _active: {
                       backgroundColor: '#d84315',
@@ -2255,27 +2342,27 @@ function App() {
                     },
                   },
                   link: {
-                    color: '#ff6b35',
+                    color: '#00BCD4',
                     _hover: {
-                      color: '#ff9800',
+                      color: '#37474F',
                       textDecoration: 'underline',
                     },
                   },
                 },
                 fieldcontrol: {
                   backgroundColor: '#2a2a2a',
-                  borderColor: 'rgba(255, 107, 53, 0.3)',
+                  borderColor: 'rgba(13, 71, 161, 0.3)',
                   borderRadius: '8px',
                   color: '#ffffff',
                   padding: '12px 16px',
                   fontSize: '1rem',
                   _focus: {
-                    borderColor: '#ff6b35',
-                    boxShadow: '0 0 0 2px rgba(255, 107, 53, 0.2)',
+                    borderColor: '#00BCD4',
+                    boxShadow: '0 0 0 2px rgba(0, 188, 212, 0.2)',
                     backgroundColor: '#333333',
                   },
                   _hover: {
-                    borderColor: '#ff6b35',
+                    borderColor: '#00BCD4',
                   },
                   _error: {
                     borderColor: '#f44336',
@@ -2300,11 +2387,11 @@ function App() {
                     color: '#b0b0b0',
                     borderColor: 'transparent',
                     _active: {
-                      color: '#ff6b35',
-                      borderColor: '#ff6b35',
+                      color: '#00BCD4',
+                      borderColor: '#00BCD4',
                     },
                     _hover: {
-                      color: '#ff9800',
+                      color: '#37474F',
                     },
                   },
                 },
@@ -2316,15 +2403,15 @@ function App() {
         {({ signOut, user }) => (
           <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             <AppBar position="static" elevation={0} sx={{ 
-              background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
-              borderBottom: '2px solid #ff6b35'
+              background: 'linear-gradient(135deg, #0D47A1 0%, #002171 100%)',
+              borderBottom: '2px solid #00BCD4'
             }}>
               <Toolbar sx={{ py: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <AutoAwesomeIcon sx={{ mr: 2, color: '#ff6b35', fontSize: 28 }} />
+                  <AutoAwesomeIcon sx={{ mr: 2, color: '#00BCD4', fontSize: 28 }} />
                   <Typography variant="h5" component="div" sx={{ 
                     fontWeight: 700,
-                    background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                    background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text'
@@ -2344,15 +2431,15 @@ function App() {
                     onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
                     sx={{ 
                       p: 0,
-                      border: '2px solid #ff6b35',
+                      border: '2px solid #00BCD4',
                       '&:hover': {
-                        border: '2px solid #ff9800',
+                        border: '2px solid #37474F',
                       }
                     }}
                   >
                     <Avatar 
                       sx={{ 
-                        bgcolor: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                        bgcolor: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
                         width: 40,
                         height: 40,
                         fontSize: '1rem',
@@ -2370,8 +2457,8 @@ function App() {
                     onClose={() => setProfileMenuAnchor(null)}
                     PaperProps={{
                       sx: {
-                        bgcolor: '#1e1e1e',
-                        border: '1px solid #ff6b35',
+                        bgcolor: '#FFFFFF',
+                        border: '1px solid #00BCD4',
                         mt: 1,
                         minWidth: 200
                       }
@@ -2382,7 +2469,7 @@ function App() {
                       setProfileMenuAnchor(null);
                     }}>
                       <ListItemIcon>
-                        <PersonIcon sx={{ color: '#ff6b35' }} />
+                        <PersonIcon sx={{ color: '#00BCD4' }} />
                       </ListItemIcon>
                       <ListItemText primary="Profile" />
                     </MenuItem>
@@ -2391,7 +2478,7 @@ function App() {
                       setProfileMenuAnchor(null);
                     }}>
                       <ListItemIcon>
-                        <SettingsIcon sx={{ color: '#ff6b35' }} />
+                        <SettingsIcon sx={{ color: '#00BCD4' }} />
                       </ListItemIcon>
                       <ListItemText primary="Settings" />
                     </MenuItem>
@@ -2400,17 +2487,17 @@ function App() {
                       setProfileMenuAnchor(null);
                     }}>
                       <ListItemIcon>
-                        <HistoryIcon sx={{ color: '#ff6b35' }} />
+                        <HistoryIcon sx={{ color: '#00BCD4' }} />
                       </ListItemIcon>
                       <ListItemText primary="History" />
                     </MenuItem>
-                    <Divider sx={{ borderColor: 'rgba(255, 107, 53, 0.2)' }} />
+                    <Divider sx={{ borderColor: 'rgba(0, 188, 212, 0.2)' }} />
                     <MenuItem onClick={() => {
                       setProfileMenuAnchor(null);
                       signOut();
                     }}>
                       <ListItemIcon>
-                        <LogoutIcon sx={{ color: '#ff6b35' }} />
+                        <LogoutIcon sx={{ color: '#00BCD4' }} />
                       </ListItemIcon>
                       <ListItemText primary="Sign Out" />
                     </MenuItem>
@@ -2433,7 +2520,7 @@ function App() {
                   sx={{ 
                     mb: 1,
                     fontWeight: 800,
-                    background: 'linear-gradient(45deg, #ff6b35 30%, #ff9800 90%)',
+                    background: 'linear-gradient(45deg, #0D47A1 30%, #00BCD4 90%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text'
@@ -2558,11 +2645,22 @@ function App() {
                         </Button>
                         <Button 
                           variant="contained" 
-                          color="primary"
                           endIcon={<AutoAwesomeIcon />}
                           disabled={!jobDescription}
                           onClick={handleOptimize}
                           size="large"
+                          sx={{
+                            backgroundColor: '#00BCD4', // Innovation Accent
+                            color: '#ffffff',
+                            fontWeight: 600,
+                            '&:hover': {
+                              backgroundColor: '#008BA3',
+                              boxShadow: '0 4px 16px rgba(0, 188, 212, 0.3)',
+                            },
+                            '&:disabled': {
+                              backgroundColor: 'rgba(0, 188, 212, 0.3)',
+                            }
+                          }}
                         >
                           Optimize Resume
                         </Button>
@@ -2894,7 +2992,7 @@ function App() {
               </motion.div>
               
               <Box sx={{ mt: 6, textAlign: 'center' }}>
-                <Divider sx={{ mb: 3, borderColor: 'rgba(255, 107, 53, 0.2)' }} />
+                <Divider sx={{ mb: 3, borderColor: 'rgba(0, 188, 212, 0.2)' }} />
                 <Typography variant="body2" color="textSecondary" sx={{ color: '#b0b0b0' }}>
                   Resume Optimizer Pro uses advanced AI to tailor your resume to specific job descriptions,
                   significantly increasing your chances of getting past Applicant Tracking Systems (ATS).
