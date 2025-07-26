@@ -2086,6 +2086,7 @@ function App() {
               Don't have an account?{' '}
               <Typography 
                 component="span" 
+                onClick={() => setAuthMode('signUp')}
                 sx={{ 
                   color: '#0A66C2', 
                   cursor: 'pointer',
@@ -2123,6 +2124,7 @@ function App() {
               Already have an account?{' '}
               <Typography 
                 component="span" 
+                onClick={() => setAuthMode('signIn')}
                 sx={{ 
                   color: '#0A66C2', 
                   cursor: 'pointer',
