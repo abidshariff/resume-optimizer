@@ -671,7 +671,7 @@ function SettingsDialog({ open, onClose, userProfile, setUserProfile }) {
 }
 
 // Professional Landing Page Component
-function LandingPage({ onGetStarted, onSignIn }) {
+function LandingPage({ onGetStarted, onSignIn, user, signOut, onStartOptimizing }) {
   const features = [
     {
       icon: <PsychologyIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
@@ -741,25 +741,80 @@ function LandingPage({ onGetStarted, onSignIn }) {
           </Box>
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button 
-              color="inherit" 
-              onClick={onSignIn}
-              sx={{ color: '#666666', '&:hover': { color: '#0A66C2' } }} // Changed to LinkedIn gray
-            >
-              Sign In
-            </Button>
-            <Button 
-              variant="contained" 
-              onClick={onGetStarted}
-              sx={{
-                background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
-                }
-              }}
-            >
-              Get Started Free
-            </Button>
+            {user ? (
+              // Authenticated user: Show profile menu and optimize button
+              <>
+                <Button 
+                  variant="contained" 
+                  onClick={onStartOptimizing || (() => {})}
+                  sx={{
+                    background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                    color: 'white',
+                    fontWeight: 600,
+                    px: 3,
+                    mr: 2,
+                    '&:hover': {
+                      background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+                    }
+                  }}
+                >
+                  Start Optimizing
+                </Button>
+                <Typography variant="body2" sx={{ 
+                  color: '#666666',
+                  display: { xs: 'none', sm: 'block' }
+                }}>
+                  Welcome, {user.username}
+                </Typography>
+                <IconButton
+                  onClick={() => {
+                    if (signOut) signOut();
+                  }}
+                  sx={{ 
+                    p: 0,
+                    border: '2px solid #0A66C2',
+                    '&:hover': {
+                      border: '2px solid #666666',
+                    }
+                  }}
+                >
+                  <Avatar 
+                    sx={{ 
+                      bgcolor: '#0A66C2', 
+                      width: 40, 
+                      height: 40,
+                      fontSize: '1rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    {user.username.charAt(0).toUpperCase()}
+                  </Avatar>
+                </IconButton>
+              </>
+            ) : (
+              // Non-authenticated user: Show sign-in and get started buttons
+              <>
+                <Button 
+                  color="inherit" 
+                  onClick={onSignIn}
+                  sx={{ color: '#666666', '&:hover': { color: '#0A66C2' } }}
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  variant="contained" 
+                  onClick={onGetStarted}
+                  sx={{
+                    background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                    '&:hover': {
+                      background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+                    }
+                  }}
+                >
+                  Get Started Free
+                </Button>
+              </>
+            )}
           </Box>
         </Toolbar>
       </AppBar>
@@ -2260,12 +2315,22 @@ function App() {
   // Main app structure with proper authentication flow
   return (
     <ThemeProvider theme={theme}>
-      {/* Show landing page when not in auth mode */}
       {!showAuth ? (
-        <LandingPage 
-          onGetStarted={handleGetStarted}
-          onSignIn={handleSignIn}
-        />
+        // Always show beautiful landing page by default
+        <Authenticator hideSignUp={true}>
+          {({ signOut, user }) => (
+            <LandingPage 
+              onGetStarted={user ? () => {} : handleGetStarted}
+              onSignIn={user ? () => {} : handleSignIn}
+              user={user}
+              signOut={signOut}
+              onStartOptimizing={() => {
+                // For now, just show an alert - we'll implement the optimizer later
+                alert('Optimizer functionality will be implemented here');
+              }}
+            />
+          )}
+        </Authenticator>
       ) : (
         /* Show Authenticator when user wants to sign in/up */
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
