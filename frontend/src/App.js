@@ -2073,12 +2073,12 @@ function App() {
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography variant="h5" sx={{ 
               fontWeight: 600, 
-              color: '#ffffff',
+              color: '#000000', // Changed to black for visibility
               mb: 1 
             }}>
               Welcome Back
             </Typography>
-            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
               Sign in to optimize your resume with AI
             </Typography>
           </Box>
@@ -2087,7 +2087,7 @@ function App() {
       Footer() {
         return (
           <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
               Don't have an account?{' '}
               <Typography 
                 component="span" 
@@ -2095,7 +2095,7 @@ function App() {
                 sx={{ 
                   color: '#0A66C2', 
                   cursor: 'pointer',
-                  '&:hover': { color: '#666666' }
+                  '&:hover': { color: '#004182' } // Darker blue on hover
                 }}
               >
                 Sign up for free
@@ -2111,12 +2111,12 @@ function App() {
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography variant="h5" sx={{ 
               fontWeight: 600, 
-              color: '#ffffff',
+              color: '#000000', // Changed to black for visibility
               mb: 1 
             }}>
               Create Your Account
             </Typography>
-            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
               Join thousands of professionals optimizing their resumes
             </Typography>
           </Box>
@@ -2125,7 +2125,7 @@ function App() {
       Footer() {
         return (
           <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}> {/* Changed to LinkedIn gray */}
               Already have an account?{' '}
               <Typography 
                 component="span" 
@@ -2133,7 +2133,7 @@ function App() {
                 sx={{ 
                   color: '#0A66C2', 
                   cursor: 'pointer',
-                  '&:hover': { color: '#666666' }
+                  '&:hover': { color: '#004182' } // Darker blue on hover
                 }}
               >
                 Sign in here
@@ -2328,90 +2328,103 @@ function App() {
               components: {
                 authenticator: {
                   router: {
-                    boxShadow: '0 8px 32px rgba(10, 102, 194, 0.2)',
-                    borderRadius: '12px',
+                    boxShadow: '0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08)', // LinkedIn shadow
+                    borderRadius: '8px',
                     backgroundColor: '#FFFFFF',
-                    border: '1px solid rgba(10, 102, 194, 0.3)',
-                    maxWidth: '480px',
+                    border: '1px solid #E0E0E0', // LinkedIn border
+                    maxWidth: '400px',
                     margin: '2rem auto',
+                    padding: '32px',
                   },
                 },
                 button: {
                   primary: {
-                    backgroundColor: '#0A66C2',
+                    backgroundColor: '#0A66C2', // LinkedIn Blue
                     color: '#ffffff',
-                    borderRadius: '8px',
+                    borderRadius: '24px', // LinkedIn pill shape
                     fontWeight: '600',
                     padding: '12px 24px',
-                    fontSize: '1rem',
-                    background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                    boxShadow: '0 4px 20px rgba(10, 102, 194, 0.3)',
+                    fontSize: '16px',
+                    border: 'none',
+                    boxShadow: 'none',
                     _hover: {
-                      backgroundColor: '#004182',
-                      background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
-                      boxShadow: '0 6px 25px rgba(10, 102, 194, 0.4)',
-                      transform: 'translateY(-1px)',
+                      backgroundColor: '#004182', // Darker LinkedIn blue
+                      boxShadow: 'inset 0 0 0 1px #0A66C2, inset 0 0 0 2px #ffffff',
+                      transform: 'none',
                     },
                     _focus: {
                       backgroundColor: '#0A66C2',
-                      boxShadow: '0 0 0 2px rgba(10, 102, 194, 0.5)',
+                      boxShadow: '0 0 0 2px rgba(10, 102, 194, 0.3)',
+                      outline: 'none',
                     },
                     _active: {
-                      backgroundColor: '#d84315',
-                      transform: 'translateY(0px)',
+                      backgroundColor: '#004182',
+                      transform: 'none',
                     },
                   },
                   link: {
                     color: '#0A66C2',
+                    fontWeight: '600',
+                    textDecoration: 'none',
                     _hover: {
-                      color: '#666666',
+                      color: '#004182',
                       textDecoration: 'underline',
                     },
                   },
                 },
                 fieldcontrol: {
-                  backgroundColor: '#2a2a2a',
-                  borderColor: 'rgba(10, 102, 194, 0.3)',
-                  borderRadius: '8px',
-                  color: '#ffffff',
+                  backgroundColor: '#FFFFFF', // White background for inputs
+                  borderColor: '#CCCCCC', // Light gray border
+                  borderRadius: '4px',
+                  color: '#000000', // Black text
                   padding: '12px 16px',
-                  fontSize: '1rem',
+                  fontSize: '14px',
                   _focus: {
                     borderColor: '#0A66C2',
-                    boxShadow: '0 0 0 2px rgba(10, 102, 194, 0.2)',
-                    backgroundColor: '#333333',
+                    borderWidth: '2px',
+                    boxShadow: 'none',
+                    backgroundColor: '#FFFFFF',
+                    outline: 'none',
                   },
                   _hover: {
                     borderColor: '#0A66C2',
+                    backgroundColor: '#FFFFFF',
                   },
                   _error: {
-                    borderColor: '#f44336',
-                    boxShadow: '0 0 0 2px rgba(244, 67, 54, 0.2)',
+                    borderColor: '#CC1016', // LinkedIn red
+                    boxShadow: 'none',
+                    backgroundColor: '#FFFFFF',
                   },
                 },
                 fieldmessages: {
-                  color: '#f44336',
-                  fontSize: '0.875rem',
+                  color: '#CC1016', // LinkedIn red for errors
+                  fontSize: '12px',
                   marginTop: '4px',
                 },
                 text: {
                   primary: {
-                    color: '#ffffff',
+                    color: '#000000', // Black text
+                    fontSize: '14px',
                   },
                   secondary: {
-                    color: '#b0b0b0',
+                    color: '#666666', // LinkedIn gray
+                    fontSize: '12px',
                   },
                 },
                 tabs: {
                   item: {
-                    color: '#b0b0b0',
+                    color: '#666666', // LinkedIn gray
                     borderColor: 'transparent',
+                    fontWeight: '600',
+                    fontSize: '16px',
+                    padding: '12px 16px',
                     _active: {
-                      color: '#0A66C2',
+                      color: '#0A66C2', // LinkedIn blue when active
                       borderColor: '#0A66C2',
+                      borderBottomWidth: '2px',
                     },
                     _hover: {
-                      color: '#666666',
+                      color: '#0A66C2',
                     },
                   },
                 },
