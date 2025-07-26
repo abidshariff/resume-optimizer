@@ -2317,20 +2317,15 @@ function App() {
     <ThemeProvider theme={theme}>
       {!showAuth ? (
         // Always show beautiful landing page by default
-        <Authenticator hideSignUp={true}>
-          {({ signOut, user }) => (
-            <LandingPage 
-              onGetStarted={user ? () => {} : handleGetStarted}
-              onSignIn={user ? () => {} : handleSignIn}
-              user={user}
-              signOut={signOut}
-              onStartOptimizing={() => {
-                // For now, just show an alert - we'll implement the optimizer later
-                alert('Optimizer functionality will be implemented here');
-              }}
-            />
-          )}
-        </Authenticator>
+        <LandingPage 
+          onGetStarted={handleGetStarted}
+          onSignIn={handleSignIn}
+          user={null} // We'll handle auth state separately
+          signOut={null}
+          onStartOptimizing={() => {
+            alert('Please sign in to start optimizing');
+          }}
+        />
       ) : (
         /* Show Authenticator when user wants to sign in/up */
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
