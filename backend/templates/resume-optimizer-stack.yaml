@@ -211,6 +211,46 @@ Resources:
       Roles:
         - !Ref ResumeProcessorRole
 
+  # Status Checker Lambda Function
+  ResumeOptimizerStatusChecker:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ResumeOptimizerStatusChecker-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt StatusCheckerRole.Arn
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+      Environment:
+        Variables:
+          STORAGE_BUCKET: !Ref ResumeStorageBucket
+      Timeout: 30
+
+  # Status Checker Role
+  StatusCheckerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub '${ResumeStorageBucket}/*'
+
   # API Layer
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
@@ -278,9 +318,69 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
 
+  # Status endpoint resource
+  ApiGatewayStatusResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: status
+
+  # Status endpoint GET method
+  ApiGatewayStatusMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiGatewayStatusResource
+      HttpMethod: GET
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResumeOptimizerStatusChecker.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # Status endpoint OPTIONS method for CORS
+  ApiGatewayStatusOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiGatewayStatusResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'https://main.d3tjpmlvy19b2l.amplifyapp.com'"
+            ResponseTemplates:
+              application/json: '{}'
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: ApiGatewayMethod
+    DependsOn: 
+      - ApiGatewayMethod
+      - ApiGatewayOptionsMethod
+      - ApiGatewayStatusMethod
+      - ApiGatewayStatusOptionsMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment
@@ -293,6 +393,15 @@ Resources:
       FunctionName: !Ref ResumeProcessorLambda
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/POST/optimize'
+
+  # Permission for API Gateway to invoke Status Checker Lambda
+  LambdaApiGatewayStatusPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ResumeOptimizerStatusChecker
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/GET/status'
 
 Outputs:
   ApiEndpoint:

@@ -194,6 +194,75 @@ function MainApp() {
     };
   }, [isPolling, educationalTips.length]);
 
+  // Poll for job status when isPolling is true
+  useEffect(() => {
+    let statusInterval;
+    
+    if (isPolling && jobId) {
+      console.log('Starting status polling for jobId:', jobId);
+      
+      statusInterval = setInterval(async () => {
+        try {
+          console.log('Polling status for jobId:', jobId);
+          
+          const { tokens } = await fetchAuthSession();
+          const idToken = tokens.idToken.toString();
+          
+          const statusResponse = await fetch(`https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev/status?jobId=${jobId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': idToken,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!statusResponse.ok) {
+            throw new Error(`Status check failed: ${statusResponse.status}`);
+          }
+          
+          const statusData = await statusResponse.json();
+          console.log('Status response received:', statusData);
+          
+          setJobStatus(statusData.status);
+          setStatusMessage(statusData.message || 'Processing...');
+          
+          if (statusData.status === 'COMPLETED') {
+            setIsPolling(false);
+            setResult({
+              optimizedResumeUrl: statusData.optimizedResumeUrl,
+              fileType: statusData.fileType || 'docx',
+              contentType: statusData.contentType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              downloadFilename: statusData.downloadFilename || `optimized_resume.${statusData.fileType || 'docx'}`
+            });
+            navigate('/app/results');
+          } else if (statusData.status === 'FAILED') {
+            setIsPolling(false);
+            setError(statusData.message || 'Job failed');
+            setSnackbarMessage(`Error: ${statusData.message || 'Job failed'}`);
+            setSnackbarOpen(true);
+          }
+        } catch (error) {
+          console.error('Error polling status:', error);
+          // Don't stop polling on network errors, but limit retries
+          if (error.message.includes('Status check failed')) {
+            setIsPolling(false);
+            setError(`Status check failed: ${error.message}`);
+            setSnackbarMessage(`Error checking status: ${error.message}`);
+            setSnackbarOpen(true);
+          }
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+    
+    return () => {
+      if (statusInterval) {
+        console.log('Clearing status polling interval');
+        clearInterval(statusInterval);
+      }
+    };
+  }, [isPolling, jobId, navigate]);
+
   const loadUser = async () => {
     try {
       const user = await getCurrentUser();
