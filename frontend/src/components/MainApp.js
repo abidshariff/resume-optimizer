@@ -479,6 +479,34 @@ function MainApp() {
     navigate('/app/upload');
   };
 
+  const cancelOptimization = () => {
+    // Show confirmation dialog
+    const confirmCancel = window.confirm(
+      'Are you sure you want to cancel the optimization? This will stop the current process and you\'ll need to start over.'
+    );
+    
+    if (!confirmCancel) {
+      return;
+    }
+    
+    // Stop polling
+    setIsPolling(false);
+    
+    // Reset job state
+    setJobId(null);
+    setJobStatus(null);
+    setStatusMessage('');
+    setResult(null);
+    setError(null);
+    
+    // Show confirmation message
+    setSnackbarMessage('Optimization canceled successfully');
+    setSnackbarOpen(true);
+    
+    // Navigate back to job description
+    navigate('/app/job-description');
+  };
+
   const isProcessing = isSubmitting || isPolling;
 
   return (
@@ -820,10 +848,23 @@ function MainApp() {
 
                 <Button 
                   variant="outlined" 
-                  onClick={() => navigate('/app/job-description')}
+                  onClick={cancelOptimization}
                   disabled={isSubmitting}
+                  color="error"
+                  sx={{
+                    borderColor: '#d32f2f',
+                    color: '#d32f2f',
+                    '&:hover': {
+                      borderColor: '#b71c1c',
+                      backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                    },
+                    '&:disabled': {
+                      borderColor: '#ccc',
+                      color: '#ccc'
+                    }
+                  }}
                 >
-                  Cancel Optimization
+                  {isSubmitting ? 'Submitting...' : 'Cancel Optimization'}
                 </Button>
               </motion.div>
             )}
