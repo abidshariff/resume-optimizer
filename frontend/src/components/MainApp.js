@@ -409,6 +409,7 @@ function MainApp() {
     }
 
     try {
+      // Handle localhost mock data
       if (window.location.hostname === 'localhost' && result.optimizedResumeUrl === '#') {
         const blob = new Blob([result.optimizedResume], { type: result.contentType || 'text/plain' });
         const url = window.URL.createObjectURL(blob);
@@ -422,31 +423,20 @@ function MainApp() {
         return;
       }
       
-      const { tokens } = await fetchAuthSession();
-      const idToken = tokens.idToken.toString();
-      
+      // For S3 pre-signed URLs, we don't need to add Authorization headers
+      // The authentication is already included in the URL
       const resumeResponse = await fetch(result.optimizedResumeUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': idToken,
-          'Content-Type': 'application/json'
-        }
+        method: 'GET'
       });
       
       if (!resumeResponse.ok) {
-        throw new Error(`Failed to fetch optimized resume: ${resumeResponse.status}`);
+        throw new Error(`Failed to download resume: ${resumeResponse.status} ${resumeResponse.statusText}`);
       }
       
-      const responseText = await resumeResponse.text();
-      const binaryString = atob(responseText);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
+      // Get the response as a blob for binary data (Word documents)
+      const blob = await resumeResponse.blob();
       
-      const contentType = result.contentType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      const blob = new Blob([bytes], { type: contentType });
-      
+      // Create download link
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

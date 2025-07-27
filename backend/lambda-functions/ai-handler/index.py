@@ -877,12 +877,31 @@ def lambda_handler(event, context):
                 ContentType=content_type
             )
         
-        # Generate pre-signed URL for download
+        # Generate pre-signed URL for download (valid for 1 hour)
         filename = f"optimized_resume.{output_extension}"
         
-        # Generate download URL through API Gateway instead of presigned URL
-        api_endpoint = "https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev"
-        optimized_url = f"{api_endpoint}/download?jobId={job_id}"
+        try:
+            optimized_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={
+                    'Bucket': bucket_name,
+                    'Key': optimized_key,
+                    'ResponseContentDisposition': f'attachment; filename="{filename}"',
+                    'ResponseContentType': content_type
+                },
+                ExpiresIn=3600  # 1 hour
+            )
+        except Exception as e:
+            print(f"Error generating presigned URL: {str(e)}")
+            # Fallback to basic presigned URL without custom headers
+            optimized_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={
+                    'Bucket': bucket_name,
+                    'Key': optimized_key
+                },
+                ExpiresIn=3600
+            )
         
         # Also generate a direct download URL for the frontend to use
         download_filename = f"optimized_resume_{job_id[:8]}.{output_extension}"
