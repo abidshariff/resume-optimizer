@@ -105,13 +105,13 @@ def create_document_xml(resume_json):
         dates = job.get('dates', 'Dates')
         doc += add_paragraph(f"{company} | {dates}", italic=True)
         
-        # Responsibilities
-        responsibilities = job.get('responsibilities', [])
-        if isinstance(responsibilities, str):
-            responsibilities = [responsibilities]
+        # Achievements/Responsibilities
+        achievements = job.get('achievements', job.get('responsibilities', []))
+        if isinstance(achievements, str):
+            achievements = [achievements]
         
-        for resp in responsibilities:
-            doc += add_paragraph(f"• {resp}")
+        for achievement in achievements:
+            doc += add_paragraph(f"• {achievement}")
         
         # Add space between jobs
         doc += '<w:p/>'

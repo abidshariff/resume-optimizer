@@ -498,23 +498,41 @@ def lambda_handler(event, context):
         original_page_count = estimate_page_count(resume_text)
         print(f"Estimated original resume page count: {original_page_count}")
         
-        # Determine content length guidance based on page count
+        # Determine content preservation guidance based on page count
         if original_page_count <= 1:
-            length_guidance = "Keep the resume concise and fit everything on 1 page. Limit to 3-4 experience entries with 2-3 bullet points each."
-            max_experiences = 4
-            max_bullets_per_job = 3
+            length_guidance = "Preserve all original content while optimizing for keywords. Maintain the same number of experience entries and bullet points as the original resume."
         elif original_page_count <= 1.5:
-            length_guidance = "Keep the resume to 1-1.5 pages maximum. Limit to 4-5 experience entries with 3-4 bullet points each."
-            max_experiences = 5
-            max_bullets_per_job = 4
+            length_guidance = "Preserve all original content while optimizing for keywords. Keep all experience entries and bullet points from the original resume."
         elif original_page_count <= 2:
-            length_guidance = "Keep the resume to 2 pages maximum. You can include up to 5-6 experience entries with 3-4 bullet points each."
-            max_experiences = 6
-            max_bullets_per_job = 4
+            length_guidance = "Preserve all original content while optimizing for keywords. Include all experience entries and bullet points from the original resume."
         else:
-            length_guidance = "Keep the resume to 2-3 pages maximum. Focus on the most relevant experiences and achievements."
-            max_experiences = 7
-            max_bullets_per_job = 4
+            length_guidance = "Preserve all original content while optimizing for keywords. Include all experience entries and bullet points from the original resume, maintaining the same level of detail."
+
+        # Analyze original resume structure for content preservation
+        def analyze_resume_structure(resume_text):
+            """Analyze the original resume to understand its structure and content density."""
+            lines = resume_text.split('\n')
+            bullet_points = [line for line in lines if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*')]
+            
+            # Estimate number of experience sections
+            experience_indicators = ['experience', 'work history', 'employment', 'professional background']
+            education_indicators = ['education', 'academic', 'degree', 'university', 'college']
+            
+            experience_sections = 0
+            for line in lines:
+                line_lower = line.lower()
+                if any(indicator in line_lower for indicator in experience_indicators):
+                    experience_sections += 1
+            
+            return {
+                'total_lines': len(lines),
+                'bullet_points': len(bullet_points),
+                'estimated_experience_sections': max(1, experience_sections),
+                'avg_bullets_per_section': len(bullet_points) // max(1, experience_sections) if experience_sections > 0 else len(bullet_points)
+            }
+        
+        original_structure = analyze_resume_structure(resume_text)
+        print(f"Original resume structure: {original_structure}")
 
         # Extract key information from job description for targeted optimization
         def extract_job_keywords(job_desc):
@@ -553,6 +571,7 @@ def lambda_handler(event, context):
         EXTRACTED KEY TECHNOLOGIES/SKILLS FROM JOB: {', '.join(job_keywords) if job_keywords else 'General skills optimization'}
 
         ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
+        ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_structure['bullet_points']} bullet points, estimated {original_structure['estimated_experience_sections']} experience sections
 
         CRITICAL OPTIMIZATION REQUIREMENTS:
 
@@ -581,11 +600,13 @@ def lambda_handler(event, context):
            - Mention key technologies and methodologies from job description
            - Highlight leadership/collaboration aspects if mentioned in job posting
 
-        5. **CONTENT PRIORITIZATION**:
+        5. **CONTENT PRESERVATION AND PRIORITIZATION**:
            - {length_guidance}
-           - **MAXIMUM {max_experiences} experience entries with MAXIMUM {max_bullets_per_job} bullet points each**
-           - Prioritize most recent and relevant experiences
-           - Remove or de-emphasize experiences that don't align with target role
+           - **PRESERVE ALL EXPERIENCE ENTRIES** from the original resume
+           - **PRESERVE ALL BULLET POINTS** for each job - do not reduce the number
+           - **MAINTAIN THE SAME LEVEL OF DETAIL** as the original resume
+           - Only reorder experiences if it significantly improves relevance to the job
+           - Transform and enhance existing content rather than removing it
 
         6. **ATS OPTIMIZATION**:
            - Use exact phrases from job description where appropriate
@@ -599,10 +620,11 @@ def lambda_handler(event, context):
            - Do not add coursework, projects, or details that weren't in the original
            - Preserve original degree names, institution names, dates, and any existing details
 
-        TRANSFORMATION EXAMPLES:
+        TRANSFORMATION EXAMPLES (PRESERVE ALL ORIGINAL POINTS):
         - Original: "Developed web applications" → "Built responsive React.js applications with Node.js backend and AWS deployment"
         - Original: "Worked with databases" → "Designed and optimized PostgreSQL databases, implemented complex queries for data analytics"
         - Original: "Team collaboration" → "Led cross-functional Agile teams using Scrum methodology, facilitated daily standups and sprint planning"
+        - **IMPORTANT**: If original has 6 bullet points, output must have 6 bullet points (enhanced, not removed)
 
         OUTPUT FORMAT:
         Provide your response in the following JSON structure:
@@ -628,7 +650,9 @@ def lambda_handler(event, context):
                 "COMPLETELY rewritten bullet focusing on job-relevant impact with specific technologies/methodologies",
                 "Quantified achievement using job description terminology and relevant metrics",
                 "Another transformed bullet that showcases skills mentioned in job posting",
-                "Maximum {max_bullets_per_job} bullets per job, each 1-2 lines, highly targeted"
+                "PRESERVE ALL ORIGINAL BULLET POINTS - if original has 6 bullets, output must have 6 bullets",
+                "Each bullet should be 1-2 lines, highly targeted to job requirements",
+                "Transform existing content rather than removing it"
               ]
             }}
           ],
@@ -644,12 +668,14 @@ def lambda_handler(event, context):
         ```
 
         **CRITICAL SUCCESS CRITERIA**:
+        - **PRESERVE ALL ORIGINAL CONTENT**: Same number of jobs, same number of bullet points per job
         - Every bullet point should feel like it was written specifically for this job
         - Resume should contain 80%+ of the technical keywords from job description
         - Candidate should sound like the ideal fit based on resume content
         - Maintain truthfulness - enhance and reframe, don't fabricate experiences
-        - Final resume should be significantly different from original while staying factual
+        - Final resume should be significantly different from original while staying factual and complete
         - **EDUCATION SECTION MUST REMAIN COMPLETELY UNCHANGED FROM ORIGINAL**
+        - **NO CONTENT SHOULD BE LOST** - only enhanced and optimized
 
         **REMEMBER**: This is not just editing - this is a complete strategic transformation to make this candidate irresistible for this specific role. However, the education section should be preserved exactly as it appears in the original resume.
 
@@ -790,6 +816,14 @@ def lambda_handler(event, context):
                 resume_json = json.loads(optimized_resume)
                 
             print("Successfully parsed JSON response")
+            
+            # Debug: Check content preservation
+            experience_count = len(resume_json.get('experience', []))
+            print(f"Generated resume has {experience_count} experience entries")
+            
+            for i, exp in enumerate(resume_json.get('experience', [])):
+                achievement_count = len(exp.get('achievements', []))
+                print(f"Experience {i+1} ({exp.get('title', 'Unknown')}) has {achievement_count} achievements")
             
             # Generate output based on requested format
             if output_format.lower() == 'word':

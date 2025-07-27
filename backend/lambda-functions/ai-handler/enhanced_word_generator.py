@@ -139,9 +139,9 @@ def create_enhanced_word_resume(resume_json):
                 company_para = doc.add_paragraph(company_info)
                 company_para.style = company_style
                 
-                # Achievements - limit bullet points for conciseness
+                # Achievements - preserve all bullet points from AI optimization
                 if exp.get('achievements'):
-                    for achievement in exp['achievements'][:4]:  # Limit to 4 bullets max
+                    for achievement in exp['achievements']:  # Include ALL achievements
                         bullet_para = doc.add_paragraph(f"• {achievement}")
                         bullet_para.style = bullet_style
         
@@ -201,7 +201,7 @@ def create_basic_word_resume(resume_json):
                 doc.add_paragraph(f"{exp.get('title', '')} - {exp.get('company', '')}")
                 doc.add_paragraph(exp.get('dates', ''))
                 if exp.get('achievements'):
-                    for achievement in exp['achievements'][:3]:
+                    for achievement in exp['achievements']:  # Include ALL achievements
                         doc.add_paragraph(f"• {achievement}")
         
         if resume_json.get('education'):
