@@ -31,9 +31,24 @@ function SettingsDialog({ open, onClose }) {
     emailNotifications: true,
     autoSave: true,
     darkMode: false,
-    defaultOutputFormat: 'docx',
+    defaultOutputFormat: 'docx', // 'txt', 'docx', or 'pdf'
     optimizationLevel: 'balanced'
   });
+
+  // Load settings from localStorage when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      const savedSettings = localStorage.getItem('userSettings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          setSettings(prev => ({ ...prev, ...parsedSettings }));
+        } catch (error) {
+          console.error('Error parsing saved settings:', error);
+        }
+      }
+    }
+  }, [open]);
 
   // Delete account state
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -43,10 +58,15 @@ function SettingsDialog({ open, onClose }) {
   const [countdown, setCountdown] = useState(5);
 
   const handleSettingChange = (setting) => (event) => {
-    setSettings(prev => ({
-      ...prev,
+    const newSettings = {
+      ...settings,
       [setting]: event.target.checked !== undefined ? event.target.checked : event.target.value
-    }));
+    };
+    
+    setSettings(newSettings);
+    
+    // Save to localStorage
+    localStorage.setItem('userSettings', JSON.stringify(newSettings));
   };
 
   const handleSave = () => {

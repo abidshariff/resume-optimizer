@@ -172,6 +172,9 @@ function MainApp() {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [userRating, setUserRating] = useState(5);
+  const [userSettings, setUserSettings] = useState({
+    defaultOutputFormat: 'docx' // Default fallback
+  });
 
   // Determine current step from URL
   const getCurrentStep = () => {
@@ -187,6 +190,19 @@ function MainApp() {
 
   useEffect(() => {
     loadUser();
+  }, []);
+
+  // Load user settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('userSettings');
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        setUserSettings(parsedSettings);
+      } catch (error) {
+        console.error('Error parsing saved settings:', error);
+      }
+    }
   }, []);
 
   // Rotate educational tips every 4 seconds during processing
@@ -338,7 +354,7 @@ function MainApp() {
       const payload = {
         resume: resume,
         jobDescription: jobDescription,
-        outputFormat: 'word'
+        outputFormat: userSettings.defaultOutputFormat || 'docx' // Use user preference or default to docx
       };
       
       // For local development, use mock response

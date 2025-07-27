@@ -408,7 +408,15 @@ def lambda_handler(event, context):
         resume_key = event.get('resumeKey')
         job_desc_key = event.get('jobDescriptionKey')
         status_key = event.get('statusKey')
-        output_format = event.get('outputFormat', 'text')  # 'text' or 'word'
+        output_format = event.get('outputFormat', 'text')  # 'text', 'word', 'docx', or 'pdf'
+        
+        # Map frontend format names to backend format names
+        format_mapping = {
+            'docx': 'word',
+            'txt': 'text',
+            'pdf': 'pdf'
+        }
+        output_format = format_mapping.get(output_format, output_format)
         
         # Validate inputs
         if not job_id or not resume_key or not job_desc_key or not status_key:
@@ -826,7 +834,45 @@ def lambda_handler(event, context):
                 print(f"Experience {i+1} ({exp.get('title', 'Unknown')}) has {achievement_count} achievements")
             
             # Generate output based on requested format
-            if output_format.lower() == 'word':
+            if output_format.lower() == 'pdf':
+                try:
+                    # Try to use reportlab for PDF generation
+                    try:
+                        # Install reportlab in /tmp
+                        subprocess.check_call(['pip', 'install', 'reportlab', '-t', '/tmp'])
+                        sys.path.append('/tmp')
+                        
+                        # Import the PDF generator
+                        from pdf_generator import create_pdf_resume
+                        
+                        # Generate PDF document
+                        pdf_content = create_pdf_resume(resume_json)
+                        
+                        output_extension = 'pdf'
+                        content_type = 'application/pdf'
+                        is_binary = True
+                        optimized_resume = pdf_content
+                        
+                        print("Successfully generated PDF document using reportlab")
+                        
+                    except Exception as pdf_error:
+                        print(f"Error using reportlab PDF generator: {str(pdf_error)}")
+                        # Fall back to text format
+                        text_resume = create_text_resume(resume_json)
+                        output_extension = 'txt'
+                        content_type = 'text/plain'
+                        is_binary = False
+                        optimized_resume = text_resume if text_resume else f"Failed to create PDF resume. Error: {str(pdf_error)}"
+                    
+                except Exception as pdf_outer_error:
+                    print(f"Error generating PDF document: {str(pdf_outer_error)}")
+                    # Fall back to text format
+                    text_resume = create_text_resume(resume_json)
+                    output_extension = 'txt'
+                    content_type = 'text/plain'
+                    is_binary = False
+                    optimized_resume = text_resume if text_resume else f"Failed to create resume. Error: {str(pdf_outer_error)}"
+            elif output_format.lower() == 'word':
                 try:
                     # Try to use python-docx for enhanced formatting
                     try:

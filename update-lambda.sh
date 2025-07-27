@@ -7,7 +7,7 @@ cd backend/lambda-functions/ai-handler
 
 # Create deployment package
 echo "📦 Creating deployment package..."
-zip -r function.zip index.py minimal_word_generator.py enhanced_word_generator.py
+zip -r function.zip index.py minimal_word_generator.py enhanced_word_generator.py pdf_generator.py
 
 # Update the Lambda function
 echo "⬆️ Updating Lambda function..."
@@ -19,10 +19,10 @@ aws lambda update-function-code \
 if [ $? -eq 0 ]; then
     echo "✅ Lambda function updated successfully!"
     echo "🔧 Changes made:"
-    echo "   - Removed artificial content limits from AI prompt"
-    echo "   - Fixed Word generators to preserve all bullet points"
-    echo "   - Added content preservation debugging"
-    echo "   - Enhanced structure analysis for better optimization"
+    echo "   - Added PDF generation support using reportlab"
+    echo "   - Updated format mapping (docx -> word, txt -> text, pdf -> pdf)"
+    echo "   - Enhanced content preservation with all bullet points"
+    echo "   - Added structure analysis for better optimization"
 else
     echo "❌ Failed to update Lambda function"
     exit 1
