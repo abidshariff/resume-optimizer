@@ -504,7 +504,17 @@ function MainApp() {
       {/* Header */}
       <AppBar position="static" elevation={0}>
         <Toolbar sx={{ py: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8
+              }
+            }}
+            onClick={() => navigate('/')}
+          >
             <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
             <Typography variant="h5" component="div" sx={{ 
               fontWeight: 700,

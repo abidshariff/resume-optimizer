@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
+import ProfileDialog from './ProfileDialog';
+import SettingsDialog from './SettingsDialog';
 import { 
   Box, 
   Container, 
@@ -30,41 +32,74 @@ import {
   Psychology as PsychologyIcon,
   Logout as LogoutIcon,
   WorkOutline as WorkIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // null = loading, false = not auth, true = auth
   const [currentUser, setCurrentUser] = useState(null);
+  const [userAttributes, setUserAttributes] = useState(null);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
   // Check authentication status on component mount
   useEffect(() => {
-    checkAuthStatus();
+    loadUser();
   }, []);
 
-  const checkAuthStatus = async () => {
+  const getDisplayName = () => {
+    // Try to get the first name from user attributes
+    if (userAttributes?.given_name) {
+      return userAttributes.given_name;
+    }
+    // Try other common attribute names
+    if (userAttributes?.name) {
+      return userAttributes.name.split(' ')[0]; // Get first part of full name
+    }
+    if (userAttributes?.['custom:firstName']) {
+      return userAttributes['custom:firstName'];
+    }
+    // Fallback to username without email domain
+    if (currentUser?.username) {
+      return currentUser.username.split('@')[0];
+    }
+    return 'User';
+  };
+
+  const loadUser = async () => {
     try {
+      setIsLoading(true);
       const user = await getCurrentUser();
-      if (user) {
-        setIsAuthenticated(true);
-        setCurrentUser(user);
-      } else {
-        setIsAuthenticated(false);
-        setCurrentUser(null);
+      console.log('LandingPage - User loaded:', user);
+      setCurrentUser(user);
+      
+      // Try to get user attributes which might contain the first name
+      try {
+        const { fetchUserAttributes } = await import('aws-amplify/auth');
+        const attributes = await fetchUserAttributes();
+        console.log('LandingPage - User attributes from fetchUserAttributes:', attributes);
+        setUserAttributes(attributes);
+      } catch (attrError) {
+        console.log('LandingPage - Could not fetch user attributes:', attrError);
+        setUserAttributes(null);
       }
+      
     } catch (error) {
-      setIsAuthenticated(false);
+      console.log('LandingPage - No user found:', error.message);
       setCurrentUser(null);
+      setUserAttributes(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      setIsAuthenticated(false);
       setCurrentUser(null);
       setProfileMenuAnchor(null);
     } catch (error) {
@@ -73,7 +108,7 @@ export function LandingPage() {
   };
 
   const handleGetStarted = () => {
-    if (isAuthenticated) {
+    if (currentUser) {
       navigate('/app/upload');
     } else {
       navigate('/auth');
@@ -116,7 +151,17 @@ export function LandingPage() {
       {/* Navigation Header */}
       <AppBar position="static" elevation={0}>
         <Toolbar sx={{ py: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8
+              }
+            }}
+            onClick={() => navigate('/')}
+          >
             <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
             <Typography variant="h5" component="div" sx={{ 
               fontWeight: 700,
@@ -130,115 +175,136 @@ export function LandingPage() {
           </Box>
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {isAuthenticated === null ? (
-              // Loading state
-              <CircularProgress size={24} />
-            ) : isAuthenticated ? (
-              // Authenticated user: Show profile menu and optimize button
-              <>
-                <Button 
-                  variant="contained" 
-                  onClick={handleStartOptimizing}
-                  sx={{
-                    background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                    color: 'white',
-                    fontWeight: 600,
-                    px: 3,
-                    mr: 2,
-                    '&:hover': {
-                      background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
-                    }
-                  }}
-                >
-                  Start Optimizing
-                </Button>
-                <Typography variant="body2" sx={{ 
-                  color: '#666666',
-                  display: { xs: 'none', sm: 'block' }
-                }}>
-                  Welcome, {currentUser?.username || 'User'}
-                </Typography>
-                <IconButton
-                  onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
-                  sx={{ 
-                    p: 0,
-                    border: '2px solid #0A66C2',
-                    '&:hover': {
-                      border: '2px solid #666666',
-                    }
-                  }}
-                >
-                  <Avatar 
-                    sx={{ 
-                      bgcolor: '#0A66C2', 
-                      width: 40, 
-                      height: 40,
-                      fontSize: '1rem',
-                      fontWeight: 600
-                    }}
-                  >
-                    {(currentUser?.username || 'U').charAt(0).toUpperCase()}
-                  </Avatar>
-                </IconButton>
-                
-                {/* Profile Menu */}
-                <Menu
-                  anchorEl={profileMenuAnchor}
-                  open={Boolean(profileMenuAnchor)}
-                  onClose={() => setProfileMenuAnchor(null)}
-                  PaperProps={{
-                    sx: {
-                      bgcolor: '#FFFFFF',
-                      border: '1px solid #0A66C2',
-                      mt: 1,
-                      minWidth: 200
-                    }
-                  }}
-                >
-                  <MenuItem onClick={() => {
-                    setProfileMenuAnchor(null);
-                    navigate('/app/upload');
-                  }}>
-                    <ListItemIcon>
-                      <AutoAwesomeIcon sx={{ color: '#0A66C2' }} />
-                    </ListItemIcon>
-                    <ListItemText primary="Resume Optimizer" />
-                  </MenuItem>
-                  <MenuItem onClick={() => {
-                    setProfileMenuAnchor(null);
-                    handleSignOut();
-                  }}>
-                    <ListItemIcon>
-                      <LogoutIcon sx={{ color: '#0A66C2' }} />
-                    </ListItemIcon>
-                    <ListItemText primary="Sign Out" />
-                  </MenuItem>
-                </Menu>
-              </>
-            ) : (
-              // Non-authenticated user: Show sign-in and get started buttons
-              <>
-                <Button 
-                  color="inherit" 
-                  onClick={handleSignIn}
-                  sx={{ color: '#666666', '&:hover': { color: '#0A66C2' } }}
-                >
-                  Sign In
-                </Button>
-                <Button 
-                  variant="contained" 
-                  onClick={handleGetStarted}
-                  sx={{
-                    background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                    '&:hover': {
-                      background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
-                    }
-                  }}
-                >
-                  Get Started Free
-                </Button>
-              </>
-            )}
+            {(() => {
+              if (isLoading) {
+                return <CircularProgress size={24} />;
+              } else if (currentUser) {
+                return (
+                  <>
+                    <Button 
+                      variant="contained" 
+                      onClick={handleStartOptimizing}
+                      sx={{
+                        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                        color: 'white',
+                        fontWeight: 600,
+                        px: 3,
+                        mr: 2,
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+                        }
+                      }}
+                    >
+                      Start Optimizing
+                    </Button>
+                    <Typography variant="body2" sx={{ 
+                      color: '#666666',
+                      display: { xs: 'none', sm: 'block' }
+                    }}>
+                      Welcome, {getDisplayName()}
+                    </Typography>
+                    <IconButton
+                      onClick={(e) => {
+                        console.log('Avatar clicked!', e.currentTarget);
+                        setProfileMenuAnchor(e.currentTarget);
+                      }}
+                      sx={{ 
+                        p: 0,
+                        border: '2px solid #0A66C2',
+                        '&:hover': {
+                          border: '2px solid #666666',
+                        }
+                      }}
+                    >
+                      <Avatar 
+                        sx={{ 
+                          bgcolor: '#0A66C2', 
+                          width: 40, 
+                          height: 40,
+                          fontSize: '1rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        {getDisplayName().charAt(0).toUpperCase()}
+                      </Avatar>
+                    </IconButton>
+                    
+                    {/* Profile Menu */}
+                    <Menu
+                      anchorEl={profileMenuAnchor}
+                      open={Boolean(profileMenuAnchor)}
+                      onClose={() => {
+                        console.log('Menu closing');
+                        setProfileMenuAnchor(null);
+                      }}
+                      PaperProps={{
+                        sx: {
+                          bgcolor: '#FFFFFF',
+                          border: '1px solid #0A66C2',
+                          mt: 1,
+                          minWidth: 200
+                        }
+                      }}
+                    >
+                      <MenuItem onClick={() => {
+                        setProfileMenuAnchor(null);
+                        setProfileDialogOpen(true);
+                      }}>
+                        <ListItemIcon>
+                          <PersonIcon sx={{ color: '#0A66C2' }} />
+                        </ListItemIcon>
+                        <ListItemText primary="Profile" />
+                      </MenuItem>
+                      
+                      <MenuItem onClick={() => {
+                        setProfileMenuAnchor(null);
+                        setSettingsDialogOpen(true);
+                      }}>
+                        <ListItemIcon>
+                          <SettingsIcon sx={{ color: '#0A66C2' }} />
+                        </ListItemIcon>
+                        <ListItemText primary="Settings & Privacy" />
+                      </MenuItem>
+                      
+                      <MenuItem onClick={() => {
+                        console.log('Sign Out clicked');
+                        setProfileMenuAnchor(null);
+                        handleSignOut();
+                      }}>
+                        <ListItemIcon>
+                          <LogoutIcon sx={{ color: '#0A66C2' }} />
+                        </ListItemIcon>
+                        <ListItemText primary="Sign Out" />
+                      </MenuItem>
+                    </Menu>
+                  </>
+                );
+              } else {
+                return (
+                  <>
+                    <Button 
+                      color="inherit" 
+                      onClick={handleSignIn}
+                      sx={{ color: '#666666', '&:hover': { color: '#0A66C2' } }}
+                    >
+                      Sign In
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      onClick={handleGetStarted}
+                      sx={{
+                        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+                        }
+                      }}
+                    >
+                      Get Started Free
+                    </Button>
+                  </>
+                );
+              }
+            })()}
           </Box>
         </Toolbar>
       </AppBar>
@@ -268,8 +334,8 @@ export function LandingPage() {
                   mb: 3,
                   lineHeight: 1.2
                 }}>
-                  {isAuthenticated 
-                    ? `Welcome back, ${currentUser?.username || 'User'}!`
+                  {currentUser 
+                    ? `Welcome back, ${getDisplayName()}!`
                     : 'Land Your Dream Job with AI-Optimized Resumes'
                   }
                 </Typography>
@@ -279,7 +345,7 @@ export function LandingPage() {
                   fontWeight: 400,
                   lineHeight: 1.4
                 }}>
-                  {isAuthenticated
+                  {currentUser
                     ? 'Ready to optimize another resume? Let\'s get started with your next career opportunity.'
                     : 'Transform your resume in seconds with our advanced AI technology. Get past ATS systems and land 3x more interviews.'
                   }
@@ -303,7 +369,7 @@ export function LandingPage() {
                       }
                     }}
                   >
-                    {isAuthenticated ? 'Continue Optimizing' : 'Start Optimizing Now'}
+                    {currentUser ? 'Continue Optimizing' : 'Start Optimizing Now'}
                   </Button>
                 </Stack>
               </motion.div>
@@ -551,7 +617,7 @@ export function LandingPage() {
                 }
               }}
             >
-              {isAuthenticated ? 'Continue Optimizing' : 'Get Started Free'}
+              {currentUser ? 'Continue Optimizing' : 'Get Started Free'}
             </Button>
           </Box>
         </Container>
@@ -662,6 +728,18 @@ export function LandingPage() {
           </Box>
         </Container>
       </Box>
+
+      {/* Profile Dialog */}
+      <ProfileDialog 
+        open={profileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
+      />
+
+      {/* Settings Dialog */}
+      <SettingsDialog 
+        open={settingsDialogOpen}
+        onClose={() => setSettingsDialogOpen(false)}
+      />
     </Box>
   );
 }
