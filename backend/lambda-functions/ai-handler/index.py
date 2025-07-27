@@ -881,7 +881,7 @@ def lambda_handler(event, context):
         filename = f"optimized_resume.{output_extension}"
         
         try:
-            optimized_url = s3_client.generate_presigned_url(
+            optimized_url = s3.generate_presigned_url(
                 'get_object',
                 Params={
                     'Bucket': bucket_name,
@@ -894,7 +894,7 @@ def lambda_handler(event, context):
         except Exception as e:
             print(f"Error generating presigned URL: {str(e)}")
             # Fallback to basic presigned URL without custom headers
-            optimized_url = s3_client.generate_presigned_url(
+            optimized_url = s3.generate_presigned_url(
                 'get_object',
                 Params={
                     'Bucket': bucket_name,
