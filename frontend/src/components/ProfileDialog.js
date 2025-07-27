@@ -128,15 +128,24 @@ function ProfileDialog({ open, onClose }) {
 
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Email"
-              value={userInfo.email}
-              disabled
-              variant="outlined"
-              helperText="Email cannot be changed"
-              sx={{ mb: 2 }}
-            />
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: '#666', fontWeight: 500 }}>
+                Email Address
+              </Typography>
+              <TextField
+                fullWidth
+                value={userInfo.email}
+                disabled
+                variant="outlined"
+                helperText="Email cannot be changed"
+                sx={{ 
+                  '& .MuiInputBase-input.Mui-disabled': {
+                    WebkitTextFillColor: '#333',
+                    color: '#333'
+                  }
+                }}
+              />
+            </Box>
           </Grid>
 
           <Grid item xs={6}>

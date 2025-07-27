@@ -69,15 +69,13 @@ Resources:
         - email
       UsernameAttributes:
         - email
-      Schema:
-        - Name: email
-          Required: true
-          Mutable: true
       Policies:
         PasswordPolicy:
           MinimumLength: 8
           RequireUppercase: true
           RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
           RequireNumbers: true
           RequireSymbols: false
 

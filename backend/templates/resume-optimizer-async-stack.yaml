@@ -55,10 +55,13 @@ Resources:
       UserPoolName: !Sub 'ResumeOptimizerUserPool-${Environment}'
       AutoVerifiedAttributes:
         - email
-      Schema:
-        - Name: email
-          Required: true
-          Mutable: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
 
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient

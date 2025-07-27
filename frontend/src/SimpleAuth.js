@@ -49,6 +49,8 @@ function SimpleAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [countdown, setCountdown] = useState(5);
 
   // Phone number formatting for Cognito (E.164 format)
   const formatPhoneForCognito = (phone) => {
@@ -137,6 +139,23 @@ function SimpleAuth() {
     setLoading(true);
     setError('');
     
+    // Debug: Log current Amplify configuration and versions
+    console.log('=== COMPREHENSIVE DEBUG ===');
+    console.log('Current config:', {
+      userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_LEo2udjvD',
+      userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || 'bajpb891n9e4rb005mhnqg60',
+      region: process.env.REACT_APP_AWS_REGION || 'us-east-1'
+    });
+    
+    // Check if there are any environment variables overriding our config
+    console.log('Environment variables:', {
+      REACT_APP_USER_POOL_ID: process.env.REACT_APP_USER_POOL_ID,
+      REACT_APP_USER_POOL_WEB_CLIENT_ID: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID,
+      REACT_APP_AWS_REGION: process.env.REACT_APP_AWS_REGION
+    });
+    
+    console.log('=== END COMPREHENSIVE DEBUG ===');
+    
     // Validate password requirements
     const { isValid } = validatePassword(formData.password);
     if (!isValid) {
@@ -154,16 +173,42 @@ function SimpleAuth() {
     try {
       const formattedPhone = formatPhoneForCognito(formData.phone);
       
+      console.log('Attempting sign-up with data:', {
+        username: formData.email,
+        options: {
+          userAttributes: {
+            email: formData.email,
+            given_name: formData.firstName,
+            family_name: formData.lastName,
+            ...(formattedPhone && { phone_number: formattedPhone })
+          }
+        }
+      });
+      
       const result = await signUp({
         username: formData.email,
         password: formData.password,
-        attributes: {
-          email: formData.email,
-          given_name: formData.firstName,
-          family_name: formData.lastName,
-          ...(formattedPhone && { phone_number: formattedPhone })
+        options: {
+          userAttributes: {
+            email: formData.email,
+            given_name: formData.firstName,
+            family_name: formData.lastName,
+            ...(formattedPhone && { phone_number: formattedPhone })
+          }
         }
       });
+      
+      console.log('Sign-up result:', result);
+      
+      // Additional verification that email was properly set
+      if (result.userSub) {
+        console.log('User created successfully with ID:', result.userSub);
+        if (result.codeDeliveryDetails) {
+          console.log('Verification email sent to:', result.codeDeliveryDetails.destination);
+        } else {
+          console.warn('No code delivery details - verification email may not have been sent');
+        }
+      }
       
       if (result.isSignUpComplete) {
         navigate(returnTo);
@@ -172,13 +217,22 @@ function SimpleAuth() {
         setMessage('Please check your email for the verification code');
       }
     } catch (err) {
-      console.error('Sign up error:', err);
-      console.error('Error details:', {
-        message: err.message,
-        code: err.code,
-        name: err.name,
-        stack: err.stack
-      });
+      console.error('=== SIGN UP ERROR DEBUG ===');
+      console.error('Full error object:', err);
+      console.error('Error message:', err.message);
+      console.error('Error code:', err.code);
+      console.error('Error name:', err.name);
+      console.error('Error stack:', err.stack);
+      
+      if (err.response) {
+        console.error('Error response:', err.response);
+      }
+      
+      if (err.request) {
+        console.error('Error request:', err.request);
+      }
+      
+      console.error('=== END DEBUG ===');
       
       // Handle specific Cognito errors
       if (err.code === 'UsernameExistsException') {
@@ -189,7 +243,7 @@ function SimpleAuth() {
         setError(`Invalid parameter: ${err.message}`);
       } else {
         // Show the actual error message for debugging
-        setError(err.message || 'Failed to sign up');
+        setError(`Sign-up failed: ${err.message}`);
       }
     } finally {
       setLoading(false);
@@ -214,7 +268,19 @@ function SimpleAuth() {
       });
       
       if (signInResult.isSignedIn) {
-        navigate('/app');
+        setEmailVerified(true);
+        
+        // Start countdown timer
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              navigate('/app/upload');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       }
     } catch (err) {
       console.error('Confirm sign up error:', err);
@@ -598,6 +664,75 @@ function SimpleAuth() {
     </Box>
   );
 
+  const renderEmailVerificationSuccess = () => (
+    <Box sx={{ textAlign: 'center', py: 4 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        mb: 3,
+        animation: 'bounce 0.6s ease-in-out'
+      }}>
+        <CheckCircle sx={{ 
+          fontSize: 80, 
+          color: '#4CAF50',
+          filter: 'drop-shadow(0 4px 8px rgba(76, 175, 80, 0.3))'
+        }} />
+      </Box>
+      
+      <Typography variant="h4" sx={{ 
+        mb: 2, 
+        fontWeight: 600,
+        color: '#4CAF50',
+        textAlign: 'center'
+      }}>
+        Email Verified Successfully! 🎉
+      </Typography>
+      
+      <Typography variant="body1" sx={{ 
+        mb: 3, 
+        color: 'rgba(0,0,0,.7)',
+        textAlign: 'center',
+        lineHeight: 1.6
+      }}>
+        Welcome to Resume Optimizer Pro! Your account is now active and ready to use.
+      </Typography>
+      
+      <Typography variant="body1" sx={{ 
+        mb: 4, 
+        color: 'rgba(0,0,0,.6)',
+        textAlign: 'center',
+        lineHeight: 1.6
+      }}>
+        Let's get started by uploading your resume and optimizing it for your dream job!
+      </Typography>
+
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        gap: 1,
+        p: 3,
+        bgcolor: '#E8F5E8',
+        borderRadius: 2,
+        mb: 3,
+        border: '1px solid #C8E6C9'
+      }}>
+        <CircularProgress size={24} sx={{ color: '#4CAF50' }} />
+        <Typography variant="body1" sx={{ color: '#2E7D32', fontWeight: 500 }}>
+          Redirecting to upload page in {countdown} second{countdown !== 1 ? 's' : ''}...
+        </Typography>
+      </Box>
+
+      <Typography variant="body2" sx={{ 
+        color: '#999', 
+        fontStyle: 'italic',
+        textAlign: 'center'
+      }}>
+        Get ready to create an amazing resume! ✨
+      </Typography>
+    </Box>
+  );
+
   const renderConfirmSignUpForm = () => (
     <Box component="form" onSubmit={handleConfirmSignUp}>
       <Typography variant="h4" sx={{ 
@@ -829,6 +964,10 @@ function SimpleAuth() {
   );
 
   const getCurrentForm = () => {
+    if (emailVerified) {
+      return renderEmailVerificationSuccess();
+    }
+    
     switch (mode) {
       case 'signUp':
         return renderSignUpForm();
@@ -844,7 +983,24 @@ function SimpleAuth() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: '#f5f5f5',
+      '& @keyframes bounce': {
+        '0%, 20%, 53%, 80%, 100%': {
+          transform: 'translate3d(0,0,0)'
+        },
+        '40%, 43%': {
+          transform: 'translate3d(0,-15px,0)'
+        },
+        '70%': {
+          transform: 'translate3d(0,-7px,0)'
+        },
+        '90%': {
+          transform: 'translate3d(0,-2px,0)'
+        }
+      }
+    }}>
       {/* Header */}
       <AppBar position="static" elevation={0} sx={{ 
         bgcolor: 'white',

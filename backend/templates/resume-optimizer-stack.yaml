@@ -55,10 +55,38 @@ Resources:
       UserPoolName: !Sub 'ResumeOptimizerUserPool-${Environment}'
       AutoVerifiedAttributes:
         - email
-      Schema:
-        - Name: email
-          Required: true
-          Mutable: true
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+        EmailSubject: "Welcome to Resume Optimizer Pro - Verify Your Email"
+        EmailMessage: |
+          Welcome to Resume Optimizer Pro!
+
+          Thank you for creating your account with us. To complete your registration and start optimizing your resume with AI, please verify your email address.
+
+          Your verification code is: {####}
+
+          Simply enter this code in the verification form on our website to activate your account.
+
+          What you can do with Resume Optimizer Pro:
+          • Transform your resume with AI-powered optimization
+          • Get past ATS (Applicant Tracking Systems)
+          • Increase your interview chances by 3x
+          • Download professionally formatted resumes
+
+          If you didn't create this account, please ignore this email.
+
+          Best regards,
+          The Resume Optimizer Pro Team
+
+          Website: https://main.d3tjpmlvy19b2l.amplifyapp.com
+          Support: Need help? Contact our support team.
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
 
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient

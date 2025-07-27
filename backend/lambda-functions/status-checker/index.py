@@ -7,7 +7,7 @@ bucket_name = os.environ.get('STORAGE_BUCKET')
 
 # CORS headers for all responses
 CORS_HEADERS = {
-    'Access-Control-Allow-Origin': 'https://main.d16ci5rhuvcide.amplifyapp.com',
+    'Access-Control-Allow-Origin': 'https://main.d3tjpmlvy19b2l.amplifyapp.com',
     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
     'Access-Control-Allow-Methods': 'OPTIONS,GET',
     'Access-Control-Allow-Credentials': 'true'

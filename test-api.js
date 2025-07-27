@@ -1,7 +1,7 @@
 // Simple test script to debug the API response
 const axios = require('axios');
 
-const API_ENDPOINT = 'https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev/optimize';
+const API_ENDPOINT = 'https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev/optimize';
 
 // Test payload
 const testPayload = {

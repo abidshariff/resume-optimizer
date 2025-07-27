@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getCurrentUser, signOut, fetchAuthSession, deleteUser } from 'aws-amplify/auth';
+import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
 import { 
@@ -10,7 +10,6 @@ import {
   Button, 
   Paper, 
   TextField, 
-  CircularProgress,
   AppBar,
   Toolbar,
   Avatar,
@@ -25,10 +24,6 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon,
@@ -37,7 +32,6 @@ import {
   Download as DownloadIcon,
   Logout as LogoutIcon,
   CheckCircle as CheckCircleIcon,
-  DeleteForever as DeleteForeverIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
@@ -131,9 +125,43 @@ function MainApp() {
   
   // UI state
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
-  const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Enhanced UX state for processing
+  const [currentTip, setCurrentTip] = useState(0);
+
+  // Educational tips to show during processing
+  const educationalTips = [
+    {
+      icon: "🎯",
+      title: "ATS Optimization",
+      text: "ATS systems scan for exact keyword matches from job descriptions. We're strategically placing relevant keywords throughout your resume."
+    },
+    {
+      icon: "📊", 
+      title: "Recruiter Insights",
+      text: "Recruiters spend only 6 seconds on initial resume review. We're optimizing your content for maximum impact in those crucial first moments."
+    },
+    {
+      icon: "✨",
+      title: "Achievement Focus", 
+      text: "Quantified achievements increase interview chances by 40%. We're highlighting your measurable accomplishments and impact."
+    },
+    {
+      icon: "🚀",
+      title: "Action Verbs",
+      text: "Action verbs like 'implemented', 'optimized', and 'achieved' catch recruiter attention. We're enhancing your experience descriptions."
+    },
+    {
+      icon: "🔍",
+      title: "Keyword Density",
+      text: "The right keyword density helps your resume rank higher in ATS searches while maintaining natural readability."
+    },
+    {
+      icon: "📝",
+      title: "Professional Format",
+      text: "Clean, professional formatting ensures your resume looks great both in ATS systems and to human recruiters."
+    }
+  ];
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
@@ -152,6 +180,19 @@ function MainApp() {
   useEffect(() => {
     loadUser();
   }, []);
+
+  // Rotate educational tips every 4 seconds during processing
+  useEffect(() => {
+    let tipInterval;
+    if (isPolling) {
+      tipInterval = setInterval(() => {
+        setCurrentTip((prev) => (prev + 1) % educationalTips.length);
+      }, 4000);
+    }
+    return () => {
+      if (tipInterval) clearInterval(tipInterval);
+    };
+  }, [isPolling, educationalTips.length]);
 
   const loadUser = async () => {
     try {
@@ -256,7 +297,7 @@ function MainApp() {
       const { tokens } = await fetchAuthSession();
       const idToken = tokens.idToken.toString();
       
-      const response = await fetch('https://x62c0f3cme.execute-api.us-east-1.amazonaws.com/dev/optimize', {
+      const response = await fetch('https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev/optimize', {
         method: 'POST',
         headers: {
           'Authorization': idToken,
@@ -369,34 +410,6 @@ function MainApp() {
     navigate('/app/upload');
   };
 
-  const handleDeleteProfile = async () => {
-    if (deleteConfirmText !== 'DELETE') {
-      setSnackbarMessage('Please type "DELETE" to confirm account deletion');
-      setSnackbarOpen(true);
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      await deleteUser();
-      setSnackbarMessage('Account successfully deleted. You will be signed out.');
-      setSnackbarOpen(true);
-      setDeleteConfirmDialogOpen(false);
-      setDeleteConfirmText('');
-      
-      setTimeout(() => {
-        handleSignOut();
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error deleting account:', error);
-      setSnackbarMessage(`Error deleting account: ${error.message}`);
-      setSnackbarOpen(true);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   const isProcessing = isSubmitting || isPolling;
 
   return (
@@ -475,17 +488,7 @@ function MainApp() {
                 <ListItemIcon>
                   <SettingsIcon sx={{ color: '#0A66C2' }} />
                 </ListItemIcon>
-                <ListItemText primary="Settings" />
-              </MenuItem>
-              
-              <MenuItem onClick={() => {
-                setDeleteConfirmDialogOpen(true);
-                setProfileMenuAnchor(null);
-              }}>
-                <ListItemIcon>
-                  <DeleteForeverIcon sx={{ color: '#CC1016' }} />
-                </ListItemIcon>
-                <ListItemText primary="Delete Account" sx={{ color: '#CC1016' }} />
+                <ListItemText primary="Settings & Privacy" />
               </MenuItem>
               
               <MenuItem onClick={() => {
@@ -657,36 +660,94 @@ function MainApp() {
                   flexDirection: 'column',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  minHeight: '500px'
+                  minHeight: '600px'
                 }}
               >
-                <Typography variant="h3" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                  🤖 Optimizing Your Resume
-                </Typography>
-                <Typography variant="h6" color="textSecondary" paragraph sx={{ mb: 4 }}>
-                  Our AI is analyzing your resume and tailoring it to the job description.
-                </Typography>
-                
+                <Box sx={{ textAlign: 'center', mb: 4, width: '100%', maxWidth: 700 }}>
+                  <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+                    🤖 Optimizing Your Resume
+                  </Typography>
+                  <Typography variant="h6" color="textSecondary" paragraph>
+                    Our AI is analyzing your resume and tailoring it to the job description.
+                  </Typography>
+                </Box>
+
                 <Box sx={{ width: '100%', maxWidth: 400, mb: 4 }}>
                   <LinearProgress 
                     variant="indeterminate"
                     sx={{ 
-                      height: 8, 
-                      borderRadius: 4,
+                      height: 16, 
+                      borderRadius: 8,
                       backgroundColor: 'grey.200',
                       '& .MuiLinearProgress-bar': {
-                        borderRadius: 4,
-                        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)'
+                        borderRadius: 8,
+                        background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
                       }
                     }}
                   />
                   <Typography variant="body2" color="textSecondary" sx={{ 
                     textAlign: 'center',
-                    mt: 2
+                    mt: 2,
+                    fontWeight: 500
                   }}>
-                    ⏱️ This typically takes 30-60 seconds...
+                    ⏱️ Time to complete: 30-45 seconds
                   </Typography>
                 </Box>
+
+                <Paper 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 4, 
+                    bgcolor: 'info.50', 
+                    borderColor: 'info.200',
+                    minHeight: 140,
+                    width: '100%',
+                    maxWidth: 700,
+                    mb: 3
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+                    💡 Resume Optimization Tips
+                  </Typography>
+                  <motion.div
+                    key={currentTip}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <Typography sx={{ fontSize: 36, mr: 3 }}>
+                        {educationalTips[currentTip].icon}
+                      </Typography>
+                      <Box>
+                        <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem' }}>
+                          {educationalTips[currentTip].title}
+                        </Typography>
+                        <Typography variant="body1" color="textSecondary" sx={{ fontSize: '1rem', lineHeight: 1.6 }}>
+                          {educationalTips[currentTip].text}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </motion.div>
+                  
+                  {/* Tip indicators */}
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                    {educationalTips.map((_, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          backgroundColor: index === currentTip ? 'info.main' : 'grey.300',
+                          mx: 0.5,
+                          transition: 'all 0.3s ease'
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Paper>
 
                 <Button 
                   variant="outlined" 
@@ -770,57 +831,6 @@ function MainApp() {
           </Paper>
         </motion.div>
       </Container>
-      
-      {/* Delete Account Dialog */}
-      <Dialog 
-        open={deleteConfirmDialogOpen} 
-        onClose={() => setDeleteConfirmDialogOpen(false)} 
-        maxWidth="sm" 
-        fullWidth
-      >
-        <DialogTitle sx={{ 
-          background: 'linear-gradient(45deg, #CC1016 30%, #FF4444 90%)',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          <DeleteForeverIcon sx={{ mr: 1 }} />
-          Delete Account
-        </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
-          <Typography variant="body1" sx={{ mb: 3, fontWeight: 500 }}>
-            ⚠️ This action cannot be undone. To confirm deletion, please type <strong>DELETE</strong>:
-          </Typography>
-          <TextField
-            fullWidth
-            value={deleteConfirmText}
-            onChange={(e) => setDeleteConfirmText(e.target.value)}
-            placeholder="Type DELETE to confirm"
-            variant="outlined"
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button 
-            onClick={() => setDeleteConfirmDialogOpen(false)} 
-            variant="outlined"
-            disabled={isDeleting}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleDeleteProfile} 
-            variant="contained"
-            disabled={deleteConfirmText !== 'DELETE' || isDeleting}
-            sx={{
-              backgroundColor: '#CC1016',
-              '&:hover': { backgroundColor: '#AA0E14' }
-            }}
-            startIcon={isDeleting ? <CircularProgress size={20} color="inherit" /> : <DeleteForeverIcon />}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete Account'}
-          </Button>
-        </DialogActions>
-      </Dialog>
       
       <Snackbar
         open={snackbarOpen}
