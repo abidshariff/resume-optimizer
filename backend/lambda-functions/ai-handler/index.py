@@ -14,22 +14,22 @@ from minimal_word_generator import create_minimal_word_resume
 # AI Model Configuration - Models are tried in order of preference
 AI_MODELS = [
     {
-        'id': 'anthropic.claude-3-5-sonnet-20240620-v1:0',
-        'name': 'Claude 3.5 Sonnet', 
-        'max_tokens': 3000,  # Reduced for faster response
-        'description': 'Reliable and fast Claude 3.5 model with good performance'
+        'id': 'anthropic.claude-sonnet-4-20250514-v1:0',
+        'name': 'Claude Sonnet 4',
+        'max_tokens': 4000,
+        'description': 'Latest and most capable Claude model'
     },
     {
         'id': 'anthropic.claude-3-7-sonnet-20250219-v1:0', 
         'name': 'Claude 3.7 Sonnet',
-        'max_tokens': 3000,  # Reduced for faster response
+        'max_tokens': 4000,
         'description': 'Enhanced Claude 3 model with improved capabilities'
     },
     {
-        'id': 'anthropic.claude-sonnet-4-20250514-v1:0',
-        'name': 'Claude Sonnet 4',
-        'max_tokens': 3000,  # Reduced for faster response
-        'description': 'Latest Claude model (fallback due to potential latency)'
+        'id': 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+        'name': 'Claude 3.5 Sonnet', 
+        'max_tokens': 4000,
+        'description': 'Reliable Claude 3.5 model with good performance'
     }
 ]
 
@@ -678,7 +678,7 @@ def lambda_handler(event, context):
                         body=json.dumps({
                             "anthropic_version": "bedrock-2023-05-31",
                             "max_tokens": model['max_tokens'],
-                            "temperature": 0.3,
+                            "temperature": 0.5,
                             "system": "You are an expert ATS resume optimizer that preserves document formatting.",
                             "messages": [
                                 {
