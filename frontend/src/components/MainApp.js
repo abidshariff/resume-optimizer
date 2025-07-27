@@ -24,6 +24,12 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Slider,
+  Rating
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon,
@@ -164,6 +170,8 @@ function MainApp() {
   ];
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [userRating, setUserRating] = useState(5);
 
   // Determine current step from URL
   const getCurrentStep = () => {
@@ -495,6 +503,18 @@ function MainApp() {
     
     // Navigate back to job description
     navigate('/app/job-description');
+  };
+
+  const handleRatingSubmit = () => {
+    // Here you could send the rating to your backend
+    console.log('User rating submitted:', userRating);
+    
+    // Show success message
+    setSnackbarMessage(`Thank you for rating us ${userRating} star${userRating !== 1 ? 's' : ''}! 🌟`);
+    setSnackbarOpen(true);
+    
+    // Close dialog
+    setRatingDialogOpen(false);
   };
 
   const isProcessing = isSubmitting || isPolling;
@@ -927,13 +947,12 @@ function MainApp() {
                     Optimize Another Resume
                   </Button>
                   <Button 
-                    variant="contained" 
+                    variant="outlined" 
                     color="primary"
-                    startIcon={<DownloadIcon />}
-                    onClick={downloadOptimizedResume}
+                    onClick={() => setRatingDialogOpen(true)}
                     size="large"
                   >
-                    Download Again
+                    ⭐ Rate Your Experience
                   </Button>
                 </Box>
               </motion.div>
@@ -968,6 +987,71 @@ function MainApp() {
         open={settingsDialogOpen}
         onClose={() => setSettingsDialogOpen(false)}
       />
+
+      {/* Rating Dialog */}
+      <Dialog 
+        open={ratingDialogOpen} 
+        onClose={() => setRatingDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: '#0A66C2' }}>
+            ⭐ Rate Your Experience
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: 'center', py: 3 }}>
+          <Typography variant="body1" sx={{ mb: 3, color: '#666666' }}>
+            How would you rate your resume optimization experience?
+          </Typography>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <Rating
+              name="user-rating"
+              value={userRating}
+              onChange={(event, newValue) => {
+                setUserRating(newValue || 1);
+              }}
+              size="large"
+              sx={{
+                fontSize: '3rem',
+                '& .MuiRating-iconFilled': {
+                  color: '#FFD700',
+                },
+                '& .MuiRating-iconHover': {
+                  color: '#FFD700',
+                }
+              }}
+            />
+          </Box>
+          
+          <Typography variant="h6" sx={{ color: '#0A66C2', fontWeight: 600 }}>
+            {userRating === 1 && "We'll do better next time! 😔"}
+            {userRating === 2 && "Thanks for the feedback! 🙂"}
+            {userRating === 3 && "Good to know! 😊"}
+            {userRating === 4 && "Great! We're glad you liked it! 😄"}
+            {userRating === 5 && "Awesome! You made our day! 🎉"}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button 
+            onClick={() => setRatingDialogOpen(false)}
+            sx={{ mr: 2 }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleRatingSubmit}
+            sx={{
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              px: 4
+            }}
+          >
+            Submit Rating
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
