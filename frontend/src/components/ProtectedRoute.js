@@ -1,25 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { CircularProgress, Box } from '@mui/material';
 
 function ProtectedRoute({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       await getCurrentUser();
       setIsAuthenticated(true);
     } catch (error) {
       setIsAuthenticated(false);
-      navigate('/');
+      // Store the intended destination
+      const intendedPath = location.pathname;
+      // Use replace to prevent back button from going to protected route
+      navigate('/auth', { 
+        state: { returnTo: intendedPath },
+        replace: true 
+      });
     }
-  };
+  }, [navigate, location.pathname]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   if (isAuthenticated === null) {
     return (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import {
   Box,
@@ -12,12 +12,28 @@ import {
   CircularProgress,
   AppBar,
   Toolbar,
-  Link
+  Link,
+  InputAdornment,
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
-import { WorkOutline as WorkIcon } from '@mui/icons-material';
+import { 
+  AutoAwesome as AutoAwesomeIcon,
+  Visibility,
+  VisibilityOff,
+  CheckCircle,
+  RadioButtonUnchecked
+} from '@mui/icons-material';
 
 function SimpleAuth() {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the return path from location state, default to /app/upload
+  const returnTo = location.state?.returnTo || '/app/upload';
   const [mode, setMode] = useState('signIn'); // signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword
   const [formData, setFormData] = useState({
     email: '',
@@ -28,9 +44,62 @@ function SimpleAuth() {
     phone: '',
     confirmationCode: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+
+  // Phone number formatting for Cognito (E.164 format)
+  const formatPhoneForCognito = (phone) => {
+    if (!phone) return null;
+    
+    // Remove all non-digit characters
+    const digits = phone.replace(/\D/g, '');
+    
+    // If it starts with 1 and has 11 digits, it's already in the right format
+    if (digits.length === 11 && digits.startsWith('1')) {
+      return `+${digits}`;
+    }
+    
+    // If it has 10 digits, assume it's US number and add +1
+    if (digits.length === 10) {
+      return `+1${digits}`;
+    }
+    
+    // If it already starts with +, return as is
+    if (phone.startsWith('+')) {
+      return phone;
+    }
+    
+    // Otherwise, return the original phone number
+    return phone;
+  };
+
+  // Password validation function
+  const validatePassword = (password) => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+    
+    const isValid = Object.values(requirements).every(req => req);
+    return { isValid, requirements };
+  };
+
+  const getPasswordRequirements = (password) => {
+    const { requirements } = validatePassword(password);
+    return [
+      { text: 'At least 8 characters', met: requirements.length },
+      { text: 'One uppercase letter (A-Z)', met: requirements.uppercase },
+      { text: 'One lowercase letter (a-z)', met: requirements.lowercase },
+      { text: 'One number (0-9)', met: requirements.number },
+      { text: 'One special character (!@#$%^&*)', met: requirements.special }
+    ];
+  };
 
   const handleInputChange = (field) => (event) => {
     setFormData(prev => ({
@@ -52,7 +121,8 @@ function SimpleAuth() {
       });
       
       if (result.isSignedIn) {
-        navigate('/app');
+        // Use replace to prevent back button from going to auth page
+        navigate(returnTo, { replace: true });
       }
     } catch (err) {
       console.error('Sign in error:', err);
@@ -67,6 +137,14 @@ function SimpleAuth() {
     setLoading(true);
     setError('');
     
+    // Validate password requirements
+    const { isValid } = validatePassword(formData.password);
+    if (!isValid) {
+      setError('Password does not meet the requirements');
+      setLoading(false);
+      return;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -74,6 +152,8 @@ function SimpleAuth() {
     }
     
     try {
+      const formattedPhone = formatPhoneForCognito(formData.phone);
+      
       const result = await signUp({
         username: formData.email,
         password: formData.password,
@@ -81,19 +161,36 @@ function SimpleAuth() {
           email: formData.email,
           given_name: formData.firstName,
           family_name: formData.lastName,
-          phone_number: formData.phone || undefined
+          ...(formattedPhone && { phone_number: formattedPhone })
         }
       });
       
       if (result.isSignUpComplete) {
-        navigate('/app');
+        navigate(returnTo);
       } else {
         setMode('confirmSignUp');
         setMessage('Please check your email for the verification code');
       }
     } catch (err) {
       console.error('Sign up error:', err);
-      setError(err.message || 'Failed to sign up');
+      console.error('Error details:', {
+        message: err.message,
+        code: err.code,
+        name: err.name,
+        stack: err.stack
+      });
+      
+      // Handle specific Cognito errors
+      if (err.code === 'UsernameExistsException') {
+        setError('An account with this email already exists. Please sign in instead.');
+      } else if (err.code === 'InvalidPasswordException') {
+        setError('Password does not meet the requirements.');
+      } else if (err.code === 'InvalidParameterException') {
+        setError(`Invalid parameter: ${err.message}`);
+      } else {
+        // Show the actual error message for debugging
+        setError(err.message || 'Failed to sign up');
+      }
     } finally {
       setLoading(false);
     }
@@ -149,6 +246,14 @@ function SimpleAuth() {
     setLoading(true);
     setError('');
     
+    // Validate password requirements
+    const { isValid } = validatePassword(formData.password);
+    if (!isValid) {
+      setError('Password does not meet the requirements');
+      setLoading(false);
+      return;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -203,11 +308,24 @@ function SimpleAuth() {
       <TextField
         fullWidth
         label="Password"
-        type="password"
+        type={showPassword ? 'text' : 'password'}
         value={formData.password}
         onChange={handleInputChange('password')}
         required
         sx={{ mb: 3 }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={() => setShowPassword(!showPassword)}
+                edge="end"
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
       
       <Button
@@ -259,8 +377,16 @@ function SimpleAuth() {
       </Box>
 
       <Box sx={{ textAlign: 'center' }}>
-        <Typography variant="body2" sx={{ color: 'rgba(0,0,0,.9)', fontSize: '16px' }}>
-          New to Resume Optimizer?{' '}
+        <Typography variant="body2" sx={{ 
+          color: 'rgba(0,0,0,.9)', 
+          fontSize: '16px',
+          lineHeight: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 0.5
+        }}>
+          New to Resume Optimizer?
           <Link
             component="button"
             type="button"
@@ -269,6 +395,9 @@ function SimpleAuth() {
               color: '#0A66C2', 
               fontWeight: 600,
               textDecoration: 'none',
+              fontSize: '16px',
+              lineHeight: 1.5,
+              display: 'inline',
               '&:hover': { textDecoration: 'underline' }
             }}
           >
@@ -319,22 +448,77 @@ function SimpleAuth() {
       
       <TextField
         fullWidth
-        label="Password (6+ characters)"
-        type="password"
+        label="Password"
+        type={showPassword ? 'text' : 'password'}
         value={formData.password}
         onChange={handleInputChange('password')}
         required
         sx={{ mb: 2 }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={() => setShowPassword(!showPassword)}
+                edge="end"
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
+      
+      {/* Password Requirements */}
+      {formData.password && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: '#f8f9fa', borderRadius: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>
+            Password Requirements:
+          </Typography>
+          <List dense sx={{ py: 0 }}>
+            {getPasswordRequirements(formData.password).map((req, index) => (
+              <ListItem key={index} sx={{ py: 0.5, px: 0 }}>
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  {req.met ? (
+                    <CheckCircle sx={{ fontSize: 16, color: 'success.main' }} />
+                  ) : (
+                    <RadioButtonUnchecked sx={{ fontSize: 16, color: 'grey.400' }} />
+                  )}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={req.text} 
+                  primaryTypographyProps={{ 
+                    fontSize: '0.875rem',
+                    color: req.met ? 'success.main' : 'text.secondary'
+                  }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      )}
       
       <TextField
         fullWidth
         label="Confirm password"
-        type="password"
+        type={showConfirmPassword ? 'text' : 'password'}
         value={formData.confirmPassword}
         onChange={handleInputChange('confirmPassword')}
         required
         sx={{ mb: 2 }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle confirm password visibility"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                edge="end"
+              >
+                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
       
       <TextField
@@ -343,6 +527,8 @@ function SimpleAuth() {
         type="tel"
         value={formData.phone}
         onChange={handleInputChange('phone')}
+        placeholder="+1 (555) 123-4567"
+        helperText="Include country code for international numbers"
         sx={{ mb: 3 }}
       />
       
@@ -381,8 +567,16 @@ function SimpleAuth() {
       </Button>
 
       <Box sx={{ textAlign: 'center' }}>
-        <Typography variant="body2" sx={{ color: 'rgba(0,0,0,.9)', fontSize: '16px' }}>
-          Already on Resume Optimizer?{' '}
+        <Typography variant="body2" sx={{ 
+          color: 'rgba(0,0,0,.9)', 
+          fontSize: '16px',
+          lineHeight: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 0.5
+        }}>
+          Already on Resume Optimizer?
           <Link
             component="button"
             type="button"
@@ -391,6 +585,9 @@ function SimpleAuth() {
               color: '#0A66C2', 
               fontWeight: 600,
               textDecoration: 'none',
+              fontSize: '16px',
+              lineHeight: 1.5,
+              display: 'inline',
               '&:hover': { textDecoration: 'underline' }
             }}
           >
@@ -537,21 +734,76 @@ function SimpleAuth() {
       <TextField
         fullWidth
         label="New password"
-        type="password"
+        type={showPassword ? 'text' : 'password'}
         value={formData.password}
         onChange={handleInputChange('password')}
         required
         sx={{ mb: 2 }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={() => setShowPassword(!showPassword)}
+                edge="end"
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
+      
+      {/* Password Requirements */}
+      {formData.password && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: '#f8f9fa', borderRadius: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>
+            Password Requirements:
+          </Typography>
+          <List dense sx={{ py: 0 }}>
+            {getPasswordRequirements(formData.password).map((req, index) => (
+              <ListItem key={index} sx={{ py: 0.5, px: 0 }}>
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  {req.met ? (
+                    <CheckCircle sx={{ fontSize: 16, color: 'success.main' }} />
+                  ) : (
+                    <RadioButtonUnchecked sx={{ fontSize: 16, color: 'grey.400' }} />
+                  )}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={req.text} 
+                  primaryTypographyProps={{ 
+                    fontSize: '0.875rem',
+                    color: req.met ? 'success.main' : 'text.secondary'
+                  }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      )}
       
       <TextField
         fullWidth
         label="Confirm new password"
-        type="password"
+        type={showConfirmPassword ? 'text' : 'password'}
         value={formData.confirmPassword}
         onChange={handleInputChange('confirmPassword')}
         required
         sx={{ mb: 3 }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle confirm password visibility"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                edge="end"
+              >
+                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
       
       <Button
@@ -600,30 +852,17 @@ function SimpleAuth() {
       }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <WorkIcon sx={{ color: '#0A66C2', mr: 1, fontSize: 28 }} />
-            <Typography variant="h6" sx={{ 
-              color: '#0A66C2', 
-              fontWeight: 600,
-              fontSize: '1.1rem'
+            <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
+            <Typography variant="h5" sx={{ 
+              fontWeight: 700,
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
             }}>
-              Resume Optimizer
+              Resume Optimizer Pro
             </Typography>
           </Box>
-          
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/')}
-            sx={{
-              color: '#666',
-              borderColor: '#ddd',
-              '&:hover': {
-                borderColor: '#999',
-                bgcolor: '#f9f9f9'
-              }
-            }}
-          >
-            Cancel
-          </Button>
         </Toolbar>
       </AppBar>
 
@@ -636,18 +875,19 @@ function SimpleAuth() {
         bgcolor: '#f3f2ef',
         p: 2
       }}>
-        <Container maxWidth="sm">
+        <Container maxWidth="md">
           <Paper sx={{ 
             bgcolor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08)',
-            p: { xs: 3, sm: 4 },
-            maxWidth: 400,
-            mx: 'auto'
+            borderRadius: '12px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08)',
+            p: { xs: 4, sm: 5 },
+            maxWidth: 600,
+            mx: 'auto',
+            border: '1px solid rgba(10, 102, 194, 0.1)'
           }}>
             {/* Logo */}
             <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <WorkIcon sx={{ fontSize: 40, color: '#0A66C2' }} />
+              <AutoAwesomeIcon sx={{ fontSize: 40, color: '#0A66C2' }} />
             </Box>
 
             {/* Error Message */}

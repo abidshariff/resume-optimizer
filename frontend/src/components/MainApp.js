@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentUser, signOut, fetchAuthSession, deleteUser } from 'aws-amplify/auth';
+import ProfileDialog from './ProfileDialog';
+import SettingsDialog from './SettingsDialog';
 import { 
   Box, 
   Container, 
@@ -34,9 +36,10 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   Download as DownloadIcon,
   Logout as LogoutIcon,
-  ArrowForward as ArrowForwardIcon,
   CheckCircle as CheckCircleIcon,
   DeleteForever as DeleteForeverIcon,
+  Person as PersonIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -88,9 +91,19 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
       </Paper>
       
       {file && (
-        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-          <DescriptionIcon sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="body2">{file.name}</Typography>
+        <Box sx={{ 
+          mt: 2, 
+          p: 2, 
+          bgcolor: 'success.light', 
+          borderRadius: 1,
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />
+          <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
+            {file.name} uploaded successfully! Proceeding to next step...
+          </Typography>
         </Box>
       )}
     </Box>
@@ -121,6 +134,8 @@ function MainApp() {
   const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
   // Determine current step from URL
   const getCurrentStep = () => {
@@ -171,11 +186,17 @@ function MainApp() {
       const reader = new FileReader();
       reader.onload = (event) => {
         setResume(event.target.result);
+        
+        // Show success message
+        setSnackbarMessage(`Resume "${file.name}" uploaded successfully! Proceeding to next step...`);
+        setSnackbarOpen(true);
+        
+        // Auto-navigate to next step after a brief delay
+        setTimeout(() => {
+          navigate('/app/job-description');
+        }, 1500);
       };
       reader.readAsDataURL(file);
-      
-      // Navigate to next step
-      navigate('/app/job-description');
     }
   };
 
@@ -438,6 +459,26 @@ function MainApp() {
               }}
             >
               <MenuItem onClick={() => {
+                setProfileMenuAnchor(null);
+                setProfileDialogOpen(true);
+              }}>
+                <ListItemIcon>
+                  <PersonIcon sx={{ color: '#0A66C2' }} />
+                </ListItemIcon>
+                <ListItemText primary="Profile" />
+              </MenuItem>
+              
+              <MenuItem onClick={() => {
+                setProfileMenuAnchor(null);
+                setSettingsDialogOpen(true);
+              }}>
+                <ListItemIcon>
+                  <SettingsIcon sx={{ color: '#0A66C2' }} />
+                </ListItemIcon>
+                <ListItemText primary="Settings" />
+              </MenuItem>
+              
+              <MenuItem onClick={() => {
                 setDeleteConfirmDialogOpen(true);
                 setProfileMenuAnchor(null);
               }}>
@@ -446,6 +487,7 @@ function MainApp() {
                 </ListItemIcon>
                 <ListItemText primary="Delete Account" sx={{ color: '#CC1016' }} />
               </MenuItem>
+              
               <MenuItem onClick={() => {
                 setProfileMenuAnchor(null);
                 handleSignOut();
@@ -543,19 +585,6 @@ function MainApp() {
                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
                   }}
                 />
-                
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    endIcon={<ArrowForwardIcon />}
-                    disabled={!resume}
-                    onClick={() => navigate('/app/job-description')}
-                    size="large"
-                  >
-                    Continue
-                  </Button>
-                </Box>
               </motion.div>
             )}
             
@@ -807,6 +836,18 @@ function MainApp() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      {/* Profile Dialog */}
+      <ProfileDialog 
+        open={profileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
+      />
+
+      {/* Settings Dialog */}
+      <SettingsDialog 
+        open={settingsDialogOpen}
+        onClose={() => setSettingsDialogOpen(false)}
+      />
     </Box>
   );
 }
