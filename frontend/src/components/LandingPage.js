@@ -330,7 +330,18 @@ export function LandingPage() {
         background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2a2a2a 100%)',
         py: 12,
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        // Add keyframes for animations
+        '& @keyframes pulse': {
+          '0%, 100%': {
+            opacity: 1,
+            transform: 'scale(1)'
+          },
+          '50%': {
+            opacity: 0.7,
+            transform: 'scale(1.1)'
+          }
+        }
       }}>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={6} alignItems="center">
@@ -348,7 +359,8 @@ export function LandingPage() {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   mb: 3,
-                  lineHeight: 1.2
+                  lineHeight: 1.2,
+                  textAlign: { xs: 'center', md: 'left' }
                 }}>
                   {(currentUser && authDataLoaded)
                     ? `Welcome back, ${getDisplayName()}!`
@@ -356,17 +368,18 @@ export function LandingPage() {
                   }
                 </Typography>
                 <Typography variant="h5" sx={{ 
-                  color: '#666666',
+                  color: '#cccccc',
                   mb: 4, 
                   fontWeight: 400,
-                  lineHeight: 1.4
+                  lineHeight: 1.4,
+                  textAlign: { xs: 'center', md: 'left' }
                 }}>
                   {currentUser
                     ? 'Ready to optimize another resume? Let\'s get started with your next career opportunity.'
                     : 'Transform your resume in seconds with our advanced AI technology. Get past ATS systems and land 3x more interviews.'
                   }
                 </Typography>
-                <Stack direction="row" spacing={3} sx={{ mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, mb: 4 }}>
                   <Button 
                     variant="contained" 
                     size="large"
@@ -387,7 +400,430 @@ export function LandingPage() {
                   >
                     {currentUser ? 'Continue Optimizing' : 'Start Optimizing Now'}
                   </Button>
-                </Stack>
+                </Box>
+              </motion.div>
+            </Grid>
+            
+            {/* Resume Transformation Mockup */}
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <Box sx={{ 
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  height: { xs: '450px', md: '550px' },
+                  pt: 2
+                }}>
+                  {/* Labels Row */}
+                  <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    maxWidth: '500px',
+                    mb: 1
+                  }}>
+                    <Box sx={{
+                      bgcolor: '#ff6b6b',
+                      color: 'white',
+                      px: 2,
+                      py: 0.7,
+                      borderRadius: 1,
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)'
+                    }}>
+                      BEFORE
+                    </Box>
+                    <Box sx={{
+                      bgcolor: '#4caf50',
+                      color: 'white',
+                      px: 2,
+                      py: 0.7,
+                      borderRadius: 1,
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)'
+                    }}>
+                      AFTER
+                    </Box>
+                  </Box>
+                  
+                  {/* Resume Mockups Row */}
+                  <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 3
+                  }}>
+                  {/* Before Resume */}
+                  <motion.div
+                    initial={{ scale: 1, x: 0 }}
+                    animate={{ scale: 0.9, x: -20 }}
+                    transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
+                  >
+                    <Box sx={{
+                      width: '220px',
+                      height: '320px',
+                      bgcolor: '#f9f9f9',
+                      borderRadius: 2,
+                      border: '2px solid #ddd',
+                      position: 'relative',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                      overflow: 'hidden',
+                      p: 1.5
+                    }}>
+                      {/* Header */}
+                      <Box sx={{ mb: 1, textAlign: 'center', borderBottom: '1px solid #ccc', pb: 1 }}>
+                        <Typography sx={{ 
+                          fontSize: '11px', 
+                          fontWeight: 'bold', 
+                          color: '#333',
+                          mb: 0.3
+                        }}>
+                          JOHN SMITH
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '8px', 
+                          color: '#666',
+                          mb: 0.3
+                        }}>
+                          Data Engineer
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '7px', 
+                          color: '#888'
+                        }}>
+                          john.smith@email.com | (555) 123-4567
+                        </Typography>
+                      </Box>
+                      
+                      {/* Summary Section */}
+                      <Box sx={{ mb: 1.2 }}>
+                        <Typography sx={{ 
+                          fontSize: '8px', 
+                          fontWeight: 'bold', 
+                          color: '#333',
+                          mb: 0.5,
+                          textDecoration: 'underline'
+                        }}>
+                          SUMMARY
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#555',
+                          lineHeight: 1.3
+                        }}>
+                          Experienced data engineer with background in ETL processes and database management.
+                        </Typography>
+                      </Box>
+
+                      {/* Experience Section */}
+                      <Box sx={{ mb: 1.2 }}>
+                        <Typography sx={{ 
+                          fontSize: '8px', 
+                          fontWeight: 'bold', 
+                          color: '#333',
+                          mb: 0.5,
+                          textDecoration: 'underline'
+                        }}>
+                          EXPERIENCE
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '7px', 
+                          fontWeight: 'bold',
+                          color: '#444',
+                          mb: 0.3
+                        }}>
+                          Data Engineer - Tech Corp
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.3
+                        }}>
+                          • Built ETL pipelines using Python and SQL
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.3
+                        }}>
+                          • Managed data warehouses and databases
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.3
+                        }}>
+                          • Performed data analysis and reporting
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#555',
+                          lineHeight: 1.2
+                        }}>
+                          • Collaborated with development teams
+                        </Typography>
+                      </Box>
+
+                      {/* Skills Section */}
+                      <Box sx={{ mb: 1 }}>
+                        <Typography sx={{ 
+                          fontSize: '8px', 
+                          fontWeight: 'bold', 
+                          color: '#333',
+                          mb: 0.5,
+                          textDecoration: 'underline'
+                        }}>
+                          TECHNICAL SKILLS
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#555',
+                          lineHeight: 1.3
+                        }}>
+                          Python, SQL, PostgreSQL, MySQL, Hadoop, Spark, Airflow, Git, Linux
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </motion.div>
+
+                  {/* Transformation Arrow */}
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0.7 }}
+                    animate={{ scale: 1.2, opacity: 1 }}
+                    transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
+                    style={{ margin: '0 25px', zIndex: 2 }}
+                  >
+                    <AutoAwesomeIcon sx={{ 
+                      fontSize: 45, 
+                      color: '#0A66C2',
+                      filter: 'drop-shadow(0 0 15px rgba(10, 102, 194, 0.6))'
+                    }} />
+                  </motion.div>
+
+                  {/* After Resume */}
+                  <motion.div
+                    initial={{ scale: 1, x: 0 }}
+                    animate={{ scale: 1.1, x: 20 }}
+                    transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
+                  >
+                    <Box sx={{
+                      width: '220px',
+                      height: '320px',
+                      bgcolor: 'white',
+                      borderRadius: 2,
+                      border: '2px solid #0A66C2',
+                      position: 'relative',
+                      boxShadow: '0 8px 30px rgba(10, 102, 194, 0.3)',
+                      overflow: 'hidden',
+                      p: 1.5
+                    }}>
+                      {/* Header */}
+                      <Box sx={{ mb: 1, textAlign: 'center', bgcolor: '#f8fbff', mx: -1.5, mt: -1.5, p: 1.5, borderBottom: '2px solid #0A66C2' }}>
+                        <Typography sx={{ 
+                          fontSize: '11px', 
+                          fontWeight: 'bold', 
+                          color: '#0A66C2',
+                          mb: 0.3
+                        }}>
+                          JOHN SMITH
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '8px', 
+                          color: '#0A66C2',
+                          fontWeight: 'bold',
+                          mb: 0.3
+                        }}>
+                          AI/ML Developer & Data Scientist
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '7px', 
+                          color: '#378FE9'
+                        }}>
+                          john.smith@email.com | (555) 123-4567
+                        </Typography>
+                      </Box>
+                      
+                      {/* Summary Section */}
+                      <Box sx={{ mb: 1.2 }}>
+                        <Typography sx={{ 
+                          fontSize: '8px', 
+                          fontWeight: 'bold', 
+                          color: '#0A66C2',
+                          mb: 0.5,
+                          borderBottom: '1px solid #0A66C2',
+                          pb: 0.2
+                        }}>
+                          PROFESSIONAL SUMMARY
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#333',
+                          lineHeight: 1.3
+                        }}>
+                          AI/ML Developer with expertise in machine learning, deep learning, and data science. Proven track record in developing intelligent systems and predictive models.
+                        </Typography>
+                      </Box>
+
+                      {/* Experience Section */}
+                      <Box sx={{ mb: 1.2 }}>
+                        <Typography sx={{ 
+                          fontSize: '8px', 
+                          fontWeight: 'bold', 
+                          color: '#0A66C2',
+                          mb: 0.5,
+                          borderBottom: '1px solid #0A66C2',
+                          pb: 0.2
+                        }}>
+                          PROFESSIONAL EXPERIENCE
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '7px', 
+                          fontWeight: 'bold',
+                          color: '#0A66C2',
+                          mb: 0.3
+                        }}>
+                          AI/ML Developer - Tech Corp
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.3
+                        }}>
+                          • Developed ML pipelines using TensorFlow & PyTorch
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.3
+                        }}>
+                          • Built predictive models with 95% accuracy
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.3
+                        }}>
+                          • Implemented NLP and computer vision solutions
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#333',
+                          lineHeight: 1.2
+                        }}>
+                          • Led AI initiatives across cross-functional teams
+                        </Typography>
+                      </Box>
+
+                      {/* Skills Section */}
+                      <Box sx={{ mb: 1 }}>
+                        <Typography sx={{ 
+                          fontSize: '8px', 
+                          fontWeight: 'bold', 
+                          color: '#0A66C2',
+                          mb: 0.5,
+                          borderBottom: '1px solid #0A66C2',
+                          pb: 0.2
+                        }}>
+                          CORE COMPETENCIES
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '6.5px', 
+                          color: '#333',
+                          lineHeight: 1.3
+                        }}>
+                          Python, TensorFlow, PyTorch, Scikit-learn, Keras, Neural Networks, Deep Learning, NLP, Computer Vision, MLOps, AWS SageMaker
+                        </Typography>
+                      </Box>
+                      
+                      {/* AI Keywords Highlight */}
+                      <Box sx={{
+                        position: 'absolute',
+                        bottom: 8,
+                        right: 8,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
+                        gap: 0.5
+                      }}>
+                        <Box sx={{
+                          fontSize: '6px',
+                          color: '#4caf50',
+                          fontWeight: 'bold',
+                          bgcolor: 'rgba(76, 175, 80, 0.1)',
+                          px: 0.5,
+                          py: 0.2,
+                          borderRadius: 0.5
+                        }}>
+                          ✓ ATS Optimized
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          {[...Array(4)].map((_, i) => (
+                            <Box key={i} sx={{
+                              width: '5px',
+                              height: '5px',
+                              bgcolor: '#4caf50',
+                              borderRadius: '50%',
+                              animation: `pulse 1.5s ease-in-out infinite ${i * 0.2}s`
+                            }} />
+                          ))}
+                        </Box>
+                      </Box>
+                    </Box>
+                  </motion.div>
+                  </Box>
+                  
+                  {/* Stats Below Mockup */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: 4, 
+                  mt: 3,
+                  flexWrap: 'wrap'
+                }}>
+                  {[
+                    { number: '3x', label: 'More Interviews' },
+                    { number: '95%', label: 'ATS Compatible' },
+                    { number: '30-45s', label: 'Processing Time' }
+                  ].map((stat, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
+                    >
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="h4" sx={{ 
+                          color: '#0A66C2', 
+                          fontWeight: 'bold',
+                          mb: 0.5
+                        }}>
+                          {stat.number}
+                        </Typography>
+                        <Typography variant="caption" sx={{ 
+                          color: '#cccccc',
+                          fontSize: '12px'
+                        }}>
+                          {stat.label}
+                        </Typography>
+                      </Box>
+                    </motion.div>
+                  ))}
+                </Box>
+                </Box>
               </motion.div>
             </Grid>
           </Grid>
