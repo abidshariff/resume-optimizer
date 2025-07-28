@@ -26,7 +26,7 @@ import {
 import { Settings as SettingsIcon, DeleteForever as DeleteForeverIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { deleteUser } from 'aws-amplify/auth';
 
-function SettingsDialog({ open, onClose }) {
+function SettingsDialog({ open, onClose, onSettingsChange }) {
   const [settings, setSettings] = useState({
     emailNotifications: true,
     autoSave: true,
@@ -67,6 +67,13 @@ function SettingsDialog({ open, onClose }) {
     
     // Save to localStorage
     localStorage.setItem('userSettings', JSON.stringify(newSettings));
+    
+    // Notify parent component of settings change
+    if (onSettingsChange) {
+      onSettingsChange(newSettings);
+    }
+    
+    console.log('Settings updated:', newSettings);
   };
 
   const handleSave = () => {

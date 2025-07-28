@@ -188,21 +188,41 @@ function MainApp() {
   const activeStep = getCurrentStep();
   const steps = ['Upload Resume', 'Enter Job Description', 'Get Optimized Resume'];
 
+  // Load user settings from localStorage
+  const loadUserSettings = () => {
+    const savedSettings = localStorage.getItem('userSettings');
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        setUserSettings(parsedSettings);
+        console.log('Loaded user settings:', parsedSettings);
+      } catch (error) {
+        console.error('Error parsing saved settings:', error);
+      }
+    }
+  };
+
   useEffect(() => {
     loadUser();
   }, []);
 
   // Load user settings from localStorage
   useEffect(() => {
-    const savedSettings = localStorage.getItem('userSettings');
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setUserSettings(parsedSettings);
-      } catch (error) {
-        console.error('Error parsing saved settings:', error);
+    loadUserSettings();
+    
+    // Listen for storage changes (when settings are updated)
+    const handleStorageChange = (e) => {
+      if (e.key === 'userSettings') {
+        console.log('Storage change detected, reloading settings');
+        loadUserSettings();
       }
-    }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Rotate educational tips every 4 seconds during processing
@@ -351,11 +371,17 @@ function MainApp() {
     setStatusMessage('Submitting your resume for optimization...');
     
     try {
+      const selectedFormat = userSettings.defaultOutputFormat || 'docx';
+      console.log('Current user settings:', userSettings);
+      console.log('Selected output format:', selectedFormat);
+      
       const payload = {
         resume: resume,
         jobDescription: jobDescription,
-        outputFormat: userSettings.defaultOutputFormat || 'docx' // Use user preference or default to docx
+        outputFormat: selectedFormat // Use user preference or default to docx
       };
+      
+      console.log('API payload:', payload);
       
       // For local development, use mock response
       if (window.location.hostname === 'localhost') {
@@ -373,12 +399,93 @@ function MainApp() {
         
         setTimeout(() => {
           setJobStatus('COMPLETED');
-          setStatusMessage('Resume optimization completed (mock)');
+          setStatusMessage(`Resume optimization completed (mock - ${selectedFormat})`);
+          
+          // Generate mock content based on selected format
+          let mockContent, contentType, fileExtension;
+          
+          if (selectedFormat === 'pdf') {
+            // Create a simple PDF-like content (in real app, this would be binary)
+            mockContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+Mock PDF Resume Content
+Generated: ${new Date().toLocaleString()}
+Format: PDF Document (.pdf)
+
+This is a mock PDF resume for local testing.
+In production, this would be a properly formatted PDF file.`;
+            contentType = 'application/pdf';
+            fileExtension = 'pdf';
+          } else if (selectedFormat === 'docx') {
+            // Create a mock Word document content
+            mockContent = `MOCK WORD DOCUMENT (.docx)
+            
+JOHN DOE
+Email: john.doe@email.com | Phone: (555) 123-4567
+
+PROFESSIONAL SUMMARY
+Experienced professional with expertise in various technologies.
+
+SKILLS
+• JavaScript, React, Node.js
+• Python, Django, Flask
+• AWS, Docker, Kubernetes
+
+EXPERIENCE
+Senior Software Engineer | Tech Company
+2020 - Present
+• Developed scalable web applications
+• Implemented CI/CD pipelines
+• Led cross-functional teams
+
+Generated: ${new Date().toLocaleString()}
+Format: Mock Word Document (.docx)`;
+            contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            fileExtension = 'docx';
+          } else {
+            // Default to text format
+            mockContent = `JOHN DOE
+Email: john.doe@email.com | Phone: (555) 123-4567
+
+================================================================================
+
+PROFESSIONAL SUMMARY
+--------------------------------------------------------------------------------
+Experienced professional with expertise in various technologies.
+
+SKILLS
+--------------------------------------------------------------------------------
+• JavaScript, React, Node.js
+• Python, Django, Flask  
+• AWS, Docker, Kubernetes
+
+EXPERIENCE
+--------------------------------------------------------------------------------
+Senior Software Engineer | Tech Company
+2020 - Present
+• Developed scalable web applications
+• Implemented CI/CD pipelines
+• Led cross-functional teams
+
+================================================================================
+Generated: ${new Date().toLocaleString()}
+Format: Mock Plain Text (.txt)`;
+            contentType = 'text/plain';
+            fileExtension = 'txt';
+          }
+          
           setResult({
-            optimizedResume: 'This is a mock optimized resume for local testing.',
+            optimizedResume: mockContent,
             optimizedResumeUrl: '#',
-            contentType: 'text/plain',
-            fileType: 'txt'
+            contentType: contentType,
+            fileType: fileExtension,
+            downloadFilename: `mock_optimized_resume.${fileExtension}`
           });
           setIsPolling(false);
           navigate('/app/results');
@@ -439,7 +546,7 @@ function MainApp() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `optimized_resume.${result.fileType || 'txt'}`;
+        a.download = result.downloadFilename || `optimized_resume.${result.fileType || 'txt'}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -1002,6 +1109,10 @@ function MainApp() {
       <SettingsDialog 
         open={settingsDialogOpen}
         onClose={() => setSettingsDialogOpen(false)}
+        onSettingsChange={(newSettings) => {
+          setUserSettings(newSettings);
+          console.log('MainApp received settings update:', newSettings);
+        }}
       />
 
       {/* Rating Dialog */}

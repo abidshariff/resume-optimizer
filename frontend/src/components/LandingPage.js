@@ -739,6 +739,7 @@ export function LandingPage() {
       <SettingsDialog 
         open={settingsDialogOpen}
         onClose={() => setSettingsDialogOpen(false)}
+        onSettingsChange={() => {}} // Empty callback since LandingPage doesn't need to track settings
       />
     </Box>
   );
