@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
+import LoadingScreen from './LoadingScreen';
 import { 
   Box, 
   Container, 
@@ -45,6 +46,7 @@ export function LandingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [authDataLoaded, setAuthDataLoaded] = useState(false);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -73,25 +75,31 @@ export function LandingPage() {
   const loadUser = async () => {
     try {
       setIsLoading(true);
+      setAuthDataLoaded(false);
+      
       const user = await getCurrentUser();
       console.log('LandingPage - User loaded:', user);
-      setCurrentUser(user);
       
       // Try to get user attributes which might contain the first name
+      let attributes = null;
       try {
         const { fetchUserAttributes } = await import('aws-amplify/auth');
-        const attributes = await fetchUserAttributes();
+        attributes = await fetchUserAttributes();
         console.log('LandingPage - User attributes from fetchUserAttributes:', attributes);
-        setUserAttributes(attributes);
       } catch (attrError) {
         console.log('LandingPage - Could not fetch user attributes:', attrError);
-        setUserAttributes(null);
       }
+      
+      // Set both user and attributes together to prevent flickering
+      setCurrentUser(user);
+      setUserAttributes(attributes);
+      setAuthDataLoaded(true);
       
     } catch (error) {
       console.log('LandingPage - No user found:', error.message);
       setCurrentUser(null);
       setUserAttributes(null);
+      setAuthDataLoaded(true);
     } finally {
       setIsLoading(false);
     }
@@ -148,19 +156,27 @@ export function LandingPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* Navigation Header */}
-      <AppBar position="static" elevation={0}>
-        <Toolbar sx={{ py: 1 }}>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.8
-              }
-            }}
-            onClick={() => navigate('/')}
+      {/* Show loading state while checking authentication */}
+      {isLoading ? (
+        <LoadingScreen 
+          message="Loading Resume Optimizer..."
+          subtitle="Preparing your professional workspace"
+        />
+      ) : (
+        <>
+          {/* Navigation Header */}
+          <AppBar position="static" elevation={0}>
+            <Toolbar sx={{ py: 1 }}>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    opacity: 0.8
+                  }
+                }}
+                onClick={() => navigate('/')}
           >
             <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
             <Typography variant="h5" component="div" sx={{ 
@@ -201,7 +217,7 @@ export function LandingPage() {
                       color: '#666666',
                       display: { xs: 'none', sm: 'block' }
                     }}>
-                      Welcome, {getDisplayName()}
+                      {(currentUser && authDataLoaded) ? `Welcome, ${getDisplayName()}` : ''}
                     </Typography>
                     <IconButton
                       onClick={(e) => {
@@ -225,7 +241,7 @@ export function LandingPage() {
                           fontWeight: 600
                         }}
                       >
-                        {getDisplayName().charAt(0).toUpperCase()}
+                        {(currentUser && authDataLoaded) ? getDisplayName().charAt(0).toUpperCase() : 'U'}
                       </Avatar>
                     </IconButton>
                     
@@ -334,7 +350,7 @@ export function LandingPage() {
                   mb: 3,
                   lineHeight: 1.2
                 }}>
-                  {currentUser 
+                  {(currentUser && authDataLoaded)
                     ? `Welcome back, ${getDisplayName()}!`
                     : 'Land Your Dream Job with AI-Optimized Resumes'
                   }
@@ -741,6 +757,8 @@ export function LandingPage() {
         onClose={() => setSettingsDialogOpen(false)}
         onSettingsChange={() => {}} // Empty callback since LandingPage doesn't need to track settings
       />
+        </>
+      )}
     </Box>
   );
 }

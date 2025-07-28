@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CircularProgress, Box } from '@mui/material';
+import LoadingScreen from './LoadingScreen';
 
 function ProtectedRoute({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -29,16 +29,7 @@ function ProtectedRoute({ children }) {
   }, [checkAuth]);
 
   if (isAuthenticated === null) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh' 
-      }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingScreen />;
   }
 
   return isAuthenticated ? children : null;

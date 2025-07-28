@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { get, post } from 'aws-amplify/api';
+import ProcessingIndicator from './components/ProcessingIndicator';
 
 function AsyncResumeOptimizer() {
   const [jobId, setJobId] = useState(null);
@@ -445,23 +446,7 @@ function AsyncResumeOptimizer() {
       {renderContent()}
 
       {(status === 'SUBMITTING' || status === 'PROCESSING') && (
-        <div style={{
-          padding: '16px',
-          backgroundColor: '#e3f2fd',
-          borderRadius: '8px',
-          margin: '16px 0'
-        }}>
-          <h4>💡 What's happening?</h4>
-          <ul style={{ margin: 0, paddingLeft: '20px' }}>
-            <li>Your resume is being analyzed and extracted</li>
-            <li>AI is matching your skills with the job requirements</li>
-            <li>Keywords are being optimized for ATS systems</li>
-            <li>A new resume is being generated</li>
-          </ul>
-          <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#666' }}>
-            This process typically takes 30-60 seconds.
-          </p>
-        </div>
+        <ProcessingIndicator status={status} />
       )}
     </div>
   );

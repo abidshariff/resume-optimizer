@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
+import { getCurrentUser, signOut, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
 import { 
@@ -114,6 +114,7 @@ function MainApp() {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(null);
+  const [userAttributes, setUserAttributes] = useState(null);
   
   // Resume optimization state
   const [resume, setResume] = useState(null);
@@ -307,10 +308,40 @@ function MainApp() {
     };
   }, [isPolling, jobId, navigate]);
 
+  const getDisplayName = () => {
+    // Try to get the first name from user attributes
+    if (userAttributes?.given_name) {
+      return userAttributes.given_name;
+    }
+    // Try other common attribute names
+    if (userAttributes?.name) {
+      return userAttributes.name.split(' ')[0]; // Get first part of full name
+    }
+    if (userAttributes?.['custom:firstName']) {
+      return userAttributes['custom:firstName'];
+    }
+    // Fallback to username without email domain
+    if (currentUser?.username) {
+      const username = currentUser.username.split('@')[0];
+      // Capitalize first letter
+      return username.charAt(0).toUpperCase() + username.slice(1);
+    }
+    return 'User';
+  };
+
   const loadUser = async () => {
     try {
       const user = await getCurrentUser();
       setCurrentUser(user);
+      
+      // Fetch user attributes
+      try {
+        const attributes = await fetchUserAttributes();
+        setUserAttributes(attributes);
+      } catch (attrError) {
+        console.log('Could not fetch user attributes:', attrError);
+        // Continue without attributes - will fall back to username
+      }
     } catch (error) {
       navigate('/');
     }
@@ -675,7 +706,7 @@ Format: Mock Plain Text (.txt)`;
               color: '#666666',
               display: { xs: 'none', sm: 'block' }
             }}>
-              Welcome, {currentUser?.username || 'User'}
+              Welcome, {getDisplayName()}
             </Typography>
             <IconButton
               onClick={(e) => setProfileMenuAnchor(e.currentTarget)}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
-import { CircularProgress, Box } from '@mui/material';
+import LoadingScreen from './LoadingScreen';
 
 function AuthGuard({ children }) {
   const [isChecking, setIsChecking] = useState(true);
@@ -24,14 +24,10 @@ function AuthGuard({ children }) {
 
   if (isChecking) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh' 
-      }}>
-        <CircularProgress />
-      </Box>
+      <LoadingScreen 
+        message="Checking authentication status..."
+        subtitle="Secure access to your professional tools"
+      />
     );
   }
 
