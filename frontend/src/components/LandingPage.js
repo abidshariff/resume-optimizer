@@ -127,30 +127,30 @@ export function LandingPage() {
     navigate('/auth');
   };
 
-  const handleStartOptimizing = () => {
+  const handleStartCrafting = () => {
     navigate('/app/upload');
   };
 
   const features = [
     {
       icon: <PsychologyIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
-      title: 'AI-Powered Optimization',
-      description: 'Advanced AI analyzes your resume and optimizes it for specific job descriptions and ATS systems.'
+      title: 'AI-Powered Crafting',
+      description: 'Advanced AI analyzes your resume and crafts it for specific job descriptions and ATS systems.'
     },
     {
       icon: <TrendingUpIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
       title: '3x More Interviews',
-      description: 'Our users get 3x more interview calls with professionally optimized resumes.'
+      description: 'Our users get 3x more interview calls with professionally crafted resumes.'
     },
     {
       icon: <SpeedIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
       title: 'Instant Results',
-      description: 'Get your optimized resume in under 60 seconds with our lightning-fast AI processing.'
+      description: 'Get your crafted resume in under 60 seconds with our lightning-fast AI processing.'
     },
     {
       icon: <ShieldIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
       title: 'ATS Compatible',
-      description: 'Ensure your resume passes Applicant Tracking Systems with our ATS optimization technology.'
+      description: 'Ensure your resume passes Applicant Tracking Systems with our ATS enhancement technology.'
     }
   ];
 
@@ -159,7 +159,7 @@ export function LandingPage() {
       {/* Show loading state while checking authentication */}
       {isLoading ? (
         <LoadingScreen 
-          message="Loading Resume Optimizer..."
+          message="Loading JobTailorAI..."
           subtitle="Preparing your professional workspace"
         />
       ) : (
@@ -186,7 +186,7 @@ export function LandingPage() {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              Resume Optimizer Pro
+              JobTailorAI
             </Typography>
           </Box>
           <Box sx={{ flexGrow: 1 }} />
@@ -199,7 +199,7 @@ export function LandingPage() {
                   <>
                     <Button 
                       variant="contained" 
-                      onClick={handleStartOptimizing}
+                      onClick={handleStartCrafting}
                       sx={{
                         background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
                         color: 'white',
@@ -211,7 +211,7 @@ export function LandingPage() {
                         }
                       }}
                     >
-                      Start Optimizing
+                      Start Crafting
                     </Button>
                     <Typography variant="body2" sx={{ 
                       color: '#666666',
@@ -364,7 +364,7 @@ export function LandingPage() {
                 }}>
                   {(currentUser && authDataLoaded)
                     ? `Welcome back, ${getDisplayName()}!`
-                    : 'Land Your Dream Job with AI-Optimized Resumes'
+                    : 'Land Your Dream Job with AI-Crafted Resumes'
                   }
                 </Typography>
                 <Typography variant="h5" sx={{ 
@@ -375,7 +375,7 @@ export function LandingPage() {
                   textAlign: { xs: 'center', md: 'left' }
                 }}>
                   {currentUser
-                    ? 'Ready to optimize another resume? Let\'s get started with your next career opportunity.'
+                    ? 'Ready to craft another resume? Let\'s get started with your next career opportunity.'
                     : 'Transform your resume in seconds with our advanced AI technology. Get past ATS systems and land 3x more interviews.'
                   }
                 </Typography>
@@ -398,7 +398,7 @@ export function LandingPage() {
                       }
                     }}
                   >
-                    {currentUser ? 'Continue Optimizing' : 'Start Optimizing Now'}
+                    {currentUser ? 'Continue Crafting' : 'Start Crafting Now'}
                   </Button>
                 </Box>
               </motion.div>
@@ -768,7 +768,7 @@ export function LandingPage() {
                           py: 0.2,
                           borderRadius: 0.5
                         }}>
-                          ✓ ATS Optimized
+                          ✓ ATS Enhanced
                         </Box>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
                           {[...Array(4)].map((_, i) => (
@@ -840,7 +840,7 @@ export function LandingPage() {
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text'
         }}>
-          Why Choose Resume Optimizer Pro?
+          Why Choose JobTailorAI?
         </Typography>
 
         <Grid container spacing={4}>
@@ -934,10 +934,10 @@ export function LandingPage() {
                   3
                 </Avatar>
                 <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-                  Get Optimized Resume
+                  Get Crafted Resume
                 </Typography>
                 <Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.6 }}>
-                  Download your professionally optimized resume, tailored specifically 
+                  Download your professionally crafted resume, tailored specifically 
                   for the job you want.
                 </Typography>
               </Box>
@@ -964,7 +964,7 @@ export function LandingPage() {
             <Card sx={{ height: '100%', p: 3 }}>
               <CardContent>
                 <Typography variant="body1" sx={{ mb: 3, fontStyle: 'italic', lineHeight: 1.6 }}>
-                  "Resume Optimizer Pro helped me land my dream job at a Fortune 500 company. 
+                  "JobTailorAI helped me land my dream job at a Fortune 500 company. 
                   The AI suggestions were spot-on and made my resume stand out."
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -1008,7 +1008,7 @@ export function LandingPage() {
             <Card sx={{ height: '100%', p: 3 }}>
               <CardContent>
                 <Typography variant="body1" sx={{ mb: 3, fontStyle: 'italic', lineHeight: 1.6 }}>
-                  "The ATS optimization feature is incredible. My resume now passes 
+                  "The ATS enhancement feature is incredible. My resume now passes 
                   through applicant tracking systems with ease."
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -1047,7 +1047,7 @@ export function LandingPage() {
               opacity: 0.9,
               fontWeight: 300
             }}>
-              Join thousands of professionals who have successfully optimized their resumes
+              Join thousands of professionals who have successfully crafted their resumes
             </Typography>
             <Button 
               variant="contained"
@@ -1069,7 +1069,7 @@ export function LandingPage() {
                 }
               }}
             >
-              {currentUser ? 'Continue Optimizing' : 'Get Started Free'}
+              {currentUser ? 'Continue Crafting' : 'Get Started Free'}
             </Button>
           </Box>
         </Container>
@@ -1083,7 +1083,7 @@ export function LandingPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <WorkIcon sx={{ fontSize: 32, mr: 2, color: '#0A66C2' }} />
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'white' }}>
-                  Resume Optimizer Pro
+                  JobTailorAI
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: '#cccccc', lineHeight: 1.6, mb: 3 }}>
@@ -1172,7 +1172,7 @@ export function LandingPage() {
             gap: 2
           }}>
             <Typography variant="body2" sx={{ color: '#cccccc' }}>
-              © {new Date().getFullYear()} Resume Optimizer Pro. All rights reserved.
+              © {new Date().getFullYear()} JobTailorAI. All rights reserved.
             </Typography>
             <Typography variant="body2" sx={{ color: '#cccccc' }}>
               Built with AWS and React

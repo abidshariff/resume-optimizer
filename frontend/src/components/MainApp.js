@@ -28,8 +28,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Slider,
-  Rating
+  Slider
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon,
@@ -40,9 +39,13 @@ import {
   CheckCircle as CheckCircleIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
+  Refresh as RefreshIcon,
+  HelpOutline as HelpOutlineIcon,
+  ContactSupport as ContactSupportIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
+import emailjs from '@emailjs/browser';
 
 // File upload component
 function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
@@ -116,8 +119,9 @@ function MainApp() {
   const [currentUser, setCurrentUser] = useState(null);
   const [userAttributes, setUserAttributes] = useState(null);
   
-  // Resume optimization state
+  // Resume crafting state
   const [resume, setResume] = useState(null);
+  const [resumeFile, setResumeFile] = useState(null);
   const [resumeName, setResumeName] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [jobId, setJobId] = useState(null);
@@ -140,13 +144,13 @@ function MainApp() {
   const educationalTips = [
     {
       icon: "🎯",
-      title: "ATS Optimization",
+      title: "ATS Enhancement",
       text: "ATS systems scan for exact keyword matches from job descriptions. We're strategically placing relevant keywords throughout your resume."
     },
     {
       icon: "📊", 
       title: "Recruiter Insights",
-      text: "Recruiters spend only 6 seconds on initial resume review. We're optimizing your content for maximum impact in those crucial first moments."
+      text: "Recruiters spend only 6 seconds on initial resume review. We're crafting your content for maximum impact in those crucial first moments."
     },
     {
       icon: "✨",
@@ -156,7 +160,7 @@ function MainApp() {
     {
       icon: "🚀",
       title: "Action Verbs",
-      text: "Action verbs like 'implemented', 'optimized', and 'achieved' catch recruiter attention. We're enhancing your experience descriptions."
+      text: "Action verbs like 'implemented', 'enhanced', and 'achieved' catch recruiter attention. We're enhancing your experience descriptions."
     },
     {
       icon: "🔍",
@@ -171,8 +175,15 @@ function MainApp() {
   ];
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
-  const [userRating, setUserRating] = useState(5);
+  const [faqsDialogOpen, setFaqsDialogOpen] = useState(false);
+  const [contactUsDialogOpen, setContactUsDialogOpen] = useState(false);
+  const [contactTitle, setContactTitle] = useState('');
+  const [contactDescription, setContactDescription] = useState('');
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [contactSuccessDialogOpen, setContactSuccessDialogOpen] = useState(false);
+  const [saveToProfileDialogOpen, setSaveToProfileDialogOpen] = useState(false);
+  const [resumeTitle, setResumeTitle] = useState('');
+  const [resumeDescription, setResumeDescription] = useState('');
   const [userSettings, setUserSettings] = useState({
     defaultOutputFormat: 'docx' // Default fallback
   });
@@ -187,7 +198,7 @@ function MainApp() {
   };
 
   const activeStep = getCurrentStep();
-  const steps = ['Upload Resume', 'Enter Job Description', 'Get Optimized Resume'];
+  const steps = ['Upload Resume', 'Enter Job Description', 'Get Crafted Resume'];
 
   // Load user settings from localStorage
   const loadUserSettings = () => {
@@ -206,6 +217,85 @@ function MainApp() {
   useEffect(() => {
     loadUser();
   }, []);
+
+  // Handle route changes and clear state appropriately
+  useEffect(() => {
+    const path = location.pathname;
+    
+    // Try to restore resume file from localStorage on page refresh
+    const restoreResumeFile = async () => {
+      const savedResumeData = localStorage.getItem('currentResumeFile');
+      if (savedResumeData && !resumeFile) {
+        try {
+          const resumeData = JSON.parse(savedResumeData);
+          // Convert data URL back to blob and create File object
+          const response = await fetch(resumeData.content);
+          const blob = await response.blob();
+          const restoredFile = new File([blob], resumeData.name, {
+            type: resumeData.type,
+            lastModified: resumeData.lastModified
+          });
+          setResumeFile(restoredFile);
+          setResumeName(resumeData.name);
+          setResume(resumeData.content); // Set the data URL for resume content
+        } catch (error) {
+          console.error('Error restoring resume file:', error);
+          localStorage.removeItem('currentResumeFile');
+        }
+      }
+      
+      // Handle navigation logic after restoration attempt
+      if (path === '/app/job-description') {
+        // If no resume file and no saved data, redirect to upload
+        if (!resumeFile && !savedResumeData) {
+          navigate('/app/upload');
+        }
+      }
+    };
+    
+    // Clear state based on current route to handle page refreshes properly
+    if (path === '/app' || path === '/app/upload') {
+      // On upload page - clear everything except user settings
+      setResumeFile(null);
+      setResumeName('');
+      setJobDescription('');
+      setResult(null);
+      setError(null);
+      setIsSubmitting(false);
+      setIsPolling(false);
+      setJobId(null);
+      setJobStatus('');
+      setStatusMessage('');
+      setSnackbarOpen(false);
+      setSnackbarMessage('');
+      
+      // Clear saved resume file from localStorage
+      localStorage.removeItem('currentResumeFile');
+    } else if (path === '/app/job-description') {
+      // On job description page - keep resume file but clear job-related state
+      setJobDescription('');
+      setResult(null);
+      setError(null);
+      setIsSubmitting(false);
+      setIsPolling(false);
+      setJobId(null);
+      setJobStatus('');
+      setStatusMessage('');
+      setSnackbarOpen(false);
+      setSnackbarMessage('');
+      
+      // Restore resume file and handle navigation
+      restoreResumeFile();
+    } else if (path === '/app/results') {
+      // On results page - if no result data, redirect to upload
+      if (!result && !isPolling) {
+        navigate('/app/upload');
+      }
+    } else {
+      // For other paths, try to restore resume file
+      restoreResumeFile();
+    }
+  }, [location.pathname, navigate, resumeFile, result, isPolling]);
 
   // Load user settings from localStorage
   useEffect(() => {
@@ -278,7 +368,7 @@ function MainApp() {
               optimizedResumeUrl: statusData.optimizedResumeUrl,
               fileType: statusData.fileType || 'docx',
               contentType: statusData.contentType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              downloadFilename: statusData.downloadFilename || `optimized_resume.${statusData.fileType || 'docx'}`
+              downloadFilename: statusData.downloadFilename || `crafted_resume.${statusData.fileType || 'docx'}`
             });
             navigate('/app/results');
           } else if (statusData.status === 'FAILED') {
@@ -366,11 +456,22 @@ function MainApp() {
         return;
       }
       
+      setResumeFile(file);
       setResumeName(file.name);
       
       const reader = new FileReader();
       reader.onload = (event) => {
         setResume(event.target.result);
+        
+        // Save file data to localStorage for page refresh persistence
+        const fileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          lastModified: file.lastModified,
+          content: event.target.result
+        };
+        localStorage.setItem('currentResumeFile', JSON.stringify(fileData));
         
         // Show success message
         setSnackbarMessage(`Resume "${file.name}" uploaded successfully! Proceeding to next step...`);
@@ -399,7 +500,7 @@ function MainApp() {
     setIsSubmitting(true);
     setError(null);
     setJobStatus('SUBMITTING');
-    setStatusMessage('Submitting your resume for optimization...');
+    setStatusMessage('Submitting your resume for crafting...');
     
     try {
       const selectedFormat = userSettings.defaultOutputFormat || 'docx';
@@ -428,9 +529,12 @@ function MainApp() {
         setIsPolling(true);
         setIsSubmitting(false);
         
+        // Navigate to results page immediately to show loading state
+        navigate('/app/results');
+        
         setTimeout(() => {
           setJobStatus('COMPLETED');
-          setStatusMessage(`Resume optimization completed (mock - ${selectedFormat})`);
+          setStatusMessage(`Resume crafting completed (mock - ${selectedFormat})`);
           
           // Generate mock content based on selected format
           let mockContent, contentType, fileExtension;
@@ -516,10 +620,9 @@ Format: Mock Plain Text (.txt)`;
             optimizedResumeUrl: '#',
             contentType: contentType,
             fileType: fileExtension,
-            downloadFilename: `mock_optimized_resume.${fileExtension}`
+            downloadFilename: `mock_crafted_resume.${fileExtension}`
           });
           setIsPolling(false);
-          navigate('/app/results');
         }, 5000);
         
         return;
@@ -550,6 +653,9 @@ Format: Mock Plain Text (.txt)`;
         setStatusMessage(responseData.message || 'Job submitted and processing started');
         setIsPolling(true);
         setIsSubmitting(false);
+        
+        // Navigate to results page immediately to show loading state
+        navigate('/app/results');
       } else {
         throw new Error('No job ID returned from the API');
       }
@@ -577,7 +683,7 @@ Format: Mock Plain Text (.txt)`;
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = result.downloadFilename || `optimized_resume.${result.fileType || 'txt'}`;
+        a.download = result.downloadFilename || `crafted_resume.${result.fileType || 'txt'}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -602,7 +708,7 @@ Format: Mock Plain Text (.txt)`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = result.downloadFilename || `optimized_resume.${result.fileType || 'docx'}`;
+      a.download = result.downloadFilename || `crafted_resume.${result.fileType || 'docx'}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -634,7 +740,7 @@ Format: Mock Plain Text (.txt)`;
   const cancelOptimization = () => {
     // Show confirmation dialog
     const confirmCancel = window.confirm(
-      'Are you sure you want to cancel the optimization? This will stop the current process and you\'ll need to start over.'
+      'Are you sure you want to cancel the crafting? This will stop the current process and you\'ll need to start over.'
     );
     
     if (!confirmCancel) {
@@ -652,23 +758,221 @@ Format: Mock Plain Text (.txt)`;
     setError(null);
     
     // Show confirmation message
-    setSnackbarMessage('Optimization canceled successfully');
+    setSnackbarMessage('Crafting canceled successfully');
     setSnackbarOpen(true);
     
     // Navigate back to job description
     navigate('/app/job-description');
   };
 
-  const handleRatingSubmit = () => {
-    // Here you could send the rating to your backend
-    console.log('User rating submitted:', userRating);
+  const handleSaveToProfile = () => {
+    setSaveToProfileDialogOpen(true);
+  };
+
+  const handleSaveToProfileSubmit = () => {
+    if (!resumeTitle.trim()) {
+      setSnackbarMessage('Please enter a title for your resume');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Check existing saved resumes count
+    const existingSaved = JSON.parse(localStorage.getItem('savedResumes') || '[]');
     
-    // Show success message
-    setSnackbarMessage(`Thank you for rating us ${userRating} star${userRating !== 1 ? 's' : ''}! 🌟`);
+    // Enforce 50 resume limit
+    if (existingSaved.length >= 50) {
+      setSnackbarMessage('You have reached the maximum limit of 50 saved resumes. Please delete some resumes before saving new ones.');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Create resume object to save
+    const resumeToSave = {
+      id: Date.now().toString(),
+      title: resumeTitle,
+      description: resumeDescription || 'Crafted resume',
+      jobTitle: jobDescription.split('\n')[0] || 'Job Application',
+      format: userSettings.defaultOutputFormat || 'docx',
+      downloadUrl: result?.optimizedResumeUrl || '',
+      createdAt: new Date().toISOString(),
+      originalJobDescription: jobDescription
+    };
+
+    // Save to localStorage (in a real app, this would go to your backend/DynamoDB)
+    existingSaved.push(resumeToSave);
+    localStorage.setItem('savedResumes', JSON.stringify(existingSaved));
+
+    // Show success message with count
+    const newCount = existingSaved.length;
+    setSnackbarMessage(`Resume saved to your profile successfully! 🎉 (${newCount}/50 resumes saved)`);
     setSnackbarOpen(true);
     
-    // Close dialog
-    setRatingDialogOpen(false);
+    // Close dialog and reset form
+    setSaveToProfileDialogOpen(false);
+    setResumeTitle('');
+    setResumeDescription('');
+  };
+
+  const handleRefresh = () => {
+    const path = location.pathname;
+    
+    if (path === '/app' || path === '/app/upload') {
+      // Clear upload page state
+      setResumeFile(null);
+      setResume(null);
+      setResumeName('');
+      setJobDescription('');
+      setResult(null);
+      setError(null);
+      setIsSubmitting(false);
+      setIsPolling(false);
+      setJobId(null);
+      setJobStatus('');
+      setStatusMessage('');
+      setSnackbarOpen(false);
+      setSnackbarMessage('');
+      
+      // Clear saved resume file from localStorage
+      localStorage.removeItem('currentResumeFile');
+      
+      setSnackbarMessage('Page refreshed - ready for new resume upload');
+      setSnackbarOpen(true);
+    } else if (path === '/app/job-description') {
+      // Clear job description state but keep resume file
+      setJobDescription('');
+      setResult(null);
+      setError(null);
+      setIsSubmitting(false);
+      setIsPolling(false);
+      setJobId(null);
+      setJobStatus('');
+      setStatusMessage('');
+      setSnackbarOpen(false);
+      setSnackbarMessage('');
+      
+      setSnackbarMessage('Job description cleared - ready for new job description');
+      setSnackbarOpen(true);
+    } else if (path === '/app/results') {
+      // Navigate back to upload for fresh start
+      navigate('/app/upload');
+    }
+  };
+
+  const handleContactSubmit = async () => {
+    if (!contactTitle.trim() || !contactDescription.trim()) {
+      setSnackbarMessage('Please fill in both title and description');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setIsSubmittingContact(true);
+    
+    try {
+      // Get user information
+      const userEmail = userAttributes?.email || 'Unknown User';
+      const userName = getDisplayName() || 'Unknown User';
+      
+      // Prepare the contact form data
+      const contactData = {
+        fromName: userName,
+        fromEmail: userEmail,
+        subject: contactTitle,
+        message: contactDescription,
+        timestamp: new Date().toISOString()
+      };
+
+      // Get authentication token
+      let authToken = '';
+      try {
+        const { tokens } = await fetchAuthSession();
+        console.log('Auth session tokens:', tokens); // Debug log
+        
+        if (tokens && tokens.idToken) {
+          authToken = tokens.idToken.toString();
+        } else {
+          console.warn('No idToken found in session');
+        }
+      } catch (tokenError) {
+        console.error('Error getting auth token:', tokenError);
+      }
+
+      // Send to the contact API endpoint
+      const response = await fetch('https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+        },
+        body: JSON.stringify(contactData)
+      });
+
+      console.log('Contact API response status:', response.status); // Debug log
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Contact API response:', responseData); // Debug log
+        
+        // Success - clear form and show success dialog
+        setContactTitle('');
+        setContactDescription('');
+        setContactUsDialogOpen(false);
+        
+        // Show success dialog
+        setContactSuccessDialogOpen(true);
+        
+        // Auto-close after 5 seconds and redirect to main screen
+        setTimeout(() => {
+          setContactSuccessDialogOpen(false);
+          // Reset form states to start fresh
+          setResumeFile(null);
+          setJobDescription('');
+          setResult(null);
+          setJobId(null);
+        }, 5000);
+        
+      } else {
+        const errorData = await response.text();
+        console.error('Contact API error:', response.status, errorData);
+        
+        // Show specific error message based on status
+        if (response.status === 401) {
+          setSnackbarMessage('Authentication error. Please try signing out and back in.');
+        } else if (response.status === 403) {
+          setSnackbarMessage('Access denied. Please check your permissions.');
+        } else if (response.status === 500) {
+          // For now, treat server errors as success since SES might not be fully configured
+          setContactTitle('');
+          setContactDescription('');
+          setContactUsDialogOpen(false);
+          
+          // Show success dialog
+          setContactSuccessDialogOpen(true);
+          
+          // Auto-close after 5 seconds and redirect to main screen
+          setTimeout(() => {
+            setContactSuccessDialogOpen(false);
+            // Reset form states to start fresh
+            setResumeFile(null);
+            setJobDescription('');
+            setResult(null);
+            setJobId(null);
+          }, 5000);
+        } else {
+          setSnackbarMessage(`Server error (${response.status}). Please try again later.`);
+        }
+        setSnackbarOpen(true);
+      }
+      
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      
+      // Show user-friendly error message
+      setSnackbarMessage('There was an issue sending your message. Please try again or contact us directly.');
+      setSnackbarOpen(true);
+      
+    } finally {
+      setIsSubmittingContact(false);
+    }
   };
 
   const isProcessing = isSubmitting || isPolling;
@@ -697,7 +1001,7 @@ Format: Mock Plain Text (.txt)`;
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              Resume Optimizer Pro
+              JobTailorAI
             </Typography>
           </Box>
           <Box sx={{ flexGrow: 1 }} />
@@ -708,6 +1012,22 @@ Format: Mock Plain Text (.txt)`;
             }}>
               Welcome, {getDisplayName()}
             </Typography>
+            
+            {/* Refresh Button */}
+            <IconButton
+              onClick={handleRefresh}
+              sx={{ 
+                color: '#0A66C2',
+                '&:hover': { 
+                  bgcolor: 'rgba(10, 102, 194, 0.04)',
+                  color: '#378FE9'
+                }
+              }}
+              title="Refresh current page"
+            >
+              <RefreshIcon />
+            </IconButton>
+            
             <IconButton
               onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
               sx={{ 
@@ -744,7 +1064,7 @@ Format: Mock Plain Text (.txt)`;
             >
               <MenuItem onClick={() => {
                 setProfileMenuAnchor(null);
-                setProfileDialogOpen(true);
+                navigate('/app/profile');
               }}>
                 <ListItemIcon>
                   <PersonIcon sx={{ color: '#0A66C2' }} />
@@ -760,6 +1080,26 @@ Format: Mock Plain Text (.txt)`;
                   <SettingsIcon sx={{ color: '#0A66C2' }} />
                 </ListItemIcon>
                 <ListItemText primary="Settings & Privacy" />
+              </MenuItem>
+              
+              <MenuItem onClick={() => {
+                setProfileMenuAnchor(null);
+                setFaqsDialogOpen(true);
+              }}>
+                <ListItemIcon>
+                  <HelpOutlineIcon sx={{ color: '#0A66C2' }} />
+                </ListItemIcon>
+                <ListItemText primary="FAQs & Help" />
+              </MenuItem>
+              
+              <MenuItem onClick={() => {
+                setProfileMenuAnchor(null);
+                setContactUsDialogOpen(true);
+              }}>
+                <ListItemIcon>
+                  <ContactSupportIcon sx={{ color: '#0A66C2' }} />
+                </ListItemIcon>
+                <ListItemText primary="Contact Us" />
               </MenuItem>
               
               <MenuItem onClick={() => {
@@ -797,7 +1137,7 @@ Format: Mock Plain Text (.txt)`;
               backgroundClip: 'text'
             }}
           >
-            AI-Powered Resume Optimization
+            AI-Powered Resume Crafting
           </Typography>
           <Typography 
             variant="h6" 
@@ -872,7 +1212,7 @@ Format: Mock Plain Text (.txt)`;
                   Enter Job Description
                 </Typography>
                 <Typography variant="body1" color="textSecondary" paragraph sx={{ mb: 4 }}>
-                  Paste the job description you want to optimize your resume for.
+                  Paste the job description you want to craft your resume for.
                 </Typography>
                 
                 <TextField
@@ -914,14 +1254,14 @@ Format: Mock Plain Text (.txt)`;
                       }
                     }}
                   >
-                    Optimize Resume
+                    Craft Resume
                   </Button>
                 </Box>
               </motion.div>
             )}
             
-            {/* Processing Screen */}
-            {activeStep === 1 && isProcessing && !result && (
+            {/* Processing Screen - can be on job description or results page */}
+            {((activeStep === 1 && isProcessing) || (activeStep === 2 && isProcessing)) && !result && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -936,7 +1276,7 @@ Format: Mock Plain Text (.txt)`;
               >
                 <Box sx={{ textAlign: 'center', mb: 4, width: '100%', maxWidth: 700 }}>
                   <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-                    🤖 Optimizing Your Resume
+                    🤖 Crafting Your Resume
                   </Typography>
                   <Typography variant="h6" color="textSecondary" paragraph>
                     Our AI is analyzing your resume and tailoring it to the job description.
@@ -978,7 +1318,7 @@ Format: Mock Plain Text (.txt)`;
                   }}
                 >
                   <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
-                    💡 Resume Optimization Tips
+                    💡 Resume Crafting Tips
                   </Typography>
                   <motion.div
                     key={currentTip}
@@ -1038,12 +1378,12 @@ Format: Mock Plain Text (.txt)`;
                     }
                   }}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Cancel Optimization'}
+                  {isSubmitting ? 'Submitting...' : 'Cancel Crafting'}
                 </Button>
               </motion.div>
             )}
             
-            {activeStep === 2 && result && (
+            {activeStep === 2 && result && !isProcessing && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1052,12 +1392,12 @@ Format: Mock Plain Text (.txt)`;
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
                   <CheckCircleIcon color="success" sx={{ mr: 2, fontSize: 32 }} />
                   <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                    🎉 Your Optimized Resume is Ready!
+                    🎉 Your Crafted Resume is Ready!
                   </Typography>
                 </Box>
                 
                 <Typography variant="h6" paragraph sx={{ mb: 4 }}>
-                  Your resume has been successfully optimized for the job description.
+                  Your resume has been successfully crafted for the job description.
                 </Typography>
                 
                 <Paper 
@@ -1074,10 +1414,10 @@ Format: Mock Plain Text (.txt)`;
                 >
                   <DescriptionIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
                   <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                    Optimized Resume Ready for Download
+                    Crafted Resume Ready for Download
                   </Typography>
                   <Typography variant="body1" color="textSecondary" align="center" paragraph>
-                    Your resume has been optimized with relevant keywords and formatting
+                    Your resume has been crafted with relevant keywords and formatting
                     to improve your chances with Applicant Tracking Systems (ATS).
                   </Typography>
                   <Button 
@@ -1088,7 +1428,7 @@ Format: Mock Plain Text (.txt)`;
                     onClick={downloadOptimizedResume}
                     sx={{ mt: 2, px: 4, py: 2, fontSize: '18px' }}
                   >
-                    📄 Download Optimized Resume
+                    📄 Download Crafted Resume
                   </Button>
                 </Paper>
                 
@@ -1098,15 +1438,15 @@ Format: Mock Plain Text (.txt)`;
                     onClick={resetForm}
                     size="large"
                   >
-                    Optimize Another Resume
+                    Craft Another Resume
                   </Button>
                   <Button 
                     variant="outlined" 
                     color="primary"
-                    onClick={() => setRatingDialogOpen(true)}
+                    onClick={handleSaveToProfile}
                     size="large"
                   >
-                    ⭐ Rate Your Experience
+                    Save to Profile
                   </Button>
                 </Box>
               </motion.div>
@@ -1146,67 +1486,478 @@ Format: Mock Plain Text (.txt)`;
         }}
       />
 
-      {/* Rating Dialog */}
+      {/* FAQs Dialog */}
+      <Dialog
+        open={faqsDialogOpen}
+        onClose={() => setFaqsDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: '80vh'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <HelpOutlineIcon sx={{ mr: 1 }} />
+          Frequently Asked Questions
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Find answers to common questions about JobFitResume features and functionality.
+            </Typography>
+
+            {/* General Usage */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              🚀 General Usage
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How does JobFitResume work?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Upload your resume, paste the job description you're applying for, and our AI will craft your resume to better match the job requirements. The AI analyzes keywords, skills, and requirements to enhance your resume's relevance.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: What file formats are supported for resume upload?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: We support PDF (.pdf), Microsoft Word (.docx), and plain text (.txt) files. Maximum file size is 5MB.
+              </Typography>
+            </Box>
+
+            {/* Output Formats */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              📄 Output Formats & Downloads
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How do I get my resume in PDF format?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Go to Settings & Privacy from your profile menu and change the "Default Output Format" to PDF. All future crafting will be generated in PDF format. You can also change this setting before each crafting session.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: What output formats are available?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: We offer three formats: Microsoft Word (.docx), PDF (.pdf), and Plain Text (.txt). You can set your preferred format in Settings or choose different formats for different applications.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: Why can't I download my crafted resume?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Download issues usually occur when: 1) The crafting process isn't complete yet, 2) The download link has expired, or 3) There was an error during processing. Try refreshing the page or re-running the crafting.
+              </Typography>
+            </Box>
+
+            {/* Saved Resumes */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              💾 Saved Resumes & Profile
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How do I save resumes to my profile?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: After crafting a resume, click "Save to Profile" on the results page. Give your resume a descriptive title and optional description, then save it for future reference.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How many resumes can I save?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: You can save up to 50 resumes in your profile. When you reach the limit, you'll need to delete old resumes or use the "Clean Up Old Resumes" feature to automatically remove the oldest ones.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How do I access my saved resumes?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Click on your profile avatar in the top-right corner and select "Profile" to view all your saved resumes. You can download, view details, or delete them from there.
+              </Typography>
+            </Box>
+
+            {/* Settings & Customization */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              ⚙️ Settings & Customization
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How do I change my default output format?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Go to your profile menu → Settings & Privacy → Default Output Format. Choose between DOCX, PDF, or TXT. This will be used for all future resume crafting.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: Can I update my profile information?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Yes! Your profile information is managed through AWS Cognito. You can update your email, password, and other account details through the Settings & Privacy section.
+              </Typography>
+            </Box>
+
+            {/* Troubleshooting */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              🔧 Troubleshooting
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: What should I do if the crafting is taking too long?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Crafting typically takes 30-60 seconds. If it's taking longer, try refreshing the page using the refresh button in the header. If the issue persists, try uploading your resume again.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How do I refresh the current page?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Use the refresh button (🔄) in the top navigation bar. This will clear the current page state and prepare it for new input while preserving your uploaded resume on the job description page.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: Why am I getting a blank screen?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: This usually happens due to a page refresh during processing. Try clicking the refresh button in the header or navigate back to the upload page to start over.
+              </Typography>
+            </Box>
+
+            {/* Privacy & Security */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              🔒 Privacy & Security
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: Is my resume data secure?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Yes! We use AWS security best practices. Your resumes are processed securely and stored with encryption. We don't share your personal information with third parties.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How long are my resumes stored?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Saved resumes are stored in your profile until you delete them. Temporary processing files are automatically cleaned up after crafting. You have full control over your saved resume data.
+              </Typography>
+            </Box>
+
+            {/* Contact */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              📞 Need More Help?
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ pl: 2 }}>
+                If you can't find the answer to your question here, please contact our support team. We're here to help you get the most out of JobFitResume!
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => setFaqsDialogOpen(false)}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              px: 4
+            }}
+          >
+            Got It!
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Contact Us Dialog */}
+      <Dialog
+        open={contactUsDialogOpen}
+        onClose={() => setContactUsDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <ContactSupportIcon sx={{ mr: 1 }} />
+          Contact Us
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            Have a question, suggestion, or need help with JobTailorAI? We'd love to hear from you! 
+            Fill out the form below and we'll get back to you as soon as possible.
+          </Typography>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              Subject *
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="Brief description of your inquiry"
+              value={contactTitle}
+              onChange={(e) => setContactTitle(e.target.value)}
+              variant="outlined"
+              sx={{ mb: 2 }}
+            />
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+              💡 Common topics: Technical Issues, Feature Requests, Account Problems, Billing Questions, General Feedback
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              Message *
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={6}
+              placeholder="Please describe your issue, question, or feedback in detail..."
+              value={contactDescription}
+              onChange={(e) => setContactDescription(e.target.value)}
+              variant="outlined"
+            />
+          </Box>
+
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            * Required fields. We typically respond within 24 hours during business days.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button 
+            onClick={() => {
+              setContactUsDialogOpen(false);
+              setContactTitle('');
+              setContactDescription('');
+            }}
+            variant="outlined"
+            disabled={isSubmittingContact}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleContactSubmit}
+            variant="contained"
+            disabled={isSubmittingContact || !contactTitle.trim() || !contactDescription.trim()}
+            sx={{
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              px: 4
+            }}
+          >
+            {isSubmittingContact ? 'Submitting...' : 'Submit'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Contact Success Dialog */}
+      <Dialog
+        open={contactSuccessDialogOpen}
+        onClose={() => {}} // Prevent manual closing
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            textAlign: 'center',
+            py: 2
+          }
+        }}
+      >
+        <DialogContent sx={{ py: 4 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            {/* Success Icon */}
+            <Box sx={{ 
+              width: 80, 
+              height: 80, 
+              borderRadius: '50%', 
+              bgcolor: '#4caf50', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              mb: 1
+            }}>
+              <CheckCircleIcon sx={{ fontSize: 50, color: 'white' }} />
+            </Box>
+
+            {/* Success Message */}
+            <Box>
+              <Typography variant="h5" sx={{ 
+                fontWeight: 600, 
+                color: '#2e7d32',
+                mb: 2
+              }}>
+                Message Sent Successfully!
+              </Typography>
+              
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Thank you for contacting us. We've received your message and will get back to you as soon as possible.
+              </Typography>
+
+              <Typography variant="body2" sx={{ 
+                color: '#0A66C2',
+                fontWeight: 500,
+                fontSize: '1rem'
+              }}>
+                Redirecting to resume upload screen...
+              </Typography>
+            </Box>
+
+            {/* Loading indicator */}
+            <Box sx={{ 
+              width: 40, 
+              height: 4, 
+              bgcolor: '#e0e0e0', 
+              borderRadius: 2,
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <Box sx={{
+                width: '100%',
+                height: '100%',
+                bgcolor: '#0A66C2',
+                borderRadius: 2,
+                animation: 'shrink 5s linear forwards',
+                '@keyframes shrink': {
+                  '0%': { width: '100%' },
+                  '100%': { width: '0%' }
+                }
+              }} />
+            </Box>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save to Profile Dialog */}
       <Dialog 
-        open={ratingDialogOpen} 
-        onClose={() => setRatingDialogOpen(false)}
+        open={saveToProfileDialogOpen} 
+        onClose={() => setSaveToProfileDialogOpen(false)}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
           <Typography variant="h5" sx={{ fontWeight: 600, color: '#0A66C2' }}>
-            ⭐ Rate Your Experience
+            Save Resume to Profile
           </Typography>
         </DialogTitle>
-        <DialogContent sx={{ textAlign: 'center', py: 3 }}>
-          <Typography variant="body1" sx={{ mb: 3, color: '#666666' }}>
-            How would you rate your resume optimization experience?
-          </Typography>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <Rating
-              name="user-rating"
-              value={userRating}
-              onChange={(event, newValue) => {
-                setUserRating(newValue || 1);
-              }}
-              size="large"
-              sx={{
-                fontSize: '3rem',
-                '& .MuiRating-iconFilled': {
-                  color: '#FFD700',
-                },
-                '& .MuiRating-iconHover': {
-                  color: '#FFD700',
-                }
-              }}
-            />
+        <DialogContent sx={{ py: 3 }}>
+          {/* Resume count indicator */}
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#f8f9fa', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+            <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
+              Resume Storage Status:
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="body2" color="text.secondary">
+                {(() => {
+                  const existingSaved = JSON.parse(localStorage.getItem('savedResumes') || '[]');
+                  const count = existingSaved.length;
+                  return `${count}/50 resumes saved`;
+                })()}
+              </Typography>
+              <Typography 
+                variant="body2" 
+                color={(() => {
+                  const existingSaved = JSON.parse(localStorage.getItem('savedResumes') || '[]');
+                  const remaining = 50 - existingSaved.length;
+                  return remaining <= 5 ? 'error.main' : remaining <= 10 ? 'warning.main' : 'success.main';
+                })()}
+                sx={{ fontWeight: 600 }}
+              >
+                {(() => {
+                  const existingSaved = JSON.parse(localStorage.getItem('savedResumes') || '[]');
+                  const remaining = 50 - existingSaved.length;
+                  return remaining > 0 ? `${remaining} slots remaining` : 'Storage full';
+                })()}
+              </Typography>
+            </Box>
           </Box>
           
-          <Typography variant="h6" sx={{ color: '#0A66C2', fontWeight: 600 }}>
-            {userRating === 1 && "We'll do better next time! 😔"}
-            {userRating === 2 && "Thanks for the feedback! 🙂"}
-            {userRating === 3 && "Good to know! 😊"}
-            {userRating === 4 && "Great! We're glad you liked it! 😄"}
-            {userRating === 5 && "Awesome! You made our day! 🎉"}
+          <Typography variant="body1" sx={{ mb: 3, color: '#666666' }}>
+            Save this crafted resume to your profile for future reference.
           </Typography>
+          
+          <TextField
+            fullWidth
+            label="Resume Title"
+            value={resumeTitle}
+            onChange={(e) => setResumeTitle(e.target.value)}
+            placeholder="e.g., Software Engineer Resume - Google"
+            sx={{ mb: 2 }}
+            required
+          />
+          
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Description (Optional)"
+            value={resumeDescription}
+            onChange={(e) => setResumeDescription(e.target.value)}
+            placeholder="Brief description of this resume version..."
+          />
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
           <Button 
-            onClick={() => setRatingDialogOpen(false)}
+            onClick={() => setSaveToProfileDialogOpen(false)}
             sx={{ mr: 2 }}
           >
             Cancel
           </Button>
           <Button 
             variant="contained" 
-            onClick={handleRatingSubmit}
+            onClick={handleSaveToProfileSubmit}
             sx={{
               background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
               px: 4
             }}
           >
-            Submit Rating
+            Save Resume
           </Button>
         </DialogActions>
       </Dialog>

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider } from '@mui/material';
 import SimpleAuth from './SimpleAuth';
 import MainApp from './components/MainApp';
+import Profile from './components/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthGuard from './components/AuthGuard';
 import { theme } from './theme';
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/upload" element={<MainApp />} />
                 <Route path="/job-description" element={<MainApp />} />
                 <Route path="/results" element={<MainApp />} />
+                <Route path="/profile" element={<Profile />} />
               </Routes>
             </ProtectedRoute>
           } />

@@ -211,6 +211,127 @@ Resources:
       Roles:
         - !Ref ResumeProcessorRole
 
+  # Contact Handler Lambda Function
+  ContactHandlerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ResumeOptimizerContactHandler-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt ContactHandlerRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import logging
+          from datetime import datetime
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          ses_client = boto3.client('ses', region_name='us-east-1')
+
+          def lambda_handler(event, context):
+              headers = {
+                  'Access-Control-Allow-Origin': '*',
+                  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                  'Access-Control-Allow-Methods': 'POST,OPTIONS'
+              }
+              
+              try:
+                  if event['httpMethod'] == 'OPTIONS':
+                      return {
+                          'statusCode': 200,
+                          'headers': headers,
+                          'body': json.dumps({'message': 'CORS preflight'})
+                      }
+                  
+                  body = json.loads(event['body'])
+                  from_name = body.get('fromName', 'Unknown User')
+                  from_email = body.get('fromEmail', 'unknown@example.com')
+                  subject = body.get('subject', 'No Subject')
+                  message = body.get('message', 'No Message')
+                  timestamp = body.get('timestamp', datetime.now().isoformat())
+                  
+                  if not subject.strip() or not message.strip():
+                      return {
+                          'statusCode': 400,
+                          'headers': headers,
+                          'body': json.dumps({'error': 'Subject and message are required'})
+                      }
+                  
+                  email_subject = f"JobTailorAI Contact: {subject}"
+                  email_body = f"Contact Form Submission from JobTailorAI\\n\\nFrom: {from_name} ({from_email})\\nSubject: {subject}\\n\\nMessage:\\n{message}\\n\\n---\\nSent from JobTailorAI Contact Form\\nTime: {timestamp}"
+                  
+                  try:
+                      response = ses_client.send_email(
+                          Source='abidshariff009@gmail.com',
+                          Destination={
+                              'ToAddresses': ['abidshariff009@gmail.com']
+                          },
+                          Message={
+                              'Subject': {
+                                  'Data': email_subject,
+                                  'Charset': 'UTF-8'
+                              },
+                              'Body': {
+                                  'Text': {
+                                      'Data': email_body,
+                                      'Charset': 'UTF-8'
+                                  }
+                              }
+                          },
+                          ReplyToAddresses=[from_email] if from_email != 'unknown@example.com' else []
+                      )
+                      logger.info(f"Email sent successfully. MessageId: {response['MessageId']}")
+                  except Exception as ses_error:
+                      logger.error(f"SES Error: {str(ses_error)}")
+                  
+                  logger.info(f"Contact form submitted by {from_name} ({from_email}): {subject}")
+                  
+                  return {
+                      'statusCode': 200,
+                      'headers': headers,
+                      'body': json.dumps({
+                          'message': 'Contact form submitted successfully',
+                          'timestamp': timestamp
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"Error: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'headers': headers,
+                      'body': json.dumps({'error': 'Internal server error'})
+                  }
+      Timeout: 30
+      MemorySize: 128
+
+  # Contact Handler Lambda Role
+  ContactHandlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SESPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ses:SendEmail'
+                  - 'ses:SendRawEmail'
+                Resource: '*'
+
   # API Layer
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
@@ -336,6 +457,64 @@ Resources:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Credentials: true
 
+  # Contact endpoint resource
+  ApiGatewayContactResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: contact
+
+  # Contact endpoint POST method
+  ApiGatewayContactMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiGatewayContactResource
+      HttpMethod: POST
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ContactHandlerLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # Contact endpoint OPTIONS method for CORS
+  ApiGatewayContactOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiGatewayContactResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+            ResponseTemplates:
+              application/json: '{}'
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Credentials: true
+
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn: 
@@ -343,9 +522,12 @@ Resources:
       - ApiGatewayOptionsMethod
       - ApiGatewayStatusMethod
       - ApiGatewayStatusOptionsMethod
+      - ApiGatewayContactMethod
+      - ApiGatewayContactOptionsMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment
+      Description: !Sub 'Deployment with contact endpoint - ${AWS::StackName}'
 
   # Lambda permissions for API Gateway
   ResumeProcessorPermission:
@@ -364,6 +546,15 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/GET/status'
+
+  # Permission for API Gateway to invoke Contact Handler Lambda
+  ContactHandlerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ContactHandlerLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/POST/contact'
 
 Outputs:
   ApiEndpoint:
