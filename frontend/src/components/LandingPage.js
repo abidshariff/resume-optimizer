@@ -22,7 +22,12 @@ import {
   ListItemIcon,
   ListItemText,
   CircularProgress,
-  Link
+  Link,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
 } from '@mui/material';
 import { 
   AutoAwesome as AutoAwesomeIcon,
@@ -34,7 +39,9 @@ import {
   Logout as LogoutIcon,
   WorkOutline as WorkIcon,
   Person as PersonIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  HelpOutline as HelpOutlineIcon,
+  ContactSupport as ContactSupportIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -46,6 +53,11 @@ export function LandingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [faqsDialogOpen, setFaqsDialogOpen] = useState(false);
+  const [contactUsDialogOpen, setContactUsDialogOpen] = useState(false);
+  const [contactTitle, setContactTitle] = useState('');
+  const [contactDescription, setContactDescription] = useState('');
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [authDataLoaded, setAuthDataLoaded] = useState(false);
 
   // Check authentication status on component mount
@@ -125,6 +137,37 @@ export function LandingPage() {
 
   const handleSignIn = () => {
     navigate('/auth');
+  };
+
+  const handleContactSubmit = async () => {
+    if (!contactTitle.trim() || !contactDescription.trim()) {
+      return;
+    }
+
+    setIsSubmittingContact(true);
+    
+    try {
+      // Simple contact form submission - you can integrate with your preferred service
+      console.log('Contact form submitted:', {
+        title: contactTitle,
+        description: contactDescription,
+        user: currentUser?.username || 'Anonymous'
+      });
+      
+      // Close dialog and reset form
+      setContactUsDialogOpen(false);
+      setContactTitle('');
+      setContactDescription('');
+      
+      // You could show a success message here
+      alert('Thank you for your message! We\'ll get back to you soon.');
+      
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      alert('There was an issue sending your message. Please try again.');
+    } finally {
+      setIsSubmittingContact(false);
+    }
   };
 
   const handleStartCrafting = () => {
@@ -264,7 +307,7 @@ export function LandingPage() {
                     >
                       <MenuItem onClick={() => {
                         setProfileMenuAnchor(null);
-                        setProfileDialogOpen(true);
+                        navigate('/app/profile');
                       }}>
                         <ListItemIcon>
                           <PersonIcon sx={{ color: '#0A66C2' }} />
@@ -280,6 +323,26 @@ export function LandingPage() {
                           <SettingsIcon sx={{ color: '#0A66C2' }} />
                         </ListItemIcon>
                         <ListItemText primary="Settings & Privacy" />
+                      </MenuItem>
+                      
+                      <MenuItem onClick={() => {
+                        setProfileMenuAnchor(null);
+                        setFaqsDialogOpen(true);
+                      }}>
+                        <ListItemIcon>
+                          <HelpOutlineIcon sx={{ color: '#0A66C2' }} />
+                        </ListItemIcon>
+                        <ListItemText primary="FAQs & Help" />
+                      </MenuItem>
+                      
+                      <MenuItem onClick={() => {
+                        setProfileMenuAnchor(null);
+                        setContactUsDialogOpen(true);
+                      }}>
+                        <ListItemIcon>
+                          <ContactSupportIcon sx={{ color: '#0A66C2' }} />
+                        </ListItemIcon>
+                        <ListItemText primary="Contact Us" />
                       </MenuItem>
                       
                       <MenuItem onClick={() => {
@@ -1193,6 +1256,208 @@ export function LandingPage() {
         onClose={() => setSettingsDialogOpen(false)}
         onSettingsChange={() => {}} // Empty callback since LandingPage doesn't need to track settings
       />
+
+      {/* FAQs Dialog */}
+      <Dialog
+        open={faqsDialogOpen}
+        onClose={() => setFaqsDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: '80vh'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <HelpOutlineIcon sx={{ mr: 1 }} />
+          Frequently Asked Questions
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Find answers to common questions about JobTailorAI features and functionality.
+            </Typography>
+
+            {/* General Usage */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              🚀 General Usage
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How does JobTailorAI work?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Upload your resume, paste the job description you're applying for, and our AI will craft your resume to better match the job requirements. The AI analyzes keywords, skills, and requirements to enhance your resume's relevance.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: What file formats are supported for resume upload?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: We support PDF (.pdf), Microsoft Word (.docx), and plain text (.txt) files. Maximum file size is 5MB.
+              </Typography>
+            </Box>
+
+            {/* Output Formats */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              📄 Output Formats
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: What formats can I download my crafted resume in?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: You can download your crafted resume in Microsoft Word (.docx) or plain text (.txt) format. Word format preserves formatting and is recommended for most applications.
+              </Typography>
+            </Box>
+
+            {/* Privacy & Security */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              🔒 Privacy & Security
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: Is my resume data secure?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Yes! We use AWS security best practices. Your resumes are processed securely and stored with encryption. We don't share your personal information with third parties.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Q: How long are my resumes stored?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
+                A: Saved resumes are stored in your profile until you delete them. Temporary processing files are automatically cleaned up after crafting. You have full control over your saved resume data.
+              </Typography>
+            </Box>
+
+            {/* Contact */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+              📞 Need More Help?
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ pl: 2 }}>
+                If you can't find the answer to your question here, please contact our support team. We're here to help you get the most out of JobTailorAI!
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => setFaqsDialogOpen(false)}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              px: 4
+            }}
+          >
+            Got It!
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Contact Us Dialog */}
+      <Dialog
+        open={contactUsDialogOpen}
+        onClose={() => setContactUsDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <ContactSupportIcon sx={{ mr: 1 }} />
+          Contact Us
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            Have a question, suggestion, or need help with JobTailorAI? We'd love to hear from you! 
+            Fill out the form below and we'll get back to you as soon as possible.
+          </Typography>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              Subject *
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="Brief description of your inquiry"
+              value={contactTitle}
+              onChange={(e) => setContactTitle(e.target.value)}
+              variant="outlined"
+              sx={{ mb: 2 }}
+            />
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              Message *
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              placeholder="Please provide details about your question or feedback..."
+              value={contactDescription}
+              onChange={(e) => setContactDescription(e.target.value)}
+              variant="outlined"
+            />
+          </Box>
+
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            * Required fields. We typically respond within 24 hours during business days.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button 
+            onClick={() => {
+              setContactUsDialogOpen(false);
+              setContactTitle('');
+              setContactDescription('');
+            }}
+            variant="outlined"
+            disabled={isSubmittingContact}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleContactSubmit}
+            variant="contained"
+            disabled={isSubmittingContact || !contactTitle.trim() || !contactDescription.trim()}
+            sx={{
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              px: 4
+            }}
+          >
+            {isSubmittingContact ? 'Submitting...' : 'Submit'}
+          </Button>
+        </DialogActions>
+      </Dialog>
         </>
       )}
     </Box>
