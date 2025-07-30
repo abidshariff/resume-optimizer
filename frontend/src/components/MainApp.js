@@ -28,7 +28,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Slider
+  Slider,
+  Grid
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon,
@@ -42,6 +43,10 @@ import {
   Refresh as RefreshIcon,
   HelpOutline as HelpOutlineIcon,
   ContactSupport as ContactSupportIcon,
+  Visibility as VisibilityIcon,
+  Compare as CompareIcon,
+  Close as CloseIcon,
+  GetApp as GetAppIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -187,6 +192,12 @@ function MainApp() {
   const [userSettings, setUserSettings] = useState({
     defaultOutputFormat: 'docx' // Default fallback
   });
+
+  // Preview and comparison state
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [compareDialogOpen, setCompareDialogOpen] = useState(false);
+  const [originalResumeText, setOriginalResumeText] = useState('');
+  const [optimizedResumeText, setOptimizedResumeText] = useState('');
 
   // Determine current step from URL
   const getCurrentStep = () => {
@@ -364,6 +375,20 @@ function MainApp() {
           
           if (statusData.status === 'COMPLETED') {
             setIsPolling(false);
+            
+            // Fetch the optimized resume text for preview/comparison
+            try {
+              const resumeResponse = await fetch(statusData.optimizedResumeUrl);
+              if (resumeResponse.ok) {
+                const resumeBlob = await resumeResponse.blob();
+                const resumeText = await resumeBlob.text();
+                setOptimizedResumeText(resumeText);
+              }
+            } catch (error) {
+              console.error('Error fetching optimized resume text:', error);
+              setOptimizedResumeText('Preview not available. Please download to view content.');
+            }
+            
             setResult({
               optimizedResumeUrl: statusData.optimizedResumeUrl,
               fileType: statusData.fileType || 'docx',
@@ -463,6 +488,9 @@ function MainApp() {
       reader.onload = (event) => {
         setResume(event.target.result);
         
+        // Extract text content for comparison
+        extractTextFromFile(file);
+        
         // Save file data to localStorage for page refresh persistence
         const fileData = {
           name: file.name,
@@ -483,6 +511,28 @@ function MainApp() {
         }, 1500);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Helper function to extract text from different file types
+  const extractTextFromFile = (file) => {
+    const reader = new FileReader();
+    
+    if (file.type === 'text/plain') {
+      reader.onload = (e) => {
+        setOriginalResumeText(e.target.result);
+      };
+      reader.readAsText(file);
+    } else if (file.type === 'application/pdf') {
+      // For PDF files, we'll use a simple placeholder
+      // In a production app, you'd use a PDF parsing library like pdf-parse
+      setOriginalResumeText('PDF content preview not available. Please download to view full content.');
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      // For DOCX files, we'll use a simple placeholder
+      // In a production app, you'd use a library like mammoth.js
+      setOriginalResumeText('DOCX content preview not available. Please download to view full content.');
+    } else {
+      setOriginalResumeText('File content preview not available for this format.');
     }
   };
 
@@ -622,6 +672,10 @@ Format: Mock Plain Text (.txt)`;
             fileType: fileExtension,
             downloadFilename: `mock_crafted_resume.${fileExtension}`
           });
+          
+          // Set the optimized resume text for preview/comparison
+          setOptimizedResumeText(mockContent);
+          
           setIsPolling(false);
         }, 5000);
         
@@ -1406,49 +1460,86 @@ Format: Mock Plain Text (.txt)`;
                     p: 4, 
                     mb: 4,
                     bgcolor: 'success.50',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    borderRadius: 2
                   }}
                 >
-                  <DescriptionIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
-                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                    Crafted Resume Ready for Download
-                  </Typography>
-                  <Typography variant="body1" color="textSecondary" align="center" paragraph>
-                    Your resume has been crafted with relevant keywords and formatting
-                    to improve your chances with Applicant Tracking Systems (ATS).
-                  </Typography>
-                  <Button 
-                    variant="contained" 
-                    color="success"
-                    size="large"
-                    startIcon={<DownloadIcon />}
-                    onClick={downloadOptimizedResume}
-                    sx={{ mt: 2, px: 4, py: 2, fontSize: '18px' }}
-                  >
-                    📄 Download Crafted Resume
-                  </Button>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+                    <DescriptionIcon sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                      Crafted Resume Ready
+                    </Typography>
+                    <Typography variant="body1" color="textSecondary" align="center" paragraph>
+                      Your resume has been crafted with relevant keywords and formatting
+                      to improve your chances with Applicant Tracking Systems (ATS).
+                    </Typography>
+                  </Box>
+
+                  {/* Action Buttons */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    justifyContent: 'center',
+                    flexWrap: 'wrap',
+                    mb: 3
+                  }}>
+                    <Button 
+                      variant="contained" 
+                      color="success"
+                      size="large"
+                      startIcon={<GetAppIcon />}
+                      onClick={downloadOptimizedResume}
+                      sx={{ px: 4, py: 1.5, fontSize: '16px' }}
+                    >
+                      Download Resume
+                    </Button>
+                    
+                    <Button 
+                      variant="outlined" 
+                      color="primary"
+                      size="large"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => setPreviewDialogOpen(true)}
+                      sx={{ px: 4, py: 1.5, fontSize: '16px' }}
+                    >
+                      Preview Resume
+                    </Button>
+                    
+                    <Button 
+                      variant="outlined" 
+                      color="secondary"
+                      size="large"
+                      startIcon={<CompareIcon />}
+                      onClick={() => setCompareDialogOpen(true)}
+                      sx={{ px: 4, py: 1.5, fontSize: '16px' }}
+                    >
+                      Compare Versions
+                    </Button>
+                  </Box>
+
+                  {/* Additional Actions */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    pt: 2,
+                    borderTop: '1px solid #e0e0e0'
+                  }}>
+                    <Button 
+                      variant="outlined" 
+                      onClick={resetForm}
+                      size="medium"
+                    >
+                      Craft Another Resume
+                    </Button>
+                    <Button 
+                      variant="outlined" 
+                      color="primary"
+                      onClick={handleSaveToProfile}
+                      size="medium"
+                    >
+                      Save to Profile
+                    </Button>
+                  </Box>
                 </Paper>
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Button 
-                    variant="outlined" 
-                    onClick={resetForm}
-                    size="large"
-                  >
-                    Craft Another Resume
-                  </Button>
-                  <Button 
-                    variant="outlined" 
-                    color="primary"
-                    onClick={handleSaveToProfile}
-                    size="large"
-                  >
-                    Save to Profile
-                  </Button>
-                </Box>
               </motion.div>
             )}
           </Paper>
@@ -1958,6 +2049,186 @@ Format: Mock Plain Text (.txt)`;
             }}
           >
             Save Resume
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog
+        open={previewDialogOpen}
+        onClose={() => setPreviewDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: '90vh'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <VisibilityIcon sx={{ mr: 1 }} />
+            Crafted Resume Preview
+          </Box>
+          <IconButton onClick={() => setPreviewDialogOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Paper 
+            variant="outlined" 
+            sx={{ 
+              p: 3, 
+              bgcolor: '#f8f9fa',
+              maxHeight: '60vh',
+              overflow: 'auto',
+              fontFamily: 'monospace',
+              fontSize: '14px',
+              lineHeight: 1.6
+            }}
+          >
+            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+              {optimizedResumeText || 'Loading preview...'}
+            </pre>
+          </Paper>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={downloadOptimizedResume}
+            variant="contained"
+            startIcon={<GetAppIcon />}
+            sx={{
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              px: 4
+            }}
+          >
+            Download Resume
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Comparison Dialog */}
+      <Dialog
+        open={compareDialogOpen}
+        onClose={() => setCompareDialogOpen(false)}
+        maxWidth="xl"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: '95vh',
+            height: '95vh'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <CompareIcon sx={{ mr: 1 }} />
+            Resume Comparison: Original vs Crafted
+          </Box>
+          <IconButton onClick={() => setCompareDialogOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ py: 3, height: '100%' }}>
+          <Grid container spacing={2} sx={{ height: '100%' }}>
+            {/* Original Resume */}
+            <Grid item xs={12} md={6} sx={{ height: '100%' }}>
+              <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" sx={{ 
+                  mb: 2, 
+                  color: '#d32f2f',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  📄 Original Resume
+                </Typography>
+                <Paper 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 3, 
+                    bgcolor: '#fff3e0',
+                    flex: 1,
+                    overflow: 'auto',
+                    fontFamily: 'monospace',
+                    fontSize: '13px',
+                    lineHeight: 1.5
+                  }}
+                >
+                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                    {originalResumeText || 'Original resume content not available'}
+                  </pre>
+                </Paper>
+              </Box>
+            </Grid>
+
+            {/* Crafted Resume */}
+            <Grid item xs={12} md={6} sx={{ height: '100%' }}>
+              <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" sx={{ 
+                  mb: 2, 
+                  color: '#2e7d32',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  ✨ Crafted Resume
+                </Typography>
+                <Paper 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 3, 
+                    bgcolor: '#e8f5e8',
+                    flex: 1,
+                    overflow: 'auto',
+                    fontFamily: 'monospace',
+                    fontSize: '13px',
+                    lineHeight: 1.5
+                  }}
+                >
+                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                    {optimizedResumeText || 'Crafted resume content not available'}
+                  </pre>
+                </Paper>
+              </Box>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => setPreviewDialogOpen(true)}
+            variant="outlined"
+            startIcon={<VisibilityIcon />}
+            sx={{ mr: 2 }}
+          >
+            Preview Only
+          </Button>
+          <Button 
+            onClick={downloadOptimizedResume}
+            variant="contained"
+            startIcon={<GetAppIcon />}
+            sx={{
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              px: 4
+            }}
+          >
+            Download Crafted Resume
           </Button>
         </DialogActions>
       </Dialog>
