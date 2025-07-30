@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentUser, signOut, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
+import config from '../config';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
 import { 
@@ -353,7 +354,7 @@ function MainApp() {
           const { tokens } = await fetchAuthSession();
           const idToken = tokens.idToken.toString();
           
-          const statusResponse = await fetch(`https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev/status?jobId=${jobId}`, {
+          const statusResponse = await fetch(`${config.API.REST.resumeOptimizer.endpoint}/status?jobId=${jobId}`, {
             method: 'GET',
             headers: {
               'Authorization': idToken,
@@ -571,7 +572,7 @@ function MainApp() {
       const { tokens } = await fetchAuthSession();
       const idToken = tokens.idToken.toString();
       
-      const response = await fetch('https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev/optimize', {
+      const response = await fetch(`${config.API.REST.resumeOptimizer.endpoint}/optimize`, {
         method: 'POST',
         headers: {
           'Authorization': idToken,
@@ -825,7 +826,7 @@ function MainApp() {
       }
 
       // Send to the contact API endpoint
-      const response = await fetch('https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev/contact', {
+      const response = await fetch(`${config.API.REST.resumeOptimizer.endpoint}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

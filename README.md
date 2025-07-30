@@ -130,9 +130,9 @@ After backend deployment, configure your frontend:
 2. Set environment variables in Amplify Console:
    ```
    REACT_APP_AWS_REGION=us-east-1
-   REACT_APP_USER_POOL_ID=<from-deployment-output>
-   REACT_APP_USER_POOL_WEB_CLIENT_ID=<from-deployment-output>
-   REACT_APP_API_ENDPOINT=<from-deployment-output>
+   REACT_APP_USER_POOL_ID=us-east-1_PdEKfFD9v
+   REACT_APP_USER_POOL_WEB_CLIENT_ID=sp5dfgb8mr3066luhs7e8h2rr
+   REACT_APP_API_ENDPOINT=https://giocwxtmw9.execute-api.us-east-1.amazonaws.com/prod
    ```
 3. Deploy automatically via Git push
 
@@ -178,9 +178,9 @@ npm start  # Starts development server at http://localhost:3000
 **Frontend (.env)**:
 ```
 REACT_APP_AWS_REGION=us-east-1
-REACT_APP_USER_POOL_ID=your-user-pool-id
-REACT_APP_USER_POOL_WEB_CLIENT_ID=your-client-id
-REACT_APP_API_ENDPOINT=your-api-endpoint
+REACT_APP_USER_POOL_ID=us-east-1_PdEKfFD9v
+REACT_APP_USER_POOL_WEB_CLIENT_ID=sp5dfgb8mr3066luhs7e8h2rr
+REACT_APP_API_ENDPOINT=https://giocwxtmw9.execute-api.us-east-1.amazonaws.com/prod
 ```
 
 **Backend (Lambda Environment Variables)**:

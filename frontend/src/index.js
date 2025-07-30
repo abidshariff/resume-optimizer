@@ -7,9 +7,9 @@ import { CssBaseline } from '@mui/material';
 import config from './config';
 
 // Get API endpoint from environment variables or config
-const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || 'https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev';
-const userPoolId = process.env.REACT_APP_USER_POOL_ID || 'us-east-1_LEo2udjvD';
-const userPoolWebClientId = process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || 'bajpb891n9e4rb005mhnqg60';
+const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || 'https://giocwxtmw9.execute-api.us-east-1.amazonaws.com/prod';
+const userPoolId = process.env.REACT_APP_USER_POOL_ID || 'us-east-1_PdEKfFD9v';
+const userPoolWebClientId = process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || 'sp5dfgb8mr3066luhs7e8h2rr';
 
 console.log('Configuring Amplify with:');
 console.log('API Endpoint:', apiEndpoint);

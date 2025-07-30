@@ -142,8 +142,8 @@ function SimpleAuth() {
     // Debug: Log current Amplify configuration and versions
     console.log('=== COMPREHENSIVE DEBUG ===');
     console.log('Current config:', {
-      userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_LEo2udjvD',
-      userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || 'bajpb891n9e4rb005mhnqg60',
+      userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_PdEKfFD9v',
+      userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || 'sp5dfgb8mr3066luhs7e8h2rr',
       region: process.env.REACT_APP_AWS_REGION || 'us-east-1'
     });
     
