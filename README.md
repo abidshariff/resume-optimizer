@@ -1,13 +1,25 @@
 # Resume Optimizer
 
-A web application that uses AI to optimize resumes based on job descriptions.
+A production-ready web application that uses AI to optimize resumes based on job descriptions, featuring real-time preview and side-by-side comparison capabilities.
 
-## Architecture
+## 🚀 Features
+
+- **AI-Powered Optimization**: Uses Amazon Bedrock (Claude 3 Sonnet) for intelligent resume enhancement
+- **Multi-Format Support**: Upload PDF, Word (.docx), or text files
+- **Real-Time Preview**: See formatted preview of your optimized resume
+- **Side-by-Side Comparison**: Compare original vs optimized resume with smart formatting
+- **Professional Output**: Download optimized resumes in Word format
+- **User Authentication**: Secure user registration and login with AWS Cognito
+- **History Tracking**: Keep track of all your resume optimizations
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+
+## 🏗️ Architecture
 
 This application uses a serverless architecture on AWS:
 
-- **Frontend**: React application hosted on AWS Amplify
-- **Backend**: AWS Lambda functions, API Gateway, and Amazon Bedrock for AI processing
+- **Frontend**: React application (deployable on AWS Amplify or S3/CloudFront)
+- **Backend**: AWS Lambda functions with API Gateway
+- **AI Processing**: Amazon Bedrock (Claude 3 Sonnet)
 - **Storage**: Amazon S3 for file storage and DynamoDB for user history
 - **Authentication**: Amazon Cognito for user management
 
@@ -39,172 +51,257 @@ This application uses a serverless architecture on AWS:
                                               └─────────────────┘
 ```
 
-In this architecture:
-
-1. The React Frontend sends resume and job description to API Gateway
-2. API Gateway triggers the Resume Processor Lambda function
-3. Resume Processor stores files in S3 and asynchronously invokes the AI Handler
-4. AI Handler processes the resume with Amazon Bedrock (Claude 3 Sonnet)
-5. AI Handler stores results and status updates in S3
-6. The Status Checker (client-side component in AsyncResumeOptimizer.js) polls S3 for job status
-7. When complete, the frontend downloads the optimized resume from S3
-
-## Features
-
-- Upload resumes in PDF, Word (.docx), or text formats
-- Enter job descriptions to target your resume optimization
-- AI-powered resume optimization using Amazon Bedrock (Claude 3 Sonnet)
-- Download optimized resumes in Word or text formats
-- User authentication and history tracking
-- Responsive design with Material UI components
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 resume-optimizer/
-├── frontend/                      # React frontend application
-│   ├── public/                    # Public assets
-│   │   ├── index.html             # HTML entry point
-│   │   └── manifest.json          # Web app manifest
-│   └── src/                       # React source code
-│       ├── App.js                 # Main application component
-│       ├── AsyncResumeOptimizer.js # Async resume processing component (includes Status Checker)
-│       ├── config.js              # Application configuration
-│       ├── index.js               # JavaScript entry point
-│       └── index.css              # Global styles
-├── backend/                       # AWS backend resources
-│   ├── lambda-functions/          # Lambda function code
-│   │   ├── resume-processor/      # Processes uploaded resumes
-│   │   │   └── index.py           # Resume processor Lambda code
-│   │   └── ai-handler/            # Handles AI optimization
-│   │       └── index.py           # AI handler Lambda code
-│   └── templates/                 # CloudFormation templates
-│       └── resume-optimizer-stack.yaml # Main infrastructure stack
-├── processor/                     # Additional processing utilities
-├── deploy-stack.sh                # Script to deploy CloudFormation stack
-├── deploy-frontend.sh             # Script to deploy frontend to S3/CloudFront
-├── install-packages.sh            # Script to install required packages
-├── cleanup.sh                     # Script to clean up AWS resources
-└── amplify.yml                    # AWS Amplify configuration
+├── frontend/                           # React frontend application
+│   ├── public/                         # Static assets
+│   ├── src/
+│   │   ├── components/                 # React components
+│   │   │   ├── MainApp.js             # Main application logic
+│   │   │   ├── LandingPage.js         # Landing page component
+│   │   │   └── ...                    # Other components
+│   │   ├── contexts/                  # React contexts
+│   │   ├── App.js                     # App entry point
+│   │   └── index.js                   # React DOM entry point
+│   ├── package.json                   # Frontend dependencies
+│   └── .env                          # Environment variables template
+├── backend/
+│   ├── lambda-functions/              # AWS Lambda functions
+│   │   ├── ai-handler/               # AI processing logic
+│   │   │   ├── index.py              # Main AI handler
+│   │   │   ├── enhanced_word_generator.py
+│   │   │   ├── pdf_generator.py
+│   │   │   └── ...                   # Word generation utilities
+│   │   ├── resume-processor/         # File processing
+│   │   │   └── index.py
+│   │   ├── status-checker/           # Status polling
+│   │   │   └── index.py
+│   │   └── contact-handler/          # Contact form handler
+│   │       └── index.py
+│   └── templates/
+│       └── resume-optimizer-stack.yaml # CloudFormation template
+├── deploy.sh                         # One-click deployment script
+├── cleanup.sh                        # Resource cleanup script
+├── amplify.yml                       # AWS Amplify configuration
+└── README.md                         # This file
 ```
 
-## Deployment Instructions
+## 🚀 Quick Deployment
 
-### Backend Deployment
+### Prerequisites
 
-1. Deploy the CloudFormation stack using the provided script:
+1. **AWS CLI configured** with appropriate permissions
+2. **jq installed** for JSON parsing
+3. **Access to Amazon Bedrock** (Claude 3 models enabled in your region)
+
+### One-Click Deployment
 
 ```bash
-./deploy-stack.sh
+# Clone the repository
+git clone <your-repo-url>
+cd resume-optimizer
+
+# Deploy to production (default)
+./deploy.sh
+
+# Or deploy to specific environment
+./deploy.sh dev    # Development
+./deploy.sh test   # Testing
+./deploy.sh prod   # Production
 ```
 
-This script will:
-- Create or update the CloudFormation stack
-- Set up all required AWS resources (Lambda, API Gateway, S3, DynamoDB, Cognito)
-- Output the resource identifiers needed for frontend configuration
-
-2. Update the Lambda functions with the actual code:
-
-```bash
-# Package and update Resume Processor Lambda
-cd backend/lambda-functions/resume-processor
-zip -r function.zip index.py
-aws lambda update-function-code \
-  --function-name ResumeOptimizerProcessor-dev \
-  --zip-file fileb://function.zip
-
-# Package and update AI Handler Lambda
-cd ../ai-handler
-zip -r function.zip index.py
-aws lambda update-function-code \
-  --function-name ResumeOptimizerAIHandler-dev \
-  --zip-file fileb://function.zip
-```
-
-3. Get the outputs from the CloudFormation stack:
-
-```bash
-aws cloudformation describe-stacks \
-  --stack-name resume-optimizer-stack \
-  --query "Stacks[0].Outputs"
-```
+The deployment script will:
+- ✅ Deploy CloudFormation infrastructure
+- ✅ Update all Lambda functions
+- ✅ Configure API Gateway and CORS
+- ✅ Set up S3 buckets and DynamoDB tables
+- ✅ Configure Cognito authentication
+- ✅ Provide frontend configuration details
 
 ### Frontend Deployment
 
+After backend deployment, configure your frontend:
+
 #### Option 1: AWS Amplify (Recommended)
 
-The frontend can be deployed automatically through AWS Amplify when changes are pushed to the Git repository.
-
 1. Connect your repository to AWS Amplify
-2. Amplify will use the `amplify.yml` file in the repository root for build settings
-3. Set the following environment variables in the AWS Amplify Console:
-   - `REACT_APP_USER_POOL_ID`: Cognito User Pool ID
-   - `REACT_APP_USER_POOL_WEB_CLIENT_ID`: Cognito User Pool Client ID
-   - `REACT_APP_API_ENDPOINT`: API Gateway endpoint URL
+2. Set environment variables in Amplify Console:
+   ```
+   REACT_APP_AWS_REGION=us-east-1
+   REACT_APP_USER_POOL_ID=<from-deployment-output>
+   REACT_APP_USER_POOL_WEB_CLIENT_ID=<from-deployment-output>
+   REACT_APP_API_ENDPOINT=<from-deployment-output>
+   ```
+3. Deploy automatically via Git push
 
-#### Option 2: CloudFront/S3
+#### Option 2: Manual Build & Deploy
 
-Alternatively, the frontend can be deployed using CloudFront and S3 with the provided script:
-
-```bash
-./deploy-frontend.sh
-```
-
-This script will:
-1. Create an S3 bucket for frontend hosting
-2. Configure the bucket for website hosting
-3. Upload the built React application to the S3 bucket
-4. Create a CloudFront distribution with the S3 bucket as the origin
-5. Set up appropriate permissions and CORS settings
-
-## Local Development
-
-### Backend Local Testing
-
-You can test the Lambda functions locally using the AWS SAM CLI:
-
-```bash
-# Install AWS SAM CLI
-pip install aws-sam-cli
-
-# Test the Lambda functions
-sam local invoke ResumeProcessorLambda -e events/test-event.json
-```
-
-### Frontend Local Development
-
-1. Create a `.env` file in the frontend directory with the following variables:
-```
-REACT_APP_AWS_REGION=us-east-1
-REACT_APP_USER_POOL_ID=<your-user-pool-id>
-REACT_APP_USER_POOL_WEB_CLIENT_ID=<your-user-pool-client-id>
-REACT_APP_API_ENDPOINT=<your-api-endpoint>
-```
-
-2. Install dependencies and start the development server:
 ```bash
 cd frontend
 npm install
-npm start
+npm run build
+
+# Deploy build/ directory to your hosting platform
 ```
 
-This will start a development server at http://localhost:3000.
+## 🛠️ Local Development
 
-## Current Deployment
-
-The application is currently deployed with the following resources:
-
-- **Frontend URL**: https://main.d3tjpmlvy19b2l.amplifyapp.com
-- **API Endpoint**: https://xnmokev79k.execute-api.us-east-1.amazonaws.com/dev/optimize
-- **User Pool ID**: us-east-1_LEo2udjvD
-- **User Pool Client ID**: bajpb891n9e4rb005mhnqg60
-
-## Cleanup
-
-To remove all AWS resources created for this project, run:
+### Backend Development
 
 ```bash
-./cleanup.sh
+# Test Lambda functions locally (requires AWS SAM CLI)
+sam local start-api
+
+# Or test individual functions
+sam local invoke AIHandlerFunction -e events/test-event.json
 ```
 
-This will delete the CloudFormation stack and all associated resources.
+### Frontend Development
+
+```bash
+cd frontend
+npm install
+
+# Create .env file with your backend endpoints
+cp .env.example .env
+# Edit .env with your values
+
+npm start  # Starts development server at http://localhost:3000
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Frontend (.env)**:
+```
+REACT_APP_AWS_REGION=us-east-1
+REACT_APP_USER_POOL_ID=your-user-pool-id
+REACT_APP_USER_POOL_WEB_CLIENT_ID=your-client-id
+REACT_APP_API_ENDPOINT=your-api-endpoint
+```
+
+**Backend (Lambda Environment Variables)**:
+- `STORAGE_BUCKET`: S3 bucket for file storage
+- `USER_HISTORY_TABLE`: DynamoDB table for user history
+
+### AWS Permissions Required
+
+The deployment requires the following AWS permissions:
+- CloudFormation: Full access
+- Lambda: Full access
+- API Gateway: Full access
+- S3: Full access
+- DynamoDB: Full access
+- Cognito: Full access
+- IAM: Role and policy management
+- Bedrock: Model access (Claude 3)
+
+## 🧪 Testing
+
+### Backend Testing
+
+```bash
+# Test API endpoints
+curl -X POST https://your-api-endpoint/optimize \
+  -H "Content-Type: application/json" \
+  -d '{"test": "data"}'
+
+# Test Lambda functions
+aws lambda invoke \
+  --function-name ResumeOptimizerAIHandler-prod \
+  --payload '{"test": "data"}' \
+  response.json
+```
+
+### Frontend Testing
+
+```bash
+cd frontend
+npm test                    # Run unit tests
+npm run test:integration   # Run integration tests
+npm run build              # Test production build
+```
+
+## 📊 Monitoring & Logging
+
+- **CloudWatch Logs**: All Lambda functions log to CloudWatch
+- **API Gateway Logs**: Request/response logging enabled
+- **Error Tracking**: Comprehensive error handling with user-friendly messages
+- **Performance Metrics**: Lambda duration, memory usage, and error rates
+
+## 🔒 Security Features
+
+- **Authentication**: AWS Cognito user pools with email verification
+- **Authorization**: JWT token-based API access
+- **CORS**: Properly configured for frontend domains
+- **Input Validation**: Comprehensive validation on all inputs
+- **File Security**: Secure file upload with type validation
+- **Data Privacy**: User data isolated by user ID
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **CORS Errors**: Ensure your frontend domain is in the CORS configuration
+2. **Bedrock Access**: Verify Claude 3 models are enabled in your AWS region
+3. **Lambda Timeouts**: Check CloudWatch logs for performance issues
+4. **Authentication Issues**: Verify Cognito configuration matches frontend
+
+### Debug Commands
+
+```bash
+# Check CloudFormation stack status
+aws cloudformation describe-stacks --stack-name resume-optimizer-stack-prod
+
+# View Lambda logs
+aws logs tail /aws/lambda/ResumeOptimizerAIHandler-prod --follow
+
+# Test API Gateway
+aws apigateway test-invoke-method \
+  --rest-api-id your-api-id \
+  --resource-id your-resource-id \
+  --http-method POST
+```
+
+## 🧹 Cleanup
+
+To remove all AWS resources:
+
+```bash
+./cleanup.sh prod  # Specify environment
+```
+
+This will delete:
+- CloudFormation stack and all resources
+- S3 buckets (after emptying them)
+- Lambda functions
+- API Gateway
+- Cognito user pools
+- DynamoDB tables
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📞 Support
+
+For issues and questions:
+1. Check the troubleshooting section above
+2. Review CloudWatch logs for error details
+3. Open an issue in the repository
+4. Contact the development team
+
+---
+
+**🎉 Ready to optimize resumes with AI? Deploy now and start helping users land their dream jobs!**
