@@ -386,7 +386,7 @@ Resources:
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET,PUT,DELETE'"
-              method.response.header.Access-Control-Allow-Origin: "'https://main.d3tjpmlvy19b2l.amplifyapp.com'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
             ResponseTemplates:
               application/json: '{}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -442,7 +442,7 @@ Resources:
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Accept'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'https://main.d3tjpmlvy19b2l.amplifyapp.com'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
               method.response.header.Access-Control-Allow-Credentials: "'true'"
             ResponseTemplates:
               application/json: '{}'
@@ -528,6 +528,47 @@ Resources:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment
       Description: !Sub 'Deployment with contact endpoint - ${AWS::StackName}'
+
+  # Gateway Responses for CORS on errors
+  ApiGatewayUnauthorizedResponse:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResponseType: UNAUTHORIZED
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+
+  ApiGatewayForbiddenResponse:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResponseType: ACCESS_DENIED
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+
+  ApiGatewayDefaultResponse:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResponseType: DEFAULT_4XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+
+  ApiGatewayDefault5XXResponse:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResponseType: DEFAULT_5XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
 
   # Lambda permissions for API Gateway
   ResumeProcessorPermission:

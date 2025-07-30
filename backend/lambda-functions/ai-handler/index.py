@@ -40,12 +40,25 @@ bucket_name = os.environ.get('STORAGE_BUCKET')
 table_name = os.environ.get('USER_HISTORY_TABLE')
 
 # CORS headers for all responses
-CORS_HEADERS = {
-    'Access-Control-Allow-Origin': 'https://main.d3tjpmlvy19b2l.amplifyapp.com',
-    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
-    'Access-Control-Allow-Credentials': 'true'
-}
+def get_cors_headers(origin=None):
+    allowed_origins = [
+        'https://main.d3tjpmlvy19b2l.amplifyapp.com',
+        'https://jobtailorai.com',
+        'http://localhost:3000'
+    ]
+    
+    # If origin is provided and is in allowed list, use it; otherwise use wildcard for development
+    if origin and origin in allowed_origins:
+        cors_origin = origin
+    else:
+        cors_origin = '*'  # Allow all for development
+    
+    return {
+        'Access-Control-Allow-Origin': cors_origin,
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+        'Access-Control-Allow-Credentials': 'true'
+    }
 
 def update_job_status(bucket, status_key, status, message, data=None):
     """Update the job status in S3"""
@@ -271,6 +284,147 @@ def extract_text_from_docx(docx_content):
             print(f"All extraction methods failed: {str(fallback_error)}")
             return "Unable to extract text from the Word document. Please try converting it to PDF format."
 
+def format_original_resume_text(raw_text):
+    """
+    Format the raw extracted resume text to make it more readable for comparison.
+    This function attempts to identify and structure common resume sections.
+    """
+    try:
+        lines = raw_text.split('\n')
+        formatted_lines = []
+        
+        # Clean up lines - remove excessive whitespace and empty lines
+        clean_lines = []
+        for line in lines:
+            cleaned = line.strip()
+            if cleaned:  # Only keep non-empty lines
+                clean_lines.append(cleaned)
+        
+        if not clean_lines:
+            return "No readable content found in the original resume."
+        
+        # Try to identify sections and format them
+        i = 0
+        current_section = None
+        
+        # Common section headers to look for
+        section_keywords = {
+            'contact': ['email', 'phone', 'linkedin', 'address', 'location'],
+            'summary': ['summary', 'objective', 'profile', 'about'],
+            'experience': ['experience', 'employment', 'work history', 'professional experience', 'career'],
+            'education': ['education', 'academic', 'degree', 'university', 'college', 'school'],
+            'skills': ['skills', 'technical skills', 'competencies', 'technologies', 'tools'],
+            'projects': ['projects', 'portfolio'],
+            'certifications': ['certifications', 'certificates', 'licenses'],
+            'awards': ['awards', 'honors', 'achievements', 'recognition']
+        }
+        
+        # First, try to identify the name (usually first few lines)
+        name_found = False
+        contact_info = []
+        
+        while i < len(clean_lines) and i < 5:  # Check first 5 lines for header info
+            line = clean_lines[i].strip()
+            
+            # Check if this looks like a name (not too long, not containing common resume keywords)
+            if not name_found and len(line) < 50 and not any(keyword in line.lower() for keyword_list in section_keywords.values() for keyword in keyword_list):
+                # Check if it contains email, phone, or other contact info
+                if '@' in line or any(char.isdigit() for char in line.replace('-', '').replace('(', '').replace(')', '').replace(' ', '')):
+                    contact_info.append(line)
+                else:
+                    # Likely a name
+                    formatted_lines.append(line.upper())
+                    formatted_lines.append("=" * len(line))
+                    formatted_lines.append("")
+                    name_found = True
+            else:
+                # Likely contact info
+                contact_info.append(line)
+            
+            i += 1
+        
+        # Add contact information
+        if contact_info:
+            formatted_lines.extend(contact_info)
+            formatted_lines.append("")
+        
+        # Process the rest of the resume
+        current_section = None
+        in_bullet_list = False
+        
+        while i < len(clean_lines):
+            line = clean_lines[i].strip()
+            
+            # Check if this line is a section header
+            section_detected = None
+            for section_name, keywords in section_keywords.items():
+                if any(keyword in line.lower() for keyword in keywords):
+                    # Additional check: section headers are usually short and may be in caps
+                    if len(line) < 100:
+                        section_detected = section_name
+                        break
+            
+            if section_detected:
+                # Add section header
+                if formatted_lines and formatted_lines[-1] != "":
+                    formatted_lines.append("")
+                
+                section_title = line.upper()
+                formatted_lines.append(section_title)
+                formatted_lines.append("=" * len(section_title))
+                formatted_lines.append("")
+                current_section = section_detected
+                in_bullet_list = False
+                
+            else:
+                # Regular content line
+                # Check if it looks like a bullet point
+                if line.startswith(('•', '-', '*', '◦')) or (len(line) > 10 and line[0].isalpha() and current_section in ['experience', 'skills', 'projects']):
+                    if not line.startswith(('•', '-', '*', '◦')):
+                        line = f"• {line}"
+                    formatted_lines.append(line)
+                    in_bullet_list = True
+                    
+                # Check if it looks like a job title/company (for experience section)
+                elif current_section == 'experience' and not in_bullet_list:
+                    # Look ahead to see if next line might be dates or location
+                    next_line = clean_lines[i + 1] if i + 1 < len(clean_lines) else ""
+                    
+                    # If this line is followed by something that looks like dates, treat as job header
+                    if any(char.isdigit() for char in next_line) or any(word in next_line.lower() for word in ['present', 'current', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']):
+                        formatted_lines.append(f"{line}")
+                        in_bullet_list = False
+                    else:
+                        formatted_lines.append(f"• {line}")
+                        in_bullet_list = True
+                        
+                # Check if it looks like education entry
+                elif current_section == 'education':
+                    formatted_lines.append(line)
+                    
+                # Default: add as regular line
+                else:
+                    formatted_lines.append(line)
+                    in_bullet_list = False
+            
+            i += 1
+        
+        # Join all formatted lines
+        result = '\n'.join(formatted_lines)
+        
+        # Clean up excessive blank lines
+        while '\n\n\n' in result:
+            result = result.replace('\n\n\n', '\n\n')
+        
+        return result.strip()
+        
+    except Exception as e:
+        print(f"Error formatting original resume text: {str(e)}")
+        # Fallback: return original text with basic cleanup
+        lines = raw_text.split('\n')
+        clean_lines = [line.strip() for line in lines if line.strip()]
+        return '\n'.join(clean_lines)
+
 # Function to determine file type and extract text
 def extract_text_from_document(file_content, file_key):
     # First, try to detect file type by content (magic bytes)
@@ -425,7 +579,7 @@ def lambda_handler(event, context):
                 update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
                 'error': error_msg,
-                'headers': CORS_HEADERS
+                'headers': get_cors_headers()
             }
         
         # Update status to processing
@@ -441,13 +595,32 @@ def lambda_handler(event, context):
             resume_text = extract_text_from_document(resume_content, resume_key)
             print(f"Extracted resume text length: {len(resume_text)}")
             
+            # Store the original extracted text for comparison purposes
+            formatted_original_text = resume_text  # Default fallback
+            try:
+                # Format the original text for better comparison readability
+                formatted_original_text = format_original_resume_text(resume_text)
+                
+                original_text_key = f"users/{user_id}/original/{job_id}/original_text.txt"
+                s3.put_object(
+                    Bucket=bucket_name,
+                    Key=original_text_key,
+                    Body=formatted_original_text.encode('utf-8'),
+                    ContentType='text/plain'
+                )
+                print(f"Stored formatted original text at {original_text_key}")
+            except Exception as e:
+                print(f"Warning: Failed to store original text for comparison: {str(e)}")
+                # Use raw text as fallback
+                formatted_original_text = resume_text
+            
             # Check if we got a valid extraction or an error message
             if resume_text.startswith("Unfortunately") or resume_text.startswith("Error") or resume_text.startswith("Unable"):
                 print("Text extraction failed with error message")
                 update_job_status(bucket_name, status_key, 'FAILED', resume_text)
                 return {
                     'error': resume_text,
-                    'headers': CORS_HEADERS
+                    'headers': get_cors_headers()
                 }
             
             # Verify we have enough text to process
@@ -457,7 +630,7 @@ def lambda_handler(event, context):
                 update_job_status(bucket_name, status_key, 'FAILED', error_msg)
                 return {
                     'error': error_msg,
-                    'headers': CORS_HEADERS
+                    'headers': get_cors_headers()
                 }
             
             # Get job description
@@ -469,7 +642,7 @@ def lambda_handler(event, context):
             update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
                 'error': error_msg,
-                'headers': CORS_HEADERS
+                'headers': get_cors_headers()
             }
         
         # Update status to AI processing
@@ -957,6 +1130,146 @@ def lambda_handler(event, context):
                 ContentType=content_type
             )
         
+        # Also store a text version for preview (if we have the JSON data)
+        preview_text = ""
+        if 'resume_json' in locals() and resume_json:
+            try:
+                # Generate text preview that matches the exact AI-generated format
+                preview_lines = []
+                
+                # Header - Full Name (prominently displayed)
+                if resume_json.get('full_name'):
+                    preview_lines.append(resume_json['full_name'].upper())
+                    preview_lines.append("=" * len(resume_json['full_name']))
+                    preview_lines.append("")
+                
+                # Contact Information
+                if resume_json.get('contact_info'):
+                    preview_lines.append(resume_json['contact_info'])
+                    preview_lines.append("")
+                
+                # Professional Summary
+                if resume_json.get('professional_summary'):
+                    preview_lines.append("PROFESSIONAL SUMMARY")
+                    preview_lines.append("=" * 20)
+                    preview_lines.append(resume_json['professional_summary'])
+                    preview_lines.append("")
+                
+                # Skills
+                if resume_json.get('skills'):
+                    preview_lines.append("CORE COMPETENCIES")
+                    preview_lines.append("=" * 17)
+                    skills_list = resume_json['skills']
+                    if isinstance(skills_list, list):
+                        # Display skills in a clean format, 3-4 per line
+                        for i in range(0, len(skills_list), 4):
+                            line_skills = skills_list[i:i+4]
+                            preview_lines.append(" • ".join(line_skills))
+                    else:
+                        preview_lines.append(str(skills_list))
+                    preview_lines.append("")
+                
+                # Professional Experience
+                if resume_json.get('experience'):
+                    preview_lines.append("PROFESSIONAL EXPERIENCE")
+                    preview_lines.append("=" * 25)
+                    preview_lines.append("")
+                    
+                    for i, exp in enumerate(resume_json['experience']):
+                        # Job Title and Company
+                        if exp.get('title') and exp.get('company'):
+                            preview_lines.append(f"{exp['title']} | {exp['company']}")
+                        elif exp.get('title'):
+                            preview_lines.append(exp['title'])
+                        
+                        # Dates
+                        if exp.get('dates'):
+                            preview_lines.append(exp['dates'])
+                        
+                        preview_lines.append("")
+                        
+                        # Achievements (exactly as generated by AI)
+                        if exp.get('achievements'):
+                            for achievement in exp['achievements']:
+                                preview_lines.append(f"• {achievement}")
+                        
+                        # Add spacing between positions (except for the last one)
+                        if i < len(resume_json['experience']) - 1:
+                            preview_lines.append("")
+                            preview_lines.append("-" * 60)
+                            preview_lines.append("")
+                        else:
+                            preview_lines.append("")
+                
+                # Education (exactly as preserved by AI)
+                if resume_json.get('education'):
+                    preview_lines.append("EDUCATION")
+                    preview_lines.append("=" * 9)
+                    preview_lines.append("")
+                    
+                    for edu in resume_json['education']:
+                        # Degree and Institution
+                        if edu.get('degree') and edu.get('institution'):
+                            preview_lines.append(f"{edu['degree']} | {edu['institution']}")
+                        elif edu.get('degree'):
+                            preview_lines.append(edu['degree'])
+                        elif edu.get('institution'):
+                            preview_lines.append(edu['institution'])
+                        
+                        # Dates
+                        if edu.get('dates'):
+                            preview_lines.append(edu['dates'])
+                        
+                        # Details (if any were preserved from original)
+                        if edu.get('details'):
+                            preview_lines.append(edu['details'])
+                        
+                        preview_lines.append("")
+                
+                # Handle any additional sections that might be in the JSON
+                # (The AI might include other sections based on the original resume)
+                for key, value in resume_json.items():
+                    if key not in ['full_name', 'contact_info', 'professional_summary', 'skills', 'experience', 'education']:
+                        if value and isinstance(value, (list, str)):
+                            section_title = key.replace('_', ' ').upper()
+                            preview_lines.append(section_title)
+                            preview_lines.append("=" * len(section_title))
+                            
+                            if isinstance(value, list):
+                                for item in value:
+                                    if isinstance(item, dict):
+                                        # Handle complex objects
+                                        for sub_key, sub_value in item.items():
+                                            if sub_value:
+                                                preview_lines.append(f"{sub_key.replace('_', ' ').title()}: {sub_value}")
+                                    else:
+                                        preview_lines.append(f"• {item}")
+                            else:
+                                preview_lines.append(str(value))
+                            
+                            preview_lines.append("")
+                
+                preview_text = "\n".join(preview_lines)
+                
+                # Store the text preview
+                preview_key = f"users/{user_id}/optimized/{job_id}/preview.txt"
+                s3.put_object(
+                    Bucket=bucket_name,
+                    Key=preview_key,
+                    Body=preview_text.encode('utf-8'),
+                    ContentType='text/plain'
+                )
+                
+                print(f"Stored AI-format-matching text preview at {preview_key}")
+                print(f"Preview text length: {len(preview_text)} characters")
+                print(f"Resume JSON keys: {list(resume_json.keys())}")
+                
+            except Exception as e:
+                print(f"Error generating text preview: {str(e)}")
+                import traceback
+                print(f"Full traceback: {traceback.format_exc()}")
+                preview_text = "Preview generation failed. Please download the resume to view the complete content."
+        
         # Generate pre-signed URL for download (valid for 1 hour)
         filename = f"optimized_resume.{output_extension}"
         
@@ -1011,7 +1324,9 @@ def lambda_handler(event, context):
             'fileType': output_extension,
             'contentType': content_type,
             'downloadFilename': download_filename,
-            'aiModel': model_used
+            'aiModel': model_used,
+            'previewText': preview_text if 'preview_text' in locals() else None,
+            'originalText': formatted_original_text if 'formatted_original_text' in locals() else (resume_text if 'resume_text' in locals() else None)
         })
         
         return {

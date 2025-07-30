@@ -22,7 +22,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "test-production": "npm run build && serve -s build -l 3000",
+    "test-production-advanced": "../test-production-advanced.sh"
   },
   "eslintConfig": {
     "extends": [

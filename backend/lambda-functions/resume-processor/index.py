@@ -11,23 +11,43 @@ bucket_name = os.environ.get('STORAGE_BUCKET')
 ai_handler_function = os.environ.get('AI_HANDLER_FUNCTION')
 
 # CORS headers for all responses
-CORS_HEADERS = {
-    'Access-Control-Allow-Origin': 'https://main.d3tjpmlvy19b2l.amplifyapp.com',
-    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
-    'Access-Control-Allow-Credentials': 'true'
-}
+def get_cors_headers(origin=None):
+    allowed_origins = [
+        'https://main.d3tjpmlvy19b2l.amplifyapp.com',
+        'https://jobtailorai.com',
+        'http://localhost:3000'
+    ]
+    
+    # If origin is provided and is in allowed list, use it; otherwise use the first one
+    if origin and origin in allowed_origins:
+        cors_origin = origin
+    else:
+        cors_origin = '*'  # Allow all for development
+    
+    return {
+        'Access-Control-Allow-Origin': cors_origin,
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+        'Access-Control-Allow-Credentials': 'true'
+    }
 
 def lambda_handler(event, context):
     # Print the event for debugging
     print("Received event:", json.dumps(event))
+    
+    # Get origin from headers for CORS
+    origin = None
+    if 'headers' in event:
+        origin = event['headers'].get('Origin') or event['headers'].get('origin')
+    
+    cors_headers = get_cors_headers(origin)
     
     # Handle preflight OPTIONS request
     if event.get('httpMethod') == 'OPTIONS' or event.get('requestContext', {}).get('http', {}).get('method') == 'OPTIONS':
         print("Handling OPTIONS request")
         return {
             'statusCode': 200,
-            'headers': CORS_HEADERS,
+            'headers': cors_headers,
             'body': json.dumps({})
         }
     
@@ -36,26 +56,26 @@ def lambda_handler(event, context):
         path = event.get('path', '')
         if '/download' in path:
             print("Handling GET request for file download")
-            return handle_download_request(event)
+            return handle_download_request(event, cors_headers)
         else:
             print("Handling GET request for status checking")
-            return handle_status_request(event)
+            return handle_status_request(event, cors_headers)
     
     # Handle POST request for job submission
     if event.get('httpMethod') == 'POST':
         print("Handling POST request for job submission")
-        return handle_job_submission(event)
+        return handle_job_submission(event, cors_headers)
     
     # If we get here, it's an unsupported method
     return {
         'statusCode': 405,
-        'headers': CORS_HEADERS,
+        'headers': cors_headers,
         'body': json.dumps({
             'message': 'Method not allowed'
         })
     }
 
-def handle_download_request(event):
+def handle_download_request(event, cors_headers):
     """Handle GET requests for file download"""
     try:
         # Get user ID from Cognito authorizer
@@ -72,7 +92,7 @@ def handle_download_request(event):
         if not job_id:
             return {
                 'statusCode': 400,
-                'headers': CORS_HEADERS,
+                'headers': cors_headers,
                 'body': json.dumps({
                     'message': 'Job ID is required'
                 })
@@ -88,7 +108,7 @@ def handle_download_request(event):
             if status_data.get('status') != 'COMPLETED':
                 return {
                     'statusCode': 400,
-                    'headers': CORS_HEADERS,
+                    'headers': cors_headers,
                     'body': json.dumps({
                         'message': 'Job is not completed yet'
                     })
@@ -97,7 +117,7 @@ def handle_download_request(event):
         except Exception as e:
             return {
                 'statusCode': 404,
-                'headers': CORS_HEADERS,
+                'headers': cors_headers,
                 'body': json.dumps({
                     'message': 'Job not found'
                 })
@@ -127,7 +147,7 @@ def handle_download_request(event):
             return {
                 'statusCode': 200,
                 'headers': {
-                    **CORS_HEADERS,
+                    **cors_headers,
                     'Content-Type': content_type,
                     'Content-Disposition': f'attachment; filename="{download_filename}"',
                     'Content-Length': str(len(file_content))
@@ -141,7 +161,7 @@ def handle_download_request(event):
             if 'NoSuchKey' in error_str or 'Not Found' in error_str or '404' in error_str:
                 return {
                     'statusCode': 404,
-                    'headers': CORS_HEADERS,
+                    'headers': cors_headers,
                     'body': json.dumps({
                         'message': 'Optimized resume file not found'
                     })
@@ -150,7 +170,7 @@ def handle_download_request(event):
                 print(f"Error downloading file: {error_str}")
                 return {
                     'statusCode': 500,
-                    'headers': CORS_HEADERS,
+                    'headers': cors_headers,
                     'body': json.dumps({
                         'message': 'Error downloading file'
                     })
@@ -160,13 +180,13 @@ def handle_download_request(event):
         print(f"Error in download handler: {str(e)}")
         return {
             'statusCode': 500,
-            'headers': CORS_HEADERS,
+            'headers': cors_headers,
             'body': json.dumps({
                 'message': 'Internal server error'
             })
         }
 
-def handle_status_request(event):
+def handle_status_request(event, cors_headers):
     """Handle GET requests for job status"""
     try:
         # Get user ID from Cognito authorizer
@@ -183,7 +203,7 @@ def handle_status_request(event):
         if not job_id:
             return {
                 'statusCode': 400,
-                'headers': CORS_HEADERS,
+                'headers': cors_headers,
                 'body': json.dumps({
                     'message': 'Job ID is required'
                 })
@@ -198,7 +218,7 @@ def handle_status_request(event):
             
             return {
                 'statusCode': 200,
-                'headers': CORS_HEADERS,
+                'headers': cors_headers,
                 'body': json.dumps(status_data)
             }
             
@@ -208,7 +228,7 @@ def handle_status_request(event):
             if 'NoSuchKey' in error_str or 'Not Found' in error_str or '404' in error_str:
                 return {
                     'statusCode': 404,
-                    'headers': CORS_HEADERS,
+                    'headers': cors_headers,
                     'body': json.dumps({
                         'message': 'Job not found'
                     })
@@ -218,7 +238,7 @@ def handle_status_request(event):
                 print(f"S3 error for status check: {error_str}")
                 return {
                     'statusCode': 500,
-                    'headers': CORS_HEADERS,
+                    'headers': cors_headers,
                     'body': json.dumps({
                         'message': 'Error retrieving job status'
                     })
@@ -228,13 +248,13 @@ def handle_status_request(event):
         print(f"Error checking job status: {str(e)}")
         return {
             'statusCode': 500,
-            'headers': CORS_HEADERS,
+            'headers': cors_headers,
             'body': json.dumps({
                 'message': f'Error checking job status: {str(e)}'
             })
         }
 
-def handle_job_submission(event):
+def handle_job_submission(event, cors_headers):
     """Handle POST requests for job submission"""
     try:
         # Parse the request body
@@ -263,7 +283,7 @@ def handle_job_submission(event):
         if not resume_content_base64:
             return {
                 'statusCode': 400,
-                'headers': CORS_HEADERS,
+                'headers': cors_headers,
                 'body': json.dumps({
                     'message': 'Resume content is required'
                 })
@@ -272,7 +292,7 @@ def handle_job_submission(event):
         if not job_description:
             return {
                 'statusCode': 400,
-                'headers': CORS_HEADERS,
+                'headers': cors_headers,
                 'body': json.dumps({
                     'message': 'Job description is required'
                 })
@@ -295,7 +315,7 @@ def handle_job_submission(event):
             print(f"Error decoding resume content: {str(e)}")
             return {
                 'statusCode': 400,
-                'headers': CORS_HEADERS,
+                'headers': cors_headers,
                 'body': json.dumps({
                     'message': 'Invalid resume content encoding'
                 })
@@ -361,7 +381,7 @@ def handle_job_submission(event):
         # Return job ID immediately
         return {
             'statusCode': 202,  # Accepted
-            'headers': CORS_HEADERS,
+            'headers': cors_headers,
             'body': json.dumps({
                 'message': 'Resume optimization job submitted',
                 'jobId': job_id,
@@ -373,7 +393,7 @@ def handle_job_submission(event):
         print(f"Error processing request: {str(e)}")
         return {
             'statusCode': 500,
-            'headers': CORS_HEADERS,
+            'headers': cors_headers,
             'body': json.dumps({
                 'message': f'Internal server error: {str(e)}'
             })
