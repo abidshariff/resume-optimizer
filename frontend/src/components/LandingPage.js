@@ -755,45 +755,6 @@ export function LandingPage() {
                       filter: 'drop-shadow(0 0 15px rgba(10, 102, 194, 0.6))',
                       transform: 'rotate(0deg)'
                     }} />
-                    
-                    {/* Stats in the middle */}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 1,
-                      mt: 2
-                    }}>
-                      {[
-                        { number: '3x', label: 'More Interviews' },
-                        { number: '95%', label: 'ATS Compatible' },
-                        { number: '30s', label: 'Processing Time' }
-                      ].map((stat, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
-                        >
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="h6" sx={{ 
-                              fontSize: { xs: '0.9rem', md: '1.1rem' },
-                              color: '#0A66C2', 
-                              fontWeight: 'bold',
-                              mb: 0.2
-                            }}>
-                              {stat.number}
-                            </Typography>
-                            <Typography variant="caption" sx={{ 
-                              color: '#cccccc',
-                              fontSize: { xs: '8px', md: '10px' }
-                            }}>
-                              {stat.label}
-                            </Typography>
-                          </Box>
-                        </motion.div>
-                      ))}
-                    </Box>
                   </motion.div>
 
                   {/* After Resume with Label */}
@@ -1052,7 +1013,44 @@ export function LandingPage() {
                   </Box>
                   </Box>
                   
-                  {/* Stats moved to middle */}
+                  {/* Stats at the bottom */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    gap: { xs: 2, md: 4 }, 
+                    mt: { xs: 3, md: 4 },
+                    flexWrap: 'wrap'
+                  }}>
+                    {[
+                      { number: '3x', label: 'More Interviews' },
+                      { number: '95%', label: 'ATS Compatible' },
+                      { number: '30-45s', label: 'Processing Time' }
+                    ].map((stat, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
+                      >
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="h4" sx={{ 
+                            fontSize: { xs: '1.5rem', md: '2rem' },
+                            color: '#0A66C2', 
+                            fontWeight: 'bold',
+                            mb: 0.5
+                          }}>
+                            {stat.number}
+                          </Typography>
+                          <Typography variant="caption" sx={{ 
+                            color: '#cccccc',
+                            fontSize: { xs: '10px', md: '12px' }
+                          }}>
+                            {stat.label}
+                          </Typography>
+                        </Box>
+                      </motion.div>
+                    ))}
+                  </Box>
                 </Box>
               </motion.div>
             </Grid>
