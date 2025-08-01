@@ -694,7 +694,7 @@ function SimpleAuth() {
         textAlign: 'center',
         lineHeight: 1.6
       }}>
-        Welcome to JobTailorAI Pro! Your account is now active and ready to use.
+        Welcome to JobTailorAI! Your account is now active and ready to use.
       </Typography>
       
       <Typography variant="body1" sx={{ 
@@ -1016,7 +1016,7 @@ function SimpleAuth() {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              JobTailorAI Pro
+              JobTailorAI
             </Typography>
           </Box>
         </Toolbar>

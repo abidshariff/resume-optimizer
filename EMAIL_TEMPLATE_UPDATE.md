@@ -2,7 +2,7 @@
 
 ## 📧 Overview
 
-The email verification template has been updated to reflect the correct branding (**JobTailorAI** instead of "JobTailorAI Pro") and features a professional, modern design.
+The email verification template has been updated to reflect the correct branding (**JobTailorAI**) and features a professional, modern design.
 
 ## ✨ What's New
 
@@ -13,7 +13,7 @@ The email verification template has been updated to reflect the correct branding
 - **Visual Elements**: Emojis and icons for better engagement
 
 ### 📝 **Updated Content**
-- **Correct Branding**: "JobTailorAI" instead of "JobTailorAI Pro"
+- **Correct Branding**: "JobTailorAI"
 - **Updated Subject**: "Welcome to JobTailorAI - Verify Your Email Address"
 - **Feature Highlights**: Showcases key platform features
 - **Statistics**: Displays impressive metrics (3x more interviews, 95% ATS compatible, 30s processing)
