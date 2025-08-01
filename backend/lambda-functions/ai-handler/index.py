@@ -11,25 +11,71 @@ import datetime
 from datetime import datetime
 from minimal_word_generator import create_minimal_word_resume
 
-# AI Model Configuration - Models are tried in order of preference
+# AI Model Configuration - Models are tried in order of cost (most expensive to least expensive)
+# This hierarchy balances performance with cost optimization
 AI_MODELS = [
     {
-        'id': 'anthropic.claude-sonnet-4-20250514-v1:0',
-        'name': 'Claude Sonnet 4',
+        'id': 'amazon.nova-pro-v1:0',
+        'name': 'Amazon Nova Pro',
         'max_tokens': 4000,
-        'description': 'Latest and most capable Claude model'
+        'cost_tier': 1,
+        'cost_per_1m_input': 2.00,
+        'cost_per_1m_output': 8.00,
+        'description': 'Premium multimodal model - highest performance, highest cost'
     },
     {
-        'id': 'anthropic.claude-3-7-sonnet-20250219-v1:0', 
-        'name': 'Claude 3.7 Sonnet',
+        'id': 'anthropic.claude-3-haiku-20240307-v1:0',
+        'name': 'Claude 3 Haiku',
         'max_tokens': 4000,
-        'description': 'Enhanced Claude 3 model with improved capabilities'
+        'cost_tier': 2,
+        'cost_per_1m_input': 0.25,
+        'cost_per_1m_output': 1.25,
+        'description': 'Fast, efficient Claude model with image support - excellent value'
     },
     {
-        'id': 'anthropic.claude-3-5-sonnet-20240620-v1:0',
-        'name': 'Claude 3.5 Sonnet', 
+        'id': 'amazon.nova-lite-v1:0',
+        'name': 'Amazon Nova Lite',
         'max_tokens': 4000,
-        'description': 'Reliable Claude 3.5 model with good performance'
+        'cost_tier': 3,
+        'cost_per_1m_input': 0.60,
+        'cost_per_1m_output': 2.40,
+        'description': 'Balanced multimodal model - good performance, moderate cost'
+    },
+    {
+        'id': 'meta.llama3-2-3b-instruct-v1:0',
+        'name': 'Llama 3.2 3B Instruct',
+        'max_tokens': 4000,
+        'cost_tier': 4,
+        'cost_per_1m_input': 0.60,
+        'cost_per_1m_output': 0.60,
+        'description': 'Cost-effective text model - good balance of performance and cost'
+    },
+    {
+        'id': 'amazon.titan-text-lite-v1',
+        'name': 'Amazon Titan Text Lite',
+        'max_tokens': 4000,
+        'cost_tier': 5,
+        'cost_per_1m_input': 0.30,
+        'cost_per_1m_output': 0.40,
+        'description': 'Primary cost-effective model - reliable and economical'
+    },
+    {
+        'id': 'amazon.nova-micro-v1:0',
+        'name': 'Amazon Nova Micro',
+        'max_tokens': 4000,
+        'cost_tier': 6,
+        'cost_per_1m_input': 0.35,
+        'cost_per_1m_output': 1.40,
+        'description': 'Ultra-economical text model - fastest and cheapest'
+    },
+    {
+        'id': 'mistral.mistral-7b-instruct-v0:2',
+        'name': 'Mistral 7B Instruct',
+        'max_tokens': 4000,
+        'cost_tier': 7,
+        'cost_per_1m_input': 0.15,
+        'cost_per_1m_output': 0.20,
+        'description': 'Backup model - excellent value for basic tasks'
     }
 ]
 
@@ -867,10 +913,14 @@ def lambda_handler(event, context):
         def call_bedrock_with_fallback(prompt):
             """
             Call Bedrock with automatic model fallback.
-            Uses the AI_MODELS configuration defined at the top of the file.
+            Uses the AI_MODELS configuration with cost-optimized hierarchy.
             """
             
             print(f"Starting AI model fallback with {len(AI_MODELS)} models configured")
+            print("Model hierarchy (most expensive to least expensive):")
+            for i, model in enumerate(AI_MODELS):
+                print(f"  {i+1}. {model['name']} - ${model['cost_per_1m_input']:.2f}/${model['cost_per_1m_output']:.2f} per 1M tokens")
+            
             last_error = None
             
             # Try each model in order
@@ -878,11 +928,13 @@ def lambda_handler(event, context):
                 try:
                     print(f"Attempting to use {model['name']} (model {i+1}/{len(AI_MODELS)})")
                     print(f"  Model ID: {model['id']}")
+                    print(f"  Cost Tier: {model['cost_tier']} - ${model['cost_per_1m_input']:.2f}/${model['cost_per_1m_output']:.2f} per 1M tokens")
                     print(f"  Description: {model['description']}")
                     
-                    response = bedrock_runtime.invoke_model(
-                        modelId=model['id'],
-                        body=json.dumps({
+                    # Prepare the request body based on model type
+                    if model['id'].startswith('anthropic.'):
+                        # Anthropic models use the messages format
+                        request_body = {
                             "anthropic_version": "bedrock-2023-05-31",
                             "max_tokens": model['max_tokens'],
                             "temperature": 0.5,
@@ -893,16 +945,101 @@ def lambda_handler(event, context):
                                     "content": prompt
                                 }
                             ]
-                        })
+                        }
+                    elif model['id'].startswith('amazon.'):
+                        # Amazon models (Nova, Titan) use different formats
+                        if 'nova' in model['id']:
+                            # Nova models use messages format similar to Anthropic
+                            request_body = {
+                                "max_tokens": model['max_tokens'],
+                                "temperature": 0.5,
+                                "system": [{"text": "You are an expert ATS resume optimizer that preserves document formatting."}],
+                                "messages": [
+                                    {
+                                        "role": "user",
+                                        "content": [{"text": prompt}]
+                                    }
+                                ]
+                            }
+                        else:
+                            # Titan models use a simpler format
+                            request_body = {
+                                "inputText": f"System: You are an expert ATS resume optimizer that preserves document formatting.\n\nHuman: {prompt}\n\nAssistant:",
+                                "textGenerationConfig": {
+                                    "maxTokenCount": model['max_tokens'],
+                                    "temperature": 0.5,
+                                    "topP": 0.9
+                                }
+                            }
+                    elif model['id'].startswith('meta.'):
+                        # Meta Llama models use messages format
+                        request_body = {
+                            "prompt": f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are an expert ATS resume optimizer that preserves document formatting.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+                            "max_gen_len": model['max_tokens'],
+                            "temperature": 0.5,
+                            "top_p": 0.9
+                        }
+                    elif model['id'].startswith('mistral.'):
+                        # Mistral models use a simple prompt format
+                        request_body = {
+                            "prompt": f"<s>[INST] You are an expert ATS resume optimizer that preserves document formatting.\n\n{prompt} [/INST]",
+                            "max_tokens": model['max_tokens'],
+                            "temperature": 0.5,
+                            "top_p": 0.9,
+                            "top_k": 50
+                        }
+                    else:
+                        # Default format for unknown models
+                        request_body = {
+                            "prompt": prompt,
+                            "max_tokens": model['max_tokens'],
+                            "temperature": 0.5
+                        }
+                    
+                    # Make the API call
+                    response = bedrock_runtime.invoke_model(
+                        modelId=model['id'],
+                        body=json.dumps(request_body)
                     )
                     
-                    # Parse the response
+                    # Parse the response based on model type
                     response_body = json.loads(response['body'].read())
-                    optimized_resume = response_body['content'][0]['text']
                     
+                    if model['id'].startswith('anthropic.'):
+                        optimized_resume = response_body['content'][0]['text']
+                    elif model['id'].startswith('amazon.'):
+                        if 'nova' in model['id']:
+                            optimized_resume = response_body['output']['message']['content'][0]['text']
+                        else:
+                            # Titan models
+                            optimized_resume = response_body['results'][0]['outputText']
+                    elif model['id'].startswith('meta.'):
+                        optimized_resume = response_body['generation']
+                    elif model['id'].startswith('mistral.'):
+                        optimized_resume = response_body['outputs'][0]['text']
+                    else:
+                        # Try to extract text from common response formats
+                        if 'content' in response_body:
+                            optimized_resume = response_body['content'][0]['text']
+                        elif 'generation' in response_body:
+                            optimized_resume = response_body['generation']
+                        elif 'text' in response_body:
+                            optimized_resume = response_body['text']
+                        else:
+                            optimized_resume = str(response_body)
+                    
+                    # Validate the response
                     if optimized_resume and len(optimized_resume.strip()) > 100:
                         print(f"✅ Successfully used {model['name']}")
                         print(f"Response length: {len(optimized_resume)} characters")
+                        
+                        # Estimate cost for this request
+                        estimated_input_tokens = len(prompt.split()) * 1.3  # Rough estimation
+                        estimated_output_tokens = len(optimized_resume.split()) * 1.3
+                        estimated_cost = (estimated_input_tokens / 1000000 * model['cost_per_1m_input']) + \
+                                       (estimated_output_tokens / 1000000 * model['cost_per_1m_output'])
+                        print(f"Estimated cost: ${estimated_cost:.4f} (Input: ~{estimated_input_tokens:.0f} tokens, Output: ~{estimated_output_tokens:.0f} tokens)")
+                        
                         return optimized_resume, model['name']
                     else:
                         print(f"⚠️ {model['name']} returned empty/short response, trying next model...")
@@ -922,7 +1059,9 @@ def lambda_handler(event, context):
                         "ValidationException",
                         "ResourceNotFoundException",
                         "ModelTimeoutException",
-                        "ModelErrorException"
+                        "ModelErrorException",
+                        "InternalServerException",
+                        "ModelStreamErrorException"
                     ]
                     
                     if any(error_type in error_msg for error_type in recoverable_errors):

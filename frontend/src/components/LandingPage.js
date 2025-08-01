@@ -27,7 +27,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField
+  TextField,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { 
   AutoAwesome as AutoAwesomeIcon,
@@ -47,6 +49,10 @@ import { motion } from 'framer-motion';
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [currentUser, setCurrentUser] = useState(null);
   const [userAttributes, setUserAttributes] = useState(null);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
@@ -59,6 +65,12 @@ export function LandingPage() {
   const [contactDescription, setContactDescription] = useState('');
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [authDataLoaded, setAuthDataLoaded] = useState(false);
+  
+  // Additional dialog states for footer links
+  const [privacyDialogOpen, setPrivacyDialogOpen] = useState(false);
+  const [termsDialogOpen, setTermsDialogOpen] = useState(false);
+  const [cookieDialogOpen, setCookieDialogOpen] = useState(false);
+  const [helpCenterDialogOpen, setHelpCenterDialogOpen] = useState(false);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -177,23 +189,33 @@ export function LandingPage() {
   const features = [
     {
       icon: <PsychologyIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
-      title: 'AI-Powered Crafting',
-      description: 'Advanced AI analyzes your resume and crafts it for specific job descriptions and ATS systems.'
+      title: 'AI-Powered Job Matching',
+      description: 'Advanced AI analyzes job descriptions and crafts your resume to match specific requirements, keywords, and company culture.'
     },
     {
       icon: <TrendingUpIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
-      title: '3x More Interviews',
-      description: 'Our users get 3x more interview calls with professionally crafted resumes.'
+      title: 'Real-Time Preview',
+      description: 'See your crafted resume instantly with our live preview feature. Review formatting and content before downloading.'
     },
     {
       icon: <SpeedIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
-      title: 'Instant Results',
-      description: 'Get your crafted resume in under 60 seconds with our lightning-fast AI processing.'
+      title: 'Side-by-Side Compare',
+      description: 'Compare your original resume with the AI-crafted version to see exactly what improvements were made.'
     },
     {
       icon: <ShieldIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
-      title: 'ATS Compatible',
-      description: 'Ensure your resume passes Applicant Tracking Systems with our ATS enhancement technology.'
+      title: 'Multiple Download Formats',
+      description: 'Download your crafted resume in Word (.docx) or text format, perfectly formatted for any application.'
+    },
+    {
+      icon: <AutoAwesomeIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
+      title: 'ATS Optimization',
+      description: 'Ensure your resume passes Applicant Tracking Systems with keyword optimization and proper formatting.'
+    },
+    {
+      icon: <WorkIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
+      title: 'Job-Specific Tailoring',
+      description: 'Each resume is uniquely crafted for the specific job you\'re applying to, not generic templates.'
     }
   ];
 
@@ -209,7 +231,7 @@ export function LandingPage() {
         <>
           {/* Navigation Header */}
           <AppBar position="static" elevation={0}>
-            <Toolbar sx={{ py: 1 }}>
+            <Toolbar sx={{ py: { xs: 0.5, md: 1 }, px: { xs: 2, md: 3 } }}>
               <Box 
                 sx={{ 
                   display: 'flex', 
@@ -220,73 +242,79 @@ export function LandingPage() {
                   }
                 }}
                 onClick={() => navigate('/')}
-          >
-            <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
-            <Typography variant="h5" component="div" sx={{ 
-              fontWeight: 700,
-              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              JobTailorAI
-            </Typography>
-          </Box>
-          <Box sx={{ flexGrow: 1 }} />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {(() => {
-              if (isLoading) {
-                return <CircularProgress size={24} />;
-              } else if (currentUser) {
-                return (
-                  <>
-                    <Button 
-                      variant="contained" 
-                      onClick={handleStartCrafting}
-                      sx={{
-                        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                        color: 'white',
-                        fontWeight: 600,
-                        px: 3,
-                        mr: 2,
-                        '&:hover': {
-                          background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
-                        }
-                      }}
-                    >
-                      Start Crafting
-                    </Button>
-                    <Typography variant="body2" sx={{ 
-                      color: '#666666',
-                      display: { xs: 'none', sm: 'block' }
-                    }}>
-                      {(currentUser && authDataLoaded) ? `Welcome, ${getDisplayName()}` : ''}
-                    </Typography>
-                    <IconButton
-                      onClick={(e) => {
-                        console.log('Avatar clicked!', e.currentTarget);
-                        setProfileMenuAnchor(e.currentTarget);
-                      }}
-                      sx={{ 
-                        p: 0,
-                        border: '2px solid #0A66C2',
-                        '&:hover': {
-                          border: '2px solid #666666',
-                        }
-                      }}
-                    >
-                      <Avatar 
-                        sx={{ 
-                          bgcolor: '#0A66C2', 
-                          width: 40, 
-                          height: 40,
-                          fontSize: '1rem',
-                          fontWeight: 600
-                        }}
-                      >
-                        {(currentUser && authDataLoaded) ? getDisplayName().charAt(0).toUpperCase() : 'U'}
-                      </Avatar>
-                    </IconButton>
+              >
+                <AutoAwesomeIcon sx={{ mr: { xs: 1, md: 2 }, color: '#0A66C2', fontSize: { xs: 24, md: 28 } }} />
+                <Typography variant="h5" component="div" sx={{ 
+                  fontWeight: 700,
+                  fontSize: { xs: '1.2rem', md: '1.5rem' },
+                  background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  JobTailorAI
+                </Typography>
+              </Box>
+              <Box sx={{ flexGrow: 1 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 } }}>
+                {(() => {
+                  if (isLoading) {
+                    return <CircularProgress size={24} />;
+                  } else if (currentUser) {
+                    return (
+                      <>
+                        <Button 
+                          variant="contained" 
+                          onClick={handleStartCrafting}
+                          size={isMobile ? "small" : "medium"}
+                          sx={{
+                            background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                            color: 'white',
+                            fontWeight: 600,
+                            px: { xs: 2, md: 3 },
+                            fontSize: { xs: '0.8rem', md: '0.9rem' },
+                            mr: { xs: 1, md: 2 },
+                            '&:hover': {
+                              background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+                            }
+                          }}
+                        >
+                          {isMobile ? 'Craft' : 'Start Crafting'}
+                        </Button>
+                        {!isSmallMobile && (
+                          <Typography variant="body2" sx={{ 
+                            color: '#666666',
+                            display: { xs: 'none', sm: 'block' },
+                            fontSize: { xs: '0.8rem', md: '0.9rem' }
+                          }}>
+                            {(currentUser && authDataLoaded) ? `Welcome, ${getDisplayName()}` : ''}
+                          </Typography>
+                        )}
+                        <IconButton
+                          onClick={(e) => {
+                            console.log('Avatar clicked!', e.currentTarget);
+                            setProfileMenuAnchor(e.currentTarget);
+                          }}
+                          sx={{ 
+                            p: 0,
+                            border: '2px solid #0A66C2',
+                            '&:hover': {
+                              border: '2px solid #666666',
+                            }
+                          }}
+                        >
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: '#0A66C2', 
+                              width: { xs: 32, md: 40 }, 
+                              height: { xs: 32, md: 40 },
+                              fontSize: { xs: '0.9rem', md: '1rem' },
+                              fontWeight: 600
+                            }}
+                          >
+                            {(currentUser && authDataLoaded) ? getDisplayName().charAt(0).toUpperCase() : 'U'}
+                          </Avatar>
+                        </IconButton>
                     
                     {/* Profile Menu */}
                     <Menu
@@ -364,21 +392,29 @@ export function LandingPage() {
                     <Button 
                       color="inherit" 
                       onClick={handleSignIn}
-                      sx={{ color: '#666666', '&:hover': { color: '#0A66C2' } }}
+                      size={isMobile ? "small" : "medium"}
+                      sx={{ 
+                        color: '#666666', 
+                        fontSize: { xs: '0.8rem', md: '0.9rem' },
+                        '&:hover': { color: '#0A66C2' } 
+                      }}
                     >
                       Sign In
                     </Button>
                     <Button 
                       variant="contained" 
                       onClick={handleGetStarted}
+                      size={isMobile ? "small" : "medium"}
                       sx={{
                         background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                        fontSize: { xs: '0.8rem', md: '0.9rem' },
+                        px: { xs: 2, md: 3 },
                         '&:hover': {
                           background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
                         }
                       }}
                     >
-                      Get Started Free
+                      {isMobile ? 'Get Started' : 'Get Started Free'}
                     </Button>
                   </>
                 );
@@ -391,7 +427,7 @@ export function LandingPage() {
       {/* Hero Section */}
       <Box sx={{ 
         background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2a2a2a 100%)',
-        py: 12,
+        py: { xs: 6, md: 12 },
         position: 'relative',
         overflow: 'hidden',
         // Add keyframes for animations
@@ -407,7 +443,7 @@ export function LandingPage() {
         }
       }}>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={6} alignItems="center">
+          <Grid container spacing={{ xs: 3, md: 6 }} alignItems="center">
             <Grid item xs={12} md={6}>
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
@@ -415,13 +451,13 @@ export function LandingPage() {
                 transition={{ duration: 0.8 }}
               >
                 <Typography variant="h1" sx={{ 
-                  fontSize: { xs: '2.5rem', md: '3.5rem' },
+                  fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3.5rem' },
                   fontWeight: 800,
                   background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  mb: 3,
+                  mb: { xs: 2, md: 3 },
                   lineHeight: 1.2,
                   textAlign: { xs: 'center', md: 'left' }
                 }}>
@@ -431,8 +467,9 @@ export function LandingPage() {
                   }
                 </Typography>
                 <Typography variant="h5" sx={{ 
+                  fontSize: { xs: '1rem', sm: '1.2rem', md: '1.5rem' },
                   color: '#cccccc',
-                  mb: 4, 
+                  mb: { xs: 3, md: 4 }, 
                   fontWeight: 400,
                   lineHeight: 1.4,
                   textAlign: { xs: 'center', md: 'left' }
@@ -442,16 +479,20 @@ export function LandingPage() {
                     : 'Transform your resume in seconds with our advanced AI technology. Get past ATS systems and land 3x more interviews.'
                   }
                 </Typography>
-                <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, mb: 4 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: { xs: 'center', md: 'flex-start' }, 
+                  mb: { xs: 3, md: 4 }
+                }}>
                   <Button 
                     variant="contained" 
-                    size="large"
+                    size={isMobile ? "medium" : "large"}
                     onClick={handleGetStarted}
                     endIcon={<PlayArrowIcon />}
                     sx={{
-                      py: 2,
-                      px: 4,
-                      fontSize: '1.1rem',
+                      py: { xs: 1.5, md: 2 },
+                      px: { xs: 3, md: 4 },
+                      fontSize: { xs: '0.9rem', md: '1.1rem' },
                       background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
                       boxShadow: '0 8px 32px rgba(10, 102, 194, 0.3)',
                       '&:hover': {
@@ -480,7 +521,7 @@ export function LandingPage() {
                   flexDirection: 'column',
                   justifyContent: 'flex-start',
                   alignItems: 'center',
-                  height: { xs: '450px', md: '550px' },
+                  height: { xs: '300px', sm: '400px', md: '550px' },
                   pt: 2
                 }}>
                   {/* Labels Row */}
@@ -488,16 +529,16 @@ export function LandingPage() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     width: '100%',
-                    maxWidth: '500px',
+                    maxWidth: { xs: '300px', sm: '400px', md: '500px' },
                     mb: 1
                   }}>
                     <Box sx={{
                       bgcolor: '#ff6b6b',
                       color: 'white',
-                      px: 2,
+                      px: { xs: 1.5, md: 2 },
                       py: 0.7,
                       borderRadius: 1,
-                      fontSize: '11px',
+                      fontSize: { xs: '10px', md: '11px' },
                       fontWeight: 'bold',
                       boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)'
                     }}>
@@ -506,10 +547,10 @@ export function LandingPage() {
                     <Box sx={{
                       bgcolor: '#4caf50',
                       color: 'white',
-                      px: 2,
+                      px: { xs: 1.5, md: 2 },
                       py: 0.7,
                       borderRadius: 1,
-                      fontSize: '11px',
+                      fontSize: { xs: '10px', md: '11px' },
                       fontWeight: 'bold',
                       boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)'
                     }}>
@@ -522,24 +563,25 @@ export function LandingPage() {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    gap: 3
+                    gap: { xs: 2, md: 3 },
+                    flexDirection: { xs: 'column', sm: 'row' }
                   }}>
                   {/* Before Resume */}
                   <motion.div
                     initial={{ scale: 1, x: 0 }}
-                    animate={{ scale: 0.9, x: -20 }}
+                    animate={{ scale: { xs: 1, sm: 0.9 }, x: { xs: 0, sm: -20 } }}
                     transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
                   >
                     <Box sx={{
-                      width: '220px',
-                      height: '320px',
+                      width: { xs: '180px', sm: '200px', md: '220px' },
+                      height: { xs: '260px', sm: '290px', md: '320px' },
                       bgcolor: '#f9f9f9',
                       borderRadius: 2,
                       border: '2px solid #ddd',
                       position: 'relative',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                       overflow: 'hidden',
-                      p: 1.5
+                      p: { xs: 1, md: 1.5 }
                     }}>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', borderBottom: '1px solid #ccc', pb: 1 }}>
@@ -665,31 +707,36 @@ export function LandingPage() {
                     initial={{ scale: 0.8, opacity: 0.7 }}
                     animate={{ scale: 1.2, opacity: 1 }}
                     transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
-                    style={{ margin: '0 25px', zIndex: 2 }}
+                    style={{ 
+                      margin: { xs: '15px 0', sm: '0 25px' }, 
+                      zIndex: 2,
+                      display: { xs: 'block', sm: 'block' }
+                    }}
                   >
                     <AutoAwesomeIcon sx={{ 
-                      fontSize: 45, 
+                      fontSize: { xs: 35, md: 45 }, 
                       color: '#0A66C2',
-                      filter: 'drop-shadow(0 0 15px rgba(10, 102, 194, 0.6))'
+                      filter: 'drop-shadow(0 0 15px rgba(10, 102, 194, 0.6))',
+                      transform: { xs: 'rotate(90deg)', sm: 'rotate(0deg)' }
                     }} />
                   </motion.div>
 
                   {/* After Resume */}
                   <motion.div
                     initial={{ scale: 1, x: 0 }}
-                    animate={{ scale: 1.1, x: 20 }}
+                    animate={{ scale: { xs: 1, sm: 1.1 }, x: { xs: 0, sm: 20 } }}
                     transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
                   >
                     <Box sx={{
-                      width: '220px',
-                      height: '320px',
+                      width: { xs: '180px', sm: '200px', md: '220px' },
+                      height: { xs: '260px', sm: '290px', md: '320px' },
                       bgcolor: 'white',
                       borderRadius: 2,
                       border: '2px solid #0A66C2',
                       position: 'relative',
                       boxShadow: '0 8px 30px rgba(10, 102, 194, 0.3)',
                       overflow: 'hidden',
-                      p: 1.5
+                      p: { xs: 1, md: 1.5 }
                     }}>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', bgcolor: '#f8fbff', mx: -1.5, mt: -1.5, p: 1.5, borderBottom: '2px solid #0A66C2' }}>
@@ -853,8 +900,8 @@ export function LandingPage() {
                 <Box sx={{ 
                   display: 'flex', 
                   justifyContent: 'center', 
-                  gap: 4, 
-                  mt: 3,
+                  gap: { xs: 2, md: 4 }, 
+                  mt: { xs: 2, md: 3 },
                   flexWrap: 'wrap'
                 }}>
                   {[
@@ -870,6 +917,7 @@ export function LandingPage() {
                     >
                       <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" sx={{ 
+                          fontSize: { xs: '1.5rem', md: '2rem' },
                           color: '#0A66C2', 
                           fontWeight: 'bold',
                           mb: 0.5
@@ -878,7 +926,7 @@ export function LandingPage() {
                         </Typography>
                         <Typography variant="caption" sx={{ 
                           color: '#cccccc',
-                          fontSize: '12px'
+                          fontSize: { xs: '10px', md: '12px' }
                         }}>
                           {stat.label}
                         </Typography>
@@ -894,9 +942,10 @@ export function LandingPage() {
       </Box>
 
       {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: 12 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }} id="features-section">
         <Typography variant="h2" align="center" sx={{ 
-          mb: 8,
+          fontSize: { xs: '1.8rem', md: '2.5rem' },
+          mb: { xs: 6, md: 8 },
           fontWeight: 700,
           background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
           WebkitBackgroundClip: 'text',
@@ -906,16 +955,32 @@ export function LandingPage() {
           Why Choose JobTailorAI?
         </Typography>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 3, md: 4 }}>
           {features.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card sx={{ height: '100%', textAlign: 'center' }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ mb: 3 }}>{feature.icon}</Box>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Card sx={{ 
+                height: '100%', 
+                textAlign: 'center', 
+                p: { xs: 2, md: 0 },
+                '&:hover': { 
+                  transform: 'translateY(-4px)', 
+                  transition: 'all 0.3s ease' 
+                } 
+              }}>
+                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                  <Box sx={{ mb: { xs: 2, md: 3 } }}>{feature.icon}</Box>
+                  <Typography variant="h6" sx={{ 
+                    mb: { xs: 1.5, md: 2 }, 
+                    fontWeight: 600,
+                    fontSize: { xs: '1.1rem', md: '1.25rem' }
+                  }}>
                     {feature.title}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#666666', lineHeight: 1.6 }}>
+                  <Typography variant="body2" sx={{ 
+                    color: '#666666', 
+                    lineHeight: 1.6,
+                    fontSize: { xs: '0.85rem', md: '0.9rem' }
+                  }}>
                     {feature.description}
                   </Typography>
                 </CardContent>
@@ -925,84 +990,475 @@ export function LandingPage() {
         </Grid>
       </Container>
 
-      {/* How It Works Section */}
-      <Box sx={{ bgcolor: '#F8F9FA', py: 12 }}>
+      {/* Detailed Features Showcase */}
+      <Box sx={{ bgcolor: '#F8F9FA', py: { xs: 8, md: 12 } }}>
         <Container maxWidth="lg">
           <Typography variant="h2" align="center" sx={{ 
-            mb: 8,
+            fontSize: { xs: '1.8rem', md: '2.5rem' },
+            mb: { xs: 2, md: 3 },
             fontWeight: 700,
             color: '#0A66C2'
           }}>
-            How It Works
+            Powerful Features for Job Success
+          </Typography>
+          <Typography variant="h6" align="center" sx={{ 
+            fontSize: { xs: '1rem', md: '1.25rem' },
+            mb: { xs: 6, md: 8 },
+            color: '#666666',
+            maxWidth: '800px',
+            mx: 'auto',
+            px: { xs: 2, md: 0 }
+          }}>
+            Every feature is designed to give you the competitive edge in today's job market
           </Typography>
 
-          <Grid container spacing={4}>
+          <Grid container spacing={{ xs: 4, md: 6 }}>
+            {/* Preview Feature */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: { xs: 2, md: 3 },
+                flexDirection: { xs: 'column', sm: 'row' },
+                textAlign: { xs: 'center', sm: 'left' }
+              }}>
+                <Box sx={{
+                  width: { xs: 50, md: 60 },
+                  height: { xs: 50, md: 60 },
+                  bgcolor: '#E3F2FD',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  mx: { xs: 'auto', sm: 0 }
+                }}>
+                  <Typography sx={{ fontSize: { xs: '20px', md: '24px' } }}>👁️</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h5" sx={{ 
+                    fontSize: { xs: '1.2rem', md: '1.5rem' },
+                    fontWeight: 600, 
+                    mb: { xs: 1.5, md: 2 }, 
+                    color: '#0A66C2' 
+                  }}>
+                    Real-Time Preview
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    color: '#666666', 
+                    lineHeight: 1.6, 
+                    mb: { xs: 1.5, md: 2 } 
+                  }}>
+                    See your crafted resume instantly with our live preview feature. Review the formatting, 
+                    layout, and content changes in real-time before downloading.
+                  </Typography>
+                  <Typography variant="body2" sx={{ 
+                    color: '#0A66C2', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.8rem', md: '0.9rem' }
+                  }}>
+                    ✓ Instant visual feedback  ✓ Professional formatting  ✓ Mobile-responsive preview
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Compare Feature */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: { xs: 2, md: 3 },
+                flexDirection: { xs: 'column', sm: 'row' },
+                textAlign: { xs: 'center', sm: 'left' }
+              }}>
+                <Box sx={{
+                  width: { xs: 50, md: 60 },
+                  height: { xs: 50, md: 60 },
+                  bgcolor: '#E8F5E8',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  mx: { xs: 'auto', sm: 0 }
+                }}>
+                  <Typography sx={{ fontSize: { xs: '20px', md: '24px' } }}>⚖️</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h5" sx={{ 
+                    fontSize: { xs: '1.2rem', md: '1.5rem' },
+                    fontWeight: 600, 
+                    mb: { xs: 1.5, md: 2 }, 
+                    color: '#0A66C2' 
+                  }}>
+                    Side-by-Side Compare
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    color: '#666666', 
+                    lineHeight: 1.6, 
+                    mb: { xs: 1.5, md: 2 } 
+                  }}>
+                    Compare your original resume with the AI-crafted version side by side. 
+                    See exactly what improvements were made and why.
+                  </Typography>
+                  <Typography variant="body2" sx={{ 
+                    color: '#0A66C2', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.8rem', md: '0.9rem' }
+                  }}>
+                    ✓ Before/after comparison  ✓ Highlight changes  ✓ Improvement insights
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Download Formats */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: { xs: 2, md: 3 },
+                flexDirection: { xs: 'column', sm: 'row' },
+                textAlign: { xs: 'center', sm: 'left' }
+              }}>
+                <Box sx={{
+                  width: { xs: 50, md: 60 },
+                  height: { xs: 50, md: 60 },
+                  bgcolor: '#FFF3E0',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  mx: { xs: 'auto', sm: 0 }
+                }}>
+                  <Typography sx={{ fontSize: { xs: '20px', md: '24px' } }}>📄</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h5" sx={{ 
+                    fontSize: { xs: '1.2rem', md: '1.5rem' },
+                    fontWeight: 600, 
+                    mb: { xs: 1.5, md: 2 }, 
+                    color: '#0A66C2' 
+                  }}>
+                    Multiple Download Formats
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    color: '#666666', 
+                    lineHeight: 1.6, 
+                    mb: { xs: 1.5, md: 2 } 
+                  }}>
+                    Download your crafted resume in Word (.docx) or plain text format. 
+                    Perfect formatting preserved for any application system.
+                  </Typography>
+                  <Typography variant="body2" sx={{ 
+                    color: '#0A66C2', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.8rem', md: '0.9rem' }
+                  }}>
+                    ✓ Word format (.docx)  ✓ Plain text (.txt)  ✓ Perfect formatting
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Job-Specific Crafting */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: { xs: 2, md: 3 },
+                flexDirection: { xs: 'column', sm: 'row' },
+                textAlign: { xs: 'center', sm: 'left' }
+              }}>
+                <Box sx={{
+                  width: { xs: 50, md: 60 },
+                  height: { xs: 50, md: 60 },
+                  bgcolor: '#F3E5F5',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  mx: { xs: 'auto', sm: 0 }
+                }}>
+                  <Typography sx={{ fontSize: { xs: '20px', md: '24px' } }}>🎯</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h5" sx={{ 
+                    fontSize: { xs: '1.2rem', md: '1.5rem' },
+                    fontWeight: 600, 
+                    mb: { xs: 1.5, md: 2 }, 
+                    color: '#0A66C2' 
+                  }}>
+                    Job-Specific Tailoring
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    color: '#666666', 
+                    lineHeight: 1.6, 
+                    mb: { xs: 1.5, md: 2 } 
+                  }}>
+                    Each resume is uniquely crafted for the specific job you're applying to. 
+                    No generic templates - every word is optimized for that role.
+                  </Typography>
+                  <Typography variant="body2" sx={{ 
+                    color: '#0A66C2', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.8rem', md: '0.9rem' }
+                  }}>
+                    ✓ Keyword optimization  ✓ Role-specific skills  ✓ Industry alignment
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* How It Works Section */}
+      <Box sx={{ py: { xs: 8, md: 12 } }} id="how-it-works-section">
+        <Container maxWidth="lg">
+          <Typography variant="h2" align="center" sx={{ 
+            fontSize: { xs: '1.8rem', md: '2.5rem' },
+            mb: { xs: 2, md: 3 },
+            fontWeight: 700,
+            color: '#0A66C2'
+          }}>
+            How JobTailorAI Works
+          </Typography>
+          <Typography variant="h6" align="center" sx={{ 
+            fontSize: { xs: '1rem', md: '1.25rem' },
+            mb: { xs: 6, md: 8 },
+            color: '#666666',
+            maxWidth: '600px',
+            mx: 'auto',
+            px: { xs: 2, md: 0 }
+          }}>
+            Transform your resume in three simple steps with our advanced AI technology
+          </Typography>
+
+          <Grid container spacing={{ xs: 4, md: 6 }}>
             <Grid item xs={12} md={4}>
               <Box sx={{ textAlign: 'center' }}>
                 <Avatar sx={{ 
-                  width: 80, 
-                  height: 80, 
+                  width: { xs: 60, md: 80 }, 
+                  height: { xs: 60, md: 80 }, 
                   bgcolor: '#0A66C2', 
                   mx: 'auto', 
-                  mb: 3,
-                  fontSize: '2rem',
+                  mb: { xs: 2, md: 3 },
+                  fontSize: { xs: '1.5rem', md: '2rem' },
                   fontWeight: 'bold'
                 }}>
                   1
                 </Avatar>
-                <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+                <Typography variant="h5" sx={{ 
+                  fontSize: { xs: '1.2rem', md: '1.5rem' },
+                  mb: { xs: 1.5, md: 2 }, 
+                  fontWeight: 600 
+                }}>
                   Upload Your Resume
                 </Typography>
-                <Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.6 }}>
-                  Simply drag and drop your existing resume or upload it directly. 
-                  We support PDF, Word, and text formats.
+                <Typography variant="body1" sx={{ 
+                  fontSize: { xs: '0.9rem', md: '1rem' },
+                  color: '#666666', 
+                  lineHeight: 1.6, 
+                  mb: { xs: 2, md: 3 },
+                  px: { xs: 1, md: 0 }
+                }}>
+                  Upload your existing resume in PDF, Word, or text format. 
+                  Our AI instantly analyzes your experience and skills.
                 </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: 1, 
+                  flexWrap: 'wrap' 
+                }}>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#E3F2FD', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#0A66C2', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    PDF
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#E3F2FD', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#0A66C2', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    Word
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#E3F2FD', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#0A66C2', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    Text
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
 
             <Grid item xs={12} md={4}>
               <Box sx={{ textAlign: 'center' }}>
                 <Avatar sx={{ 
-                  width: 80, 
-                  height: 80, 
+                  width: { xs: 60, md: 80 }, 
+                  height: { xs: 60, md: 80 }, 
                   bgcolor: '#0A66C2', 
                   mx: 'auto', 
-                  mb: 3,
-                  fontSize: '2rem',
+                  mb: { xs: 2, md: 3 },
+                  fontSize: { xs: '1.5rem', md: '2rem' },
                   fontWeight: 'bold'
                 }}>
                   2
                 </Avatar>
-                <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+                <Typography variant="h5" sx={{ 
+                  fontSize: { xs: '1.2rem', md: '1.5rem' },
+                  mb: { xs: 1.5, md: 2 }, 
+                  fontWeight: 600 
+                }}>
                   Add Job Description
                 </Typography>
-                <Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.6 }}>
-                  Paste the job description you're applying for. Our AI will analyze 
-                  the requirements and keywords.
+                <Typography variant="body1" sx={{ 
+                  fontSize: { xs: '0.9rem', md: '1rem' },
+                  color: '#666666', 
+                  lineHeight: 1.6, 
+                  mb: { xs: 2, md: 3 },
+                  px: { xs: 1, md: 0 }
+                }}>
+                  Paste the job description you're applying for. Our AI analyzes 
+                  requirements, keywords, and company culture.
                 </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: 1, 
+                  flexWrap: 'wrap' 
+                }}>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#E8F5E8', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#2E7D32', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    Keywords
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#E8F5E8', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#2E7D32', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    Skills
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#E8F5E8', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#2E7D32', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    Requirements
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
 
             <Grid item xs={12} md={4}>
               <Box sx={{ textAlign: 'center' }}>
                 <Avatar sx={{ 
-                  width: 80, 
-                  height: 80, 
+                  width: { xs: 60, md: 80 }, 
+                  height: { xs: 60, md: 80 }, 
                   bgcolor: '#0A66C2', 
                   mx: 'auto', 
-                  mb: 3,
-                  fontSize: '2rem',
+                  mb: { xs: 2, md: 3 },
+                  fontSize: { xs: '1.5rem', md: '2rem' },
                   fontWeight: 'bold'
                 }}>
                   3
                 </Avatar>
-                <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-                  Get Crafted Resume
+                <Typography variant="h5" sx={{ 
+                  fontSize: { xs: '1.2rem', md: '1.5rem' },
+                  mb: { xs: 1.5, md: 2 }, 
+                  fontWeight: 600 
+                }}>
+                  Preview, Compare & Download
                 </Typography>
-                <Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.6 }}>
-                  Download your professionally crafted resume, tailored specifically 
-                  for the job you want.
+                <Typography variant="body1" sx={{ 
+                  fontSize: { xs: '0.9rem', md: '1rem' },
+                  color: '#666666', 
+                  lineHeight: 1.6, 
+                  mb: { xs: 2, md: 3 },
+                  px: { xs: 1, md: 0 }
+                }}>
+                  Preview your crafted resume, compare with the original, 
+                  and download in your preferred format.
                 </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: 1, 
+                  flexWrap: 'wrap' 
+                }}>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#FFF3E0', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#F57C00', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    Preview
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#FFF3E0', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#F57C00', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    Compare
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    bgcolor: '#FFF3E0', 
+                    px: { xs: 1.5, md: 2 }, 
+                    py: 0.5, 
+                    borderRadius: 1, 
+                    color: '#F57C00', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', md: '0.75rem' }
+                  }}>
+                    Download
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
           </Grid>
@@ -1010,9 +1466,10 @@ export function LandingPage() {
       </Box>
 
       {/* Testimonials Section */}
-      <Container maxWidth="lg" sx={{ py: 12 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }} id="testimonials-section">
         <Typography variant="h2" align="center" sx={{ 
-          mb: 8,
+          fontSize: { xs: '1.8rem', md: '2.5rem' },
+          mb: { xs: 6, md: 8 },
           fontWeight: 700,
           background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
           WebkitBackgroundClip: 'text',
@@ -1022,21 +1479,32 @@ export function LandingPage() {
           What Our Users Say
         </Typography>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 3, md: 4 }}>
           <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', p: 3 }}>
-              <CardContent>
-                <Typography variant="body1" sx={{ mb: 3, fontStyle: 'italic', lineHeight: 1.6 }}>
+            <Card sx={{ height: '100%', p: { xs: 2, md: 3 } }}>
+              <CardContent sx={{ p: { xs: 2, md: 0 } }}>
+                <Typography variant="body1" sx={{ 
+                  mb: { xs: 2, md: 3 }, 
+                  fontStyle: 'italic', 
+                  lineHeight: 1.6,
+                  fontSize: { xs: '0.9rem', md: '1rem' }
+                }}>
                   "JobTailorAI helped me land my dream job at a Fortune 500 company. 
                   The AI suggestions were spot-on and made my resume stand out."
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ bgcolor: '#0A66C2', mr: 2 }}>S</Avatar>
+                  <Avatar sx={{ bgcolor: '#0A66C2', mr: 2, width: { xs: 36, md: 40 }, height: { xs: 36, md: 40 } }}>S</Avatar>
                   <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    <Typography variant="subtitle2" sx={{ 
+                      fontWeight: 600,
+                      fontSize: { xs: '0.9rem', md: '1rem' }
+                    }}>
                       Sarah Johnson
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#666666' }}>
+                    <Typography variant="caption" sx={{ 
+                      color: '#666666',
+                      fontSize: { xs: '0.75rem', md: '0.8rem' }
+                    }}>
                       Software Engineer at Microsoft
                     </Typography>
                   </Box>
@@ -1046,19 +1514,30 @@ export function LandingPage() {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', p: 3 }}>
-              <CardContent>
-                <Typography variant="body1" sx={{ mb: 3, fontStyle: 'italic', lineHeight: 1.6 }}>
+            <Card sx={{ height: '100%', p: { xs: 2, md: 3 } }}>
+              <CardContent sx={{ p: { xs: 2, md: 0 } }}>
+                <Typography variant="body1" sx={{ 
+                  mb: { xs: 2, md: 3 }, 
+                  fontStyle: 'italic', 
+                  lineHeight: 1.6,
+                  fontSize: { xs: '0.9rem', md: '1rem' }
+                }}>
                   "I was struggling to get interviews until I used this tool. 
                   Now I'm getting callbacks from top companies. Highly recommended!"
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ bgcolor: '#0A66C2', mr: 2 }}>M</Avatar>
+                  <Avatar sx={{ bgcolor: '#0A66C2', mr: 2, width: { xs: 36, md: 40 }, height: { xs: 36, md: 40 } }}>M</Avatar>
                   <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    <Typography variant="subtitle2" sx={{ 
+                      fontWeight: 600,
+                      fontSize: { xs: '0.9rem', md: '1rem' }
+                    }}>
                       Michael Chen
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#666666' }}>
+                    <Typography variant="caption" sx={{ 
+                      color: '#666666',
+                      fontSize: { xs: '0.75rem', md: '0.8rem' }
+                    }}>
                       Product Manager at Google
                     </Typography>
                   </Box>
@@ -1068,19 +1547,30 @@ export function LandingPage() {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', p: 3 }}>
-              <CardContent>
-                <Typography variant="body1" sx={{ mb: 3, fontStyle: 'italic', lineHeight: 1.6 }}>
+            <Card sx={{ height: '100%', p: { xs: 2, md: 3 } }}>
+              <CardContent sx={{ p: { xs: 2, md: 0 } }}>
+                <Typography variant="body1" sx={{ 
+                  mb: { xs: 2, md: 3 }, 
+                  fontStyle: 'italic', 
+                  lineHeight: 1.6,
+                  fontSize: { xs: '0.9rem', md: '1rem' }
+                }}>
                   "The ATS enhancement feature is incredible. My resume now passes 
                   through applicant tracking systems with ease."
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ bgcolor: '#0A66C2', mr: 2 }}>E</Avatar>
+                  <Avatar sx={{ bgcolor: '#0A66C2', mr: 2, width: { xs: 36, md: 40 }, height: { xs: 36, md: 40 } }}>E</Avatar>
                   <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    <Typography variant="subtitle2" sx={{ 
+                      fontWeight: 600,
+                      fontSize: { xs: '0.9rem', md: '1rem' }
+                    }}>
                       Emily Rodriguez
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#666666' }}>
+                    <Typography variant="caption" sx={{ 
+                      color: '#666666',
+                      fontSize: { xs: '0.75rem', md: '0.8rem' }
+                    }}>
                       Marketing Director at Amazon
                     </Typography>
                   </Box>
@@ -1094,34 +1584,38 @@ export function LandingPage() {
       {/* CTA Section */}
       <Box sx={{ 
         bgcolor: 'linear-gradient(135deg, #0A66C2 0%, #378FE9 100%)', 
-        py: 12,
+        py: { xs: 8, md: 12 },
         color: 'white'
       }}>
         <Container maxWidth="md">
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="h2" sx={{ 
-              mb: 3,
-              fontWeight: 700
+              fontSize: { xs: '1.8rem', md: '2.5rem' },
+              mb: { xs: 2, md: 3 },
+              fontWeight: 700,
+              px: { xs: 2, md: 0 }
             }}>
               Ready to Land Your Dream Job?
             </Typography>
             <Typography variant="h5" sx={{ 
-              mb: 6,
+              fontSize: { xs: '1rem', md: '1.25rem' },
+              mb: { xs: 4, md: 6 },
               opacity: 0.9,
-              fontWeight: 300
+              fontWeight: 300,
+              px: { xs: 2, md: 0 }
             }}>
               Join thousands of professionals who have successfully crafted their resumes
             </Typography>
             <Button 
               variant="contained"
-              size="large"
+              size={isMobile ? "medium" : "large"}
               onClick={handleGetStarted}
               sx={{
                 bgcolor: 'white',
                 color: '#0A66C2',
-                px: 6,
-                py: 2,
-                fontSize: '1.2rem',
+                px: { xs: 4, md: 6 },
+                py: { xs: 1.5, md: 2 },
+                fontSize: { xs: '1rem', md: '1.2rem' },
                 fontWeight: 600,
                 borderRadius: 3,
                 boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
@@ -1139,86 +1633,283 @@ export function LandingPage() {
       </Box>
 
       {/* Footer */}
-      <Box sx={{ bgcolor: '#1a1a1a', color: 'white', py: 8 }}>
+      <Box sx={{ bgcolor: '#1a1a1a', color: 'white', py: { xs: 6, md: 8 } }}>
         <Container maxWidth="lg">
-          <Grid container spacing={4}>
+          <Grid container spacing={{ xs: 3, md: 4 }}>
             <Grid item xs={12} md={4}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <WorkIcon sx={{ fontSize: 32, mr: 2, color: '#0A66C2' }} />
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'white' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 3 } }}>
+                <WorkIcon sx={{ fontSize: { xs: 28, md: 32 }, mr: 2, color: '#0A66C2' }} />
+                <Typography variant="h5" sx={{ 
+                  fontWeight: 700, 
+                  color: 'white',
+                  fontSize: { xs: '1.2rem', md: '1.5rem' }
+                }}>
                   JobTailorAI
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ color: '#cccccc', lineHeight: 1.6, mb: 3 }}>
+              <Typography variant="body2" sx={{ 
+                color: '#cccccc', 
+                lineHeight: 1.6, 
+                mb: { xs: 2, md: 3 },
+                fontSize: { xs: '0.85rem', md: '0.9rem' }
+              }}>
                 Powered by advanced AI technology to help professionals create 
                 compelling resumes that get noticed by employers and pass ATS systems.
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={2}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'white' }}>
+            <Grid item xs={6} md={2}>
+              <Typography variant="h6" sx={{ 
+                mb: { xs: 2, md: 3 }, 
+                fontWeight: 600, 
+                color: 'white',
+                fontSize: { xs: '1rem', md: '1.25rem' }
+              }}>
                 Product
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.5, md: 1 } }}>
+                <Link 
+                  component="button"
+                  onClick={() => document.querySelector('#features-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Features
                 </Link>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+                <Link 
+                  component="button"
+                  onClick={() => document.querySelector('#how-it-works-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   How it Works
                 </Link>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+                <Link 
+                  component="button"
+                  onClick={() => document.querySelector('#testimonials-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Testimonials
                 </Link>
+                <Link 
+                  component="button"
+                  onClick={handleGetStarted}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
+                  Try Now
+                </Link>
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={2}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'white' }}>
+            <Grid item xs={6} md={2}>
+              <Typography variant="h6" sx={{ 
+                mb: { xs: 2, md: 3 }, 
+                fontWeight: 600, 
+                color: 'white',
+                fontSize: { xs: '1rem', md: '1.25rem' }
+              }}>
                 Support
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.5, md: 1 } }}>
+                <Link 
+                  component="button"
+                  onClick={() => setHelpCenterDialogOpen(true)}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Help Center
                 </Link>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+                <Link 
+                  component="button"
+                  onClick={() => setContactUsDialogOpen(true)}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Contact Us
                 </Link>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+                <Link 
+                  component="button"
+                  onClick={() => setFaqsDialogOpen(true)}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   FAQ
                 </Link>
+                <Link 
+                  href="mailto:support@jobtailorai.com"
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
+                  Email Support
+                </Link>
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={2}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'white' }}>
+            <Grid item xs={6} md={2}>
+              <Typography variant="h6" sx={{ 
+                mb: { xs: 2, md: 3 }, 
+                fontWeight: 600, 
+                color: 'white',
+                fontSize: { xs: '1rem', md: '1.25rem' }
+              }}>
                 Legal
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.5, md: 1 } }}>
+                <Link 
+                  component="button"
+                  onClick={() => setPrivacyDialogOpen(true)}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Privacy Policy
                 </Link>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+                <Link 
+                  component="button"
+                  onClick={() => setTermsDialogOpen(true)}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Terms of Service
                 </Link>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+                <Link 
+                  component="button"
+                  onClick={() => setCookieDialogOpen(true)}
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none', 
+                    textAlign: 'left',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Cookie Policy
+                </Link>
+                <Link 
+                  href="mailto:legal@jobtailorai.com"
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
+                  Legal Inquiries
                 </Link>
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={2}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'white' }}>
+            <Grid item xs={6} md={2}>
+              <Typography variant="h6" sx={{ 
+                mb: { xs: 2, md: 3 }, 
+                fontWeight: 600, 
+                color: 'white',
+                fontSize: { xs: '1rem', md: '1.25rem' }
+              }}>
                 Connect
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.5, md: 1 } }}>
+                <Link 
+                  href="https://linkedin.com/company/jobtailorai" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   LinkedIn
                 </Link>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+                <Link 
+                  href="https://twitter.com/jobtailorai" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Twitter
                 </Link>
-                <Link href="#" sx={{ color: '#cccccc', textDecoration: 'none', '&:hover': { color: '#0A66C2' } }}>
+                <Link 
+                  href="https://blog.jobtailorai.com" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
                   Blog
+                </Link>
+                <Link 
+                  href="https://github.com/jobtailorai" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ 
+                    color: '#cccccc', 
+                    textDecoration: 'none',
+                    fontSize: { xs: '0.8rem', md: '0.9rem' },
+                    '&:hover': { color: '#0A66C2' } 
+                  }}
+                >
+                  GitHub
                 </Link>
               </Box>
             </Grid>
@@ -1226,20 +1917,58 @@ export function LandingPage() {
 
           <Box sx={{ 
             borderTop: '1px solid #333333', 
-            mt: 6, 
-            pt: 4,
+            mt: { xs: 4, md: 6 }, 
+            pt: { xs: 3, md: 4 },
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: 2
           }}>
-            <Typography variant="body2" sx={{ color: '#cccccc' }}>
+            <Typography variant="body2" sx={{ 
+              color: '#cccccc',
+              fontSize: { xs: '0.8rem', md: '0.9rem' }
+            }}>
               © {new Date().getFullYear()} JobTailorAI. All rights reserved.
             </Typography>
-            <Typography variant="body2" sx={{ color: '#cccccc' }}>
-              Built with AWS and React
-            </Typography>
+            <Box sx={{ display: 'flex', gap: { xs: 2, md: 3 } }}>
+              <Link 
+                component="button"
+                onClick={() => setPrivacyDialogOpen(true)}
+                sx={{ 
+                  color: '#cccccc', 
+                  textDecoration: 'none', 
+                  fontSize: { xs: '0.75rem', md: '0.875rem' },
+                  '&:hover': { color: '#0A66C2' } 
+                }}
+              >
+                Privacy
+              </Link>
+              <Link 
+                component="button"
+                onClick={() => setTermsDialogOpen(true)}
+                sx={{ 
+                  color: '#cccccc', 
+                  textDecoration: 'none', 
+                  fontSize: { xs: '0.75rem', md: '0.875rem' },
+                  '&:hover': { color: '#0A66C2' } 
+                }}
+              >
+                Terms
+              </Link>
+              <Link 
+                component="button"
+                onClick={() => setContactUsDialogOpen(true)}
+                sx={{ 
+                  color: '#cccccc', 
+                  textDecoration: 'none', 
+                  fontSize: { xs: '0.75rem', md: '0.875rem' },
+                  '&:hover': { color: '#0A66C2' } 
+                }}
+              >
+                Contact
+              </Link>
+            </Box>
           </Box>
         </Container>
       </Box>
@@ -1455,6 +2184,270 @@ export function LandingPage() {
             }}
           >
             {isSubmittingContact ? 'Submitting...' : 'Submit'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Privacy Policy Dialog */}
+      <Dialog
+        open={privacyDialogOpen}
+        onClose={() => setPrivacyDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, maxHeight: '80vh' } }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          🔒 Privacy Policy
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Typography variant="body2" sx={{ color: '#666', mb: 2 }}>
+            Last updated: {new Date().toLocaleDateString()}
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            At JobTailorAI, we take your privacy seriously. This policy explains how we collect, use, and protect your information.
+          </Typography>
+          
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            Information We Collect
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            • Account information (email, name)<br/>
+            • Resume content you upload<br/>
+            • Job descriptions you provide<br/>
+            • Usage analytics and performance data
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            How We Use Your Information
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            • To provide AI resume crafting services<br/>
+            • To improve our algorithms and features<br/>
+            • To communicate with you about your account<br/>
+            • To ensure service security and prevent abuse
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            Data Security
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            We use industry-standard encryption and security measures to protect your data. 
+            Your resume content is processed securely and never shared with third parties.
+          </Typography>
+
+          <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#666' }}>
+            For questions about this policy, contact us at privacy@jobtailorai.com
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => setPrivacyDialogOpen(false)}
+            variant="contained"
+            sx={{ background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)', px: 4 }}
+          >
+            I Understand
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Terms of Service Dialog */}
+      <Dialog
+        open={termsDialogOpen}
+        onClose={() => setTermsDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, maxHeight: '80vh' } }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          📋 Terms of Service
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Typography variant="body2" sx={{ color: '#666', mb: 2 }}>
+            Last updated: {new Date().toLocaleDateString()}
+          </Typography>
+          
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            1. Service Description
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            JobTailorAI provides AI-powered resume optimization services to help users create 
+            job-specific resumes that are tailored to particular job descriptions.
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            2. User Responsibilities
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            • Provide accurate information in your resume<br/>
+            • Use the service for legitimate job applications<br/>
+            • Maintain the confidentiality of your account<br/>
+            • Comply with all applicable laws and regulations
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            3. Intellectual Property
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            You retain ownership of your resume content. JobTailorAI retains ownership 
+            of the AI technology and service infrastructure.
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            4. Limitation of Liability
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            JobTailorAI provides resume optimization services but does not guarantee 
+            job placement or interview success. Use of our service is at your own discretion.
+          </Typography>
+
+          <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#666' }}>
+            For questions about these terms, contact us at legal@jobtailorai.com
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => setTermsDialogOpen(false)}
+            variant="contained"
+            sx={{ background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)', px: 4 }}
+          >
+            I Agree
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Cookie Policy Dialog */}
+      <Dialog
+        open={cookieDialogOpen}
+        onClose={() => setCookieDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          🍪 Cookie Policy
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            We use cookies to enhance your experience on JobTailorAI.
+          </Typography>
+          
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            Essential Cookies
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            Required for the website to function properly, including authentication and security.
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            Analytics Cookies
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            Help us understand how users interact with our service to improve functionality.
+          </Typography>
+
+          <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#666' }}>
+            You can manage cookie preferences in your browser settings.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => setCookieDialogOpen(false)}
+            variant="contained"
+            sx={{ background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)', px: 4 }}
+          >
+            Got It
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Help Center Dialog */}
+      <Dialog
+        open={helpCenterDialogOpen}
+        onClose={() => setHelpCenterDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, maxHeight: '80vh' } }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          color: '#0A66C2',
+          fontWeight: 600,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          🆘 Help Center
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            Welcome to the JobTailorAI Help Center! Find answers to common questions and learn how to get the most out of our platform.
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            🚀 Getting Started
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            • Create your account and upload your resume<br/>
+            • Paste a job description you're interested in<br/>
+            • Let our AI craft your resume for that specific job<br/>
+            • Preview, compare, and download your tailored resume
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            💡 Pro Tips
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            • Use the complete job description for best results<br/>
+            • Review the comparison to understand changes<br/>
+            • Download in Word format for easy editing<br/>
+            • Create different versions for different job types
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
+            🔧 Troubleshooting
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
+            • Ensure your resume file is under 5MB<br/>
+            • Use supported formats: PDF, Word, or text<br/>
+            • Check your internet connection for uploads<br/>
+            • Clear browser cache if experiencing issues
+          </Typography>
+
+          <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#666' }}>
+            Still need help? Contact our support team at support@jobtailorai.com
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => setContactUsDialogOpen(true)}
+            variant="outlined"
+            sx={{ mr: 2 }}
+          >
+            Contact Support
+          </Button>
+          <Button 
+            onClick={() => setHelpCenterDialogOpen(false)}
+            variant="contained"
+            sx={{ background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)', px: 4 }}
+          >
+            Close
           </Button>
         </DialogActions>
       </Dialog>
