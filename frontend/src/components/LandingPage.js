@@ -524,14 +524,16 @@ export function LandingPage() {
                   height: { xs: '280px', sm: '400px', md: '550px' },
                   pt: 2
                 }}>
-                  {/* Labels Row */}
+                  {/* Resume Mockups Row */}
                   <Box sx={{
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    maxWidth: { xs: '290px', sm: '400px', md: '500px' },
-                    mb: 1
+                    justifyContent: 'center',
+                    alignItems: 'flex-start',
+                    gap: { xs: 1, sm: 2, md: 3 },
+                    flexDirection: 'row'
                   }}>
+                  {/* Before Resume with Label */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Box sx={{
                       bgcolor: '#ff6b6b',
                       color: 'white',
@@ -540,33 +542,11 @@ export function LandingPage() {
                       borderRadius: 1,
                       fontSize: { xs: '10px', md: '11px' },
                       fontWeight: 'bold',
-                      boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)'
+                      boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)',
+                      mb: 1
                     }}>
                       BEFORE
                     </Box>
-                    <Box sx={{
-                      bgcolor: '#4caf50',
-                      color: 'white',
-                      px: { xs: 1.5, md: 2 },
-                      py: 0.7,
-                      borderRadius: 1,
-                      fontSize: { xs: '10px', md: '11px' },
-                      fontWeight: 'bold',
-                      boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)'
-                    }}>
-                      AFTER
-                    </Box>
-                  </Box>
-                  
-                  {/* Resume Mockups Row */}
-                  <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: { xs: 1, sm: 2, md: 3 },
-                    flexDirection: 'row'
-                  }}>
-                  {/* Before Resume */}
                   <motion.div
                     initial={{ scale: 1, x: 0 }}
                     animate={{ scale: { xs: 1, sm: 0.9 }, x: { xs: 0, sm: -20 } }}
@@ -701,6 +681,7 @@ export function LandingPage() {
                       </Box>
                     </Box>
                   </motion.div>
+                  </Box>
 
                   {/* Transformation Arrow */}
                   <motion.div
@@ -721,7 +702,21 @@ export function LandingPage() {
                     }} />
                   </motion.div>
 
-                  {/* After Resume */}
+                  {/* After Resume with Label */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Box sx={{
+                      bgcolor: '#4caf50',
+                      color: 'white',
+                      px: { xs: 1.5, md: 2 },
+                      py: 0.7,
+                      borderRadius: 1,
+                      fontSize: { xs: '10px', md: '11px' },
+                      fontWeight: 'bold',
+                      boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)',
+                      mb: 1
+                    }}>
+                      AFTER
+                    </Box>
                   <motion.div
                     initial={{ scale: 1, x: 0 }}
                     animate={{ scale: { xs: 1, sm: 1.1 }, x: { xs: 0, sm: 20 } }}
@@ -894,6 +889,7 @@ export function LandingPage() {
                       </Box>
                     </Box>
                   </motion.div>
+                  </Box>
                   </Box>
                   
                   {/* Stats Below Mockup */}
