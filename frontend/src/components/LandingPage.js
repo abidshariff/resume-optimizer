@@ -521,7 +521,7 @@ export function LandingPage() {
                   flexDirection: 'column',
                   justifyContent: 'flex-start',
                   alignItems: 'center',
-                  height: { xs: '280px', sm: '400px', md: '550px' },
+                  height: { xs: '320px', sm: '480px', md: '600px' },
                   pt: 2
                 }}>
                   {/* Resume Mockups Row */}
@@ -553,15 +553,15 @@ export function LandingPage() {
                     transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
                   >
                     <Box sx={{
-                      width: { xs: '140px', sm: '200px', md: '220px' },
-                      height: { xs: '200px', sm: '290px', md: '320px' },
+                      width: { xs: '160px', sm: '240px', md: '280px' },
+                      height: { xs: '240px', sm: '360px', md: '420px' },
                       bgcolor: '#f9f9f9',
                       borderRadius: 2,
                       border: '2px solid #ddd',
                       position: 'relative',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                       overflow: 'hidden',
-                      p: { xs: 0.8, md: 1.5 }
+                      p: { xs: 1, md: 1.5 }
                     }}>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', borderBottom: '1px solid #ccc', pb: 1 }}>
@@ -679,6 +679,61 @@ export function LandingPage() {
                           Python, SQL, PostgreSQL, MySQL, Hadoop, Spark, Airflow, Git, Linux
                         </Typography>
                       </Box>
+                      
+                      {/* Education Section */}
+                      <Box sx={{ mb: 1 }}>
+                        <Typography sx={{ 
+                          fontSize: { xs: '6px', sm: '8px' }, 
+                          fontWeight: 'bold', 
+                          color: '#333',
+                          mb: 0.5,
+                          textDecoration: 'underline'
+                        }}>
+                          EDUCATION
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '7px' }, 
+                          fontWeight: 'bold', 
+                          color: '#444',
+                          mb: 0.3
+                        }}>
+                          BS Computer Science - State University
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2
+                        }}>
+                          2018-2022 | GPA: 3.5
+                        </Typography>
+                      </Box>
+                      
+                      {/* Certifications */}
+                      <Box sx={{ mb: 1 }}>
+                        <Typography sx={{ 
+                          fontSize: { xs: '6px', sm: '8px' }, 
+                          fontWeight: 'bold', 
+                          color: '#333',
+                          mb: 0.5,
+                          textDecoration: 'underline'
+                        }}>
+                          CERTIFICATIONS
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.3
+                        }}>
+                          • AWS Certified Solutions Architect
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.3
+                        }}>
+                          • Google Cloud Professional Data Engineer
+                        </Typography>
+                      </Box>
                     </Box>
                   </motion.div>
                   </Box>
@@ -700,6 +755,45 @@ export function LandingPage() {
                       filter: 'drop-shadow(0 0 15px rgba(10, 102, 194, 0.6))',
                       transform: 'rotate(0deg)'
                     }} />
+                    
+                    {/* Stats in the middle */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 1,
+                      mt: 2
+                    }}>
+                      {[
+                        { number: '3x', label: 'More Interviews' },
+                        { number: '95%', label: 'ATS Compatible' },
+                        { number: '30s', label: 'Processing Time' }
+                      ].map((stat, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
+                        >
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h6" sx={{ 
+                              fontSize: { xs: '0.9rem', md: '1.1rem' },
+                              color: '#0A66C2', 
+                              fontWeight: 'bold',
+                              mb: 0.2
+                            }}>
+                              {stat.number}
+                            </Typography>
+                            <Typography variant="caption" sx={{ 
+                              color: '#cccccc',
+                              fontSize: { xs: '8px', md: '10px' }
+                            }}>
+                              {stat.label}
+                            </Typography>
+                          </Box>
+                        </motion.div>
+                      ))}
+                    </Box>
                   </motion.div>
 
                   {/* After Resume with Label */}
@@ -723,18 +817,18 @@ export function LandingPage() {
                     transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
                   >
                     <Box sx={{
-                      width: { xs: '140px', sm: '200px', md: '220px' },
-                      height: { xs: '200px', sm: '290px', md: '320px' },
+                      width: { xs: '160px', sm: '240px', md: '280px' },
+                      height: { xs: '240px', sm: '360px', md: '420px' },
                       bgcolor: 'white',
                       borderRadius: 2,
                       border: '2px solid #0A66C2',
                       position: 'relative',
                       boxShadow: '0 8px 30px rgba(10, 102, 194, 0.3)',
                       overflow: 'hidden',
-                      p: { xs: 0.8, md: 1.5 }
+                      p: { xs: 1, md: 1.5 }
                     }}>
                       {/* Header */}
-                      <Box sx={{ mb: 1, textAlign: 'center', bgcolor: '#f8fbff', mx: { xs: -0.8, md: -1.5 }, mt: { xs: -0.8, md: -1.5 }, p: { xs: 0.8, md: 1.5 }, borderBottom: '2px solid #0A66C2' }}>
+                      <Box sx={{ mb: 1, textAlign: 'center', bgcolor: '#f8fbff', mx: { xs: -1, md: -1.5 }, mt: { xs: -1, md: -1.5 }, p: { xs: 1, md: 1.5 }, borderBottom: '2px solid #0A66C2' }}>
                         <Typography sx={{ 
                           fontSize: { xs: '9px', sm: '11px' }, 
                           fontWeight: 'bold', 
@@ -854,6 +948,72 @@ export function LandingPage() {
                         </Typography>
                       </Box>
                       
+                      {/* Education Section - Enhanced */}
+                      <Box sx={{ mb: 1 }}>
+                        <Typography sx={{ 
+                          fontSize: { xs: '6px', sm: '8px' }, 
+                          fontWeight: 'bold', 
+                          color: '#0A66C2',
+                          mb: 0.5,
+                          borderBottom: '1px solid #0A66C2',
+                          pb: 0.2
+                        }}>
+                          EDUCATION & CERTIFICATIONS
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '7px' }, 
+                          fontWeight: 'bold', 
+                          color: '#0A66C2',
+                          mb: 0.3
+                        }}>
+                          MS Computer Science - Stanford University
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.3
+                        }}>
+                          Specialization: Machine Learning & AI | GPA: 3.9
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2
+                        }}>
+                          • AWS ML Specialty • Google Cloud ML Engineer • TensorFlow Developer
+                        </Typography>
+                      </Box>
+                      
+                      {/* Projects Section */}
+                      <Box sx={{ mb: 1 }}>
+                        <Typography sx={{ 
+                          fontSize: { xs: '6px', sm: '8px' }, 
+                          fontWeight: 'bold', 
+                          color: '#0A66C2',
+                          mb: 0.5,
+                          borderBottom: '1px solid #0A66C2',
+                          pb: 0.2
+                        }}>
+                          KEY PROJECTS
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Predictive Analytics Platform: Increased accuracy by 40%
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2
+                        }}>
+                          • Computer Vision System: Reduced processing time by 60%
+                        </Typography>
+                      </Box>
+                      
                       {/* AI Keywords Highlight */}
                       <Box sx={{
                         position: 'absolute',
@@ -892,44 +1052,7 @@ export function LandingPage() {
                   </Box>
                   </Box>
                   
-                  {/* Stats Below Mockup */}
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  gap: { xs: 2, md: 4 }, 
-                  mt: { xs: 2, md: 3 },
-                  flexWrap: 'wrap'
-                }}>
-                  {[
-                    { number: '3x', label: 'More Interviews' },
-                    { number: '95%', label: 'ATS Compatible' },
-                    { number: '30-45s', label: 'Processing Time' }
-                  ].map((stat, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
-                    >
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h4" sx={{ 
-                          fontSize: { xs: '1.5rem', md: '2rem' },
-                          color: '#0A66C2', 
-                          fontWeight: 'bold',
-                          mb: 0.5
-                        }}>
-                          {stat.number}
-                        </Typography>
-                        <Typography variant="caption" sx={{ 
-                          color: '#cccccc',
-                          fontSize: { xs: '10px', md: '12px' }
-                        }}>
-                          {stat.label}
-                        </Typography>
-                      </Box>
-                    </motion.div>
-                  ))}
-                </Box>
+                  {/* Stats moved to middle */}
                 </Box>
               </motion.div>
             </Grid>
@@ -1580,7 +1703,7 @@ export function LandingPage() {
       {/* CTA Section */}
       <Box sx={{ 
         bgcolor: 'linear-gradient(135deg, #0A66C2 0%, #378FE9 100%)', 
-        py: { xs: 8, md: 12 },
+        py: { xs: 4, md: 6 },
         color: 'white'
       }}>
         <Container maxWidth="md">
