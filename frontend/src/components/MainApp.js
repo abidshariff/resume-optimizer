@@ -1352,10 +1352,12 @@ function MainApp() {
                   {/* Primary Action Buttons */}
                   <Box sx={{ 
                     display: 'flex', 
-                    gap: 2, 
+                    gap: { xs: 1.5, md: 2 }, 
                     justifyContent: 'center',
                     flexWrap: 'wrap',
-                    mb: 3
+                    mb: 3,
+                    flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile
+                    alignItems: { xs: 'stretch', sm: 'center' }
                   }}>
                     <Button 
                       variant="contained" 
@@ -1363,7 +1365,12 @@ function MainApp() {
                       size="large"
                       startIcon={<DownloadIcon />}
                       onClick={downloadOptimizedResume}
-                      sx={{ px: 4, py: 1.5, fontSize: '16px' }}
+                      sx={{ 
+                        px: { xs: 3, md: 4 }, 
+                        py: { xs: 1.2, md: 1.5 }, 
+                        fontSize: { xs: '14px', md: '16px' },
+                        minWidth: { xs: 'auto', sm: '160px' }
+                      }}
                     >
                       Download Resume
                     </Button>
@@ -1374,7 +1381,12 @@ function MainApp() {
                       size="large"
                       startIcon={<VisibilityIcon />}
                       onClick={() => setPreviewDialogOpen(true)}
-                      sx={{ px: 4, py: 1.5, fontSize: '16px' }}
+                      sx={{ 
+                        px: { xs: 3, md: 4 }, 
+                        py: { xs: 1.2, md: 1.5 }, 
+                        fontSize: { xs: '14px', md: '16px' },
+                        minWidth: { xs: 'auto', sm: '160px' }
+                      }}
                     >
                       Preview Resume
                     </Button>
@@ -1385,7 +1397,12 @@ function MainApp() {
                       size="large"
                       startIcon={<CompareIcon />}
                       onClick={() => setCompareDialogOpen(true)}
-                      sx={{ px: 4, py: 1.5, fontSize: '16px' }}
+                      sx={{ 
+                        px: { xs: 3, md: 4 }, 
+                        py: { xs: 1.2, md: 1.5 }, 
+                        fontSize: { xs: '14px', md: '16px' },
+                        minWidth: { xs: 'auto', sm: '160px' }
+                      }}
                     >
                       Compare Versions
                     </Button>
@@ -1934,10 +1951,12 @@ function MainApp() {
         onClose={() => setPreviewDialogOpen(false)}
         maxWidth="md"
         fullWidth
+        fullScreen={window.innerWidth < 768} // Full screen on mobile
         PaperProps={{
           sx: {
-            borderRadius: 2,
-            maxHeight: '90vh'
+            borderRadius: { xs: 0, md: 2 },
+            maxHeight: { xs: '100vh', md: '90vh' },
+            height: { xs: '100vh', md: 'auto' }
           }
         }}
       >
@@ -1947,42 +1966,65 @@ function MainApp() {
           justifyContent: 'space-between',
           color: '#0A66C2',
           fontWeight: 600,
-          borderBottom: '1px solid #e0e0e0'
+          borderBottom: '1px solid #e0e0e0',
+          py: { xs: 1.5, md: 2 },
+          px: { xs: 2, md: 3 },
+          fontSize: { xs: '1.1rem', md: '1.25rem' }
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <VisibilityIcon sx={{ mr: 1 }} />
-            Crafted Resume Preview
+            <VisibilityIcon sx={{ mr: 1, fontSize: { xs: '1.2rem', md: '1.5rem' } }} />
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              Crafted Resume Preview
+            </Box>
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+              Preview
+            </Box>
           </Box>
           <IconButton onClick={() => setPreviewDialogOpen(false)}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ py: 3 }}>
+        <DialogContent sx={{ 
+          py: { xs: 2, md: 3 },
+          px: { xs: 1, md: 3 }
+        }}>
           <Paper 
             variant="outlined" 
             sx={{ 
-              p: 3, 
+              p: { xs: 1.5, md: 3 }, 
               bgcolor: '#f8f9fa',
-              maxHeight: '60vh',
+              maxHeight: { xs: 'calc(100vh - 200px)', md: '60vh' },
               overflow: 'auto',
               fontFamily: 'monospace',
-              fontSize: '14px',
+              fontSize: { xs: '12px', md: '14px' },
               lineHeight: 1.6
             }}
           >
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+            <pre style={{ 
+              margin: 0, 
+              whiteSpace: 'pre-wrap', 
+              wordWrap: 'break-word',
+              fontSize: 'inherit'
+            }}>
               {optimizedResumeText || 'Loading preview...'}
             </pre>
           </Paper>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ 
+          px: { xs: 2, md: 3 }, 
+          pb: { xs: 1.5, md: 2 },
+          pt: { xs: 1, md: 0 }
+        }}>
           <Button 
             onClick={downloadOptimizedResume}
             variant="contained"
             startIcon={<DownloadIcon />}
+            fullWidth={window.innerWidth < 768} // Full width on mobile
             sx={{
               background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-              px: 4
+              px: { xs: 2, md: 4 },
+              py: { xs: 1.5, md: 1 },
+              fontSize: { xs: '0.9rem', md: '1rem' }
             }}
           >
             Download Resume
@@ -1996,11 +2038,12 @@ function MainApp() {
         onClose={() => setCompareDialogOpen(false)}
         maxWidth="xl"
         fullWidth
+        fullScreen={window.innerWidth < 768} // Full screen on mobile
         PaperProps={{
           sx: {
-            borderRadius: 2,
-            maxHeight: '95vh',
-            height: '95vh'
+            borderRadius: { xs: 0, md: 2 }, // No border radius on mobile
+            maxHeight: { xs: '100vh', md: '95vh' },
+            height: { xs: '100vh', md: '95vh' }
           }
         }}
       >
@@ -2010,48 +2053,68 @@ function MainApp() {
           justifyContent: 'space-between',
           color: '#0A66C2',
           fontWeight: 600,
-          borderBottom: '1px solid #e0e0e0'
+          borderBottom: '1px solid #e0e0e0',
+          py: { xs: 1.5, md: 2 },
+          px: { xs: 2, md: 3 },
+          fontSize: { xs: '1.1rem', md: '1.25rem' }
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <CompareIcon sx={{ mr: 1 }} />
-            Resume Comparison: Original vs Crafted
+            <CompareIcon sx={{ mr: 1, fontSize: { xs: '1.2rem', md: '1.5rem' } }} />
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              Resume Comparison: Original vs Crafted
+            </Box>
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+              Comparison
+            </Box>
           </Box>
           <IconButton onClick={() => setCompareDialogOpen(false)}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ py: 3, height: '100%' }}>
-          <Grid container spacing={2} sx={{ height: '100%' }}>
+        <DialogContent sx={{ 
+          py: { xs: 2, md: 3 }, 
+          px: { xs: 1, md: 3 },
+          height: '100%',
+          overflow: 'hidden'
+        }}>
+          <Grid container spacing={{ xs: 1, md: 2 }} sx={{ height: '100%' }}>
             {/* Original Resume */}
-            <Grid item xs={12} md={6} sx={{ height: '100%' }}>
+            <Grid item xs={12} md={6} sx={{ 
+              height: { xs: '50%', md: '100%' },
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
               <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" sx={{ 
-                  mb: 2, 
+                  mb: { xs: 1, md: 2 }, 
                   color: '#d32f2f',
                   fontWeight: 600,
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  fontSize: { xs: '1rem', md: '1.25rem' }
                 }}>
                   📄 Original Resume
                 </Typography>
                 <Paper 
                   variant="outlined" 
                   sx={{ 
-                    p: 3, 
+                    p: { xs: 1.5, md: 3 }, 
                     bgcolor: '#fff3e0',
                     flex: 1,
                     overflow: 'auto',
                     fontFamily: 'monospace',
-                    fontSize: '14px',
+                    fontSize: { xs: '12px', md: '14px' },
                     lineHeight: 1.6,
-                    border: '2px solid #ff9800'
+                    border: '2px solid #ff9800',
+                    minHeight: { xs: '200px', md: 'auto' }
                   }}
                 >
                   <pre style={{ 
                     margin: 0, 
                     whiteSpace: 'pre-wrap', 
                     wordWrap: 'break-word',
-                    fontFamily: 'Consolas, Monaco, "Courier New", monospace'
+                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                    fontSize: 'inherit'
                   }}>
                     {originalResumeText || 'Original resume text not available for this job.\n\nThis feature is available for new resume optimizations.\nFor existing jobs, the original text was not stored for comparison.\n\nTo see a comparison:\n1. Upload your resume again\n2. Run a new optimization\n3. The comparison will show both versions'}
                   </pre>
@@ -2060,35 +2123,42 @@ function MainApp() {
             </Grid>
 
             {/* Crafted Resume */}
-            <Grid item xs={12} md={6} sx={{ height: '100%' }}>
+            <Grid item xs={12} md={6} sx={{ 
+              height: { xs: '50%', md: '100%' },
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
               <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" sx={{ 
-                  mb: 2, 
+                  mb: { xs: 1, md: 2 }, 
                   color: '#2e7d32',
                   fontWeight: 600,
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  fontSize: { xs: '1rem', md: '1.25rem' }
                 }}>
                   ✨ Crafted Resume
                 </Typography>
                 <Paper 
                   variant="outlined" 
                   sx={{ 
-                    p: 3, 
+                    p: { xs: 1.5, md: 3 }, 
                     bgcolor: '#e8f5e8',
                     flex: 1,
                     overflow: 'auto',
                     fontFamily: 'monospace',
-                    fontSize: '14px',
+                    fontSize: { xs: '12px', md: '14px' },
                     lineHeight: 1.6,
-                    border: '2px solid #4caf50'
+                    border: '2px solid #4caf50',
+                    minHeight: { xs: '200px', md: 'auto' }
                   }}
                 >
                   <pre style={{ 
                     margin: 0, 
                     whiteSpace: 'pre-wrap', 
                     wordWrap: 'break-word',
-                    fontFamily: 'Consolas, Monaco, "Courier New", monospace'
+                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                    fontSize: 'inherit'
                   }}>
                     {optimizedResumeText || 'Crafted resume content not available'}
                   </pre>
