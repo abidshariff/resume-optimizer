@@ -1,4 +1,4 @@
-# Resume Optimizer
+# JobTailorAI
 
 A production-ready web application that uses AI to optimize resumes based on job descriptions, featuring real-time preview and side-by-side comparison capabilities.
 

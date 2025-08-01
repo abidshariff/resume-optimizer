@@ -930,7 +930,7 @@ function MainApp() {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              Resume Optimizer
+              JobTailorAI
             </Typography>
           </Box>
           <Box sx={{ flexGrow: 1 }} />
@@ -1495,7 +1495,7 @@ function MainApp() {
         <DialogContent sx={{ py: 3 }}>
           <Box sx={{ mb: 2 }}>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Find answers to common questions about Resume Optimizer features and functionality.
+              Find answers to common questions about JobTailorAI features and functionality.
             </Typography>
 
             {/* General Usage */}
@@ -1505,7 +1505,7 @@ function MainApp() {
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                Q: How does Resume Optimizer work?
+                Q: How does JobTailorAI work?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
                 A: Upload your resume, paste the job description you're applying for, and our AI will craft your resume to better match the job requirements. The AI analyzes keywords, skills, and requirements to enhance your resume's relevance.
@@ -1670,7 +1670,7 @@ function MainApp() {
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="body2" color="text.secondary" sx={{ pl: 2 }}>
-                If you can't find the answer to your question here, please contact our support team. We're here to help you get the most out of Resume Optimizer!
+                If you can't find the answer to your question here, please contact our support team. We're here to help you get the most out of JobTailorAI!
               </Typography>
             </Box>
           </Box>
@@ -1713,7 +1713,7 @@ function MainApp() {
         </DialogTitle>
         <DialogContent sx={{ py: 3 }}>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Have a question, suggestion, or need help with Resume Optimizer? We'd love to hear from you! 
+            Have a question, suggestion, or need help with JobTailorAI? We'd love to hear from you! 
             Fill out the form below and we'll get back to you as soon as possible.
           </Typography>
 

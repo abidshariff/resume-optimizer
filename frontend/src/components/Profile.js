@@ -659,7 +659,7 @@ function Profile() {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              Resume Optimizer
+              JobTailorAI
             </Typography>
           </Box>
           <Box sx={{ flexGrow: 1 }} />

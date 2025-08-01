@@ -1,4 +1,4 @@
-// Configuration file for Resume Optimizer
+// Configuration file for JobTailorAI
 // This file reads from environment variables set during deployment
 
 const config = {
@@ -23,7 +23,7 @@ const config = {
   
   // Application Configuration
   App: {
-    name: 'Resume Optimizer',
+    name: 'JobTailorAI',
     version: '1.0.0',
     description: 'AI-powered resume optimization tool',
     supportedFileTypes: ['.pdf', '.doc', '.docx', '.txt'],

@@ -464,7 +464,7 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: !Sub 'ResumeOptimizerAPI-${Environment}'
-      Description: API for Resume Optimizer application
+      Description: API for JobTailorAI application
       EndpointConfiguration:
         Types:
           - REGIONAL

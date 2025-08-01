@@ -142,7 +142,7 @@ function LoadingScreen({
           mb: 1,
           animation: 'fadeInUp 0.8s ease-out 0.2s both'
         }}>
-          Resume Optimizer Pro
+          JobTailorAI Pro
         </Typography>
 
         {/* Tagline */}

@@ -191,7 +191,7 @@ function SettingsDialog({ open, onClose, onSettingsChange }) {
             </Box>
 
             <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
-              Thank you for using Resume Optimizer Pro!
+              Thank you for using JobTailorAI Pro!
             </Typography>
           </DialogContent>
         </>

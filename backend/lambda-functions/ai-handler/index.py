@@ -1099,7 +1099,7 @@ def lambda_handler(event, context):
   "experience": [
     {{
       "title": "Service Notice",
-      "company": "Resume Optimizer",
+      "company": "JobTailorAI",
       "dates": "Current",
       "achievements": [
         "Your resume was successfully uploaded and processed",
@@ -1112,7 +1112,7 @@ def lambda_handler(event, context):
   "education": [
     {{
       "degree": "Technical Notice",
-      "institution": "Resume Optimizer Service",
+      "institution": "JobTailorAI Service",
       "dates": "Current",
       "details": "All AI models are currently experiencing issues. This is a temporary service disruption."
     }}

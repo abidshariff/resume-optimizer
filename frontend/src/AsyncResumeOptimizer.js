@@ -340,7 +340,7 @@ function AsyncResumeOptimizer() {
         `}
       </style>
       
-      <h1>Resume Optimizer</h1>
+      <h1>JobTailorAI</h1>
       <p>Upload your resume and job description to get an ATS-optimized version.</p>
 
       {!status || status === 'FAILED' ? (

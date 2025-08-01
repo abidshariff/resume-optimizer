@@ -452,7 +452,7 @@ function SimpleAuth() {
           justifyContent: 'center',
           gap: 0.5
         }}>
-          New to Resume Optimizer?
+          New to JobTailorAI?
           <Link
             component="button"
             type="button"
@@ -605,7 +605,7 @@ function SimpleAuth() {
         mb: 3,
         lineHeight: 1.33
       }}>
-        By clicking Agree & Join, you agree to the Resume Optimizer{' '}
+        By clicking Agree & Join, you agree to the JobTailorAI{' '}
         <Link sx={{ color: '#0A66C2' }}>User Agreement</Link>,{' '}
         <Link sx={{ color: '#0A66C2' }}>Privacy Policy</Link>, and{' '}
         <Link sx={{ color: '#0A66C2' }}>Cookie Policy</Link>.
@@ -642,7 +642,7 @@ function SimpleAuth() {
           justifyContent: 'center',
           gap: 0.5
         }}>
-          Already on Resume Optimizer?
+          Already on JobTailorAI?
           <Link
             component="button"
             type="button"
@@ -694,7 +694,7 @@ function SimpleAuth() {
         textAlign: 'center',
         lineHeight: 1.6
       }}>
-        Welcome to Resume Optimizer Pro! Your account is now active and ready to use.
+        Welcome to JobTailorAI Pro! Your account is now active and ready to use.
       </Typography>
       
       <Typography variant="body1" sx={{ 
@@ -1016,7 +1016,7 @@ function SimpleAuth() {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              Resume Optimizer Pro
+              JobTailorAI Pro
             </Typography>
           </Box>
         </Toolbar>
