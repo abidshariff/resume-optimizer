@@ -224,7 +224,7 @@ export function LandingPage() {
       {/* Show loading state while checking authentication */}
       {isLoading ? (
         <LoadingScreen 
-          message="Loading JobTailorAI..."
+          message="Loading Resume Optimizer..."
           subtitle="Preparing your professional workspace"
         />
       ) : (
@@ -252,7 +252,7 @@ export function LandingPage() {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text'
                 }}>
-                  JobTailorAI
+                  Resume Optimizer
                 </Typography>
               </Box>
               <Box sx={{ flexGrow: 1 }} />
@@ -952,7 +952,7 @@ export function LandingPage() {
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text'
         }}>
-          Why Choose JobTailorAI?
+          Why Choose Resume Optimizer?
         </Typography>
 
         <Grid container spacing={{ xs: 3, md: 4 }}>
@@ -1229,7 +1229,7 @@ export function LandingPage() {
             fontWeight: 700,
             color: '#0A66C2'
           }}>
-            How JobTailorAI Works
+            How Resume Optimizer Works
           </Typography>
           <Typography variant="h6" align="center" sx={{ 
             fontSize: { xs: '1rem', md: '1.25rem' },
@@ -1489,7 +1489,7 @@ export function LandingPage() {
                   lineHeight: 1.6,
                   fontSize: { xs: '0.9rem', md: '1rem' }
                 }}>
-                  "JobTailorAI helped me land my dream job at a Fortune 500 company. 
+                  "Resume Optimizer helped me land my dream job at a Fortune 500 company. 
                   The AI suggestions were spot-on and made my resume stand out."
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -1644,7 +1644,7 @@ export function LandingPage() {
                   color: 'white',
                   fontSize: { xs: '1.2rem', md: '1.5rem' }
                 }}>
-                  JobTailorAI
+                  Resume Optimizer
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ 
@@ -1773,7 +1773,7 @@ export function LandingPage() {
                   FAQ
                 </Link>
                 <Link 
-                  href="mailto:support@jobtailorai.com"
+                  href="mailto:support@resumeoptimizer.com"
                   sx={{ 
                     color: '#cccccc', 
                     textDecoration: 'none',
@@ -1836,7 +1836,7 @@ export function LandingPage() {
                   Cookie Policy
                 </Link>
                 <Link 
-                  href="mailto:legal@jobtailorai.com"
+                  href="mailto:legal@resumeoptimizer.com"
                   sx={{ 
                     color: '#cccccc', 
                     textDecoration: 'none',
@@ -1860,7 +1860,7 @@ export function LandingPage() {
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.5, md: 1 } }}>
                 <Link 
-                  href="https://linkedin.com/company/jobtailorai" 
+                  href="https://linkedin.com/company/resumeoptimizer" 
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{ 
@@ -1873,7 +1873,7 @@ export function LandingPage() {
                   LinkedIn
                 </Link>
                 <Link 
-                  href="https://twitter.com/jobtailorai" 
+                  href="https://twitter.com/resumeoptimizer" 
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{ 
@@ -1886,7 +1886,7 @@ export function LandingPage() {
                   Twitter
                 </Link>
                 <Link 
-                  href="https://blog.jobtailorai.com" 
+                  href="https://blog.resumeoptimizer.com" 
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{ 
@@ -1899,7 +1899,7 @@ export function LandingPage() {
                   Blog
                 </Link>
                 <Link 
-                  href="https://github.com/jobtailorai" 
+                  href="https://github.com/resumeoptimizer" 
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{ 
@@ -1929,7 +1929,7 @@ export function LandingPage() {
               color: '#cccccc',
               fontSize: { xs: '0.8rem', md: '0.9rem' }
             }}>
-              © {new Date().getFullYear()} JobTailorAI. All rights reserved.
+              © {new Date().getFullYear()} Resume Optimizer. All rights reserved.
             </Typography>
             <Box sx={{ display: 'flex', gap: { xs: 2, md: 3 } }}>
               <Link 
@@ -2012,7 +2012,7 @@ export function LandingPage() {
         <DialogContent sx={{ py: 3 }}>
           <Box sx={{ mb: 2 }}>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Find answers to common questions about JobTailorAI features and functionality.
+              Find answers to common questions about Resume Optimizer features and functionality.
             </Typography>
 
             {/* General Usage */}
@@ -2022,7 +2022,7 @@ export function LandingPage() {
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                Q: How does JobTailorAI work?
+                Q: How does Resume Optimizer work?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
                 A: Upload your resume, paste the job description you're applying for, and our AI will craft your resume to better match the job requirements. The AI analyzes keywords, skills, and requirements to enhance your resume's relevance.
@@ -2082,7 +2082,7 @@ export function LandingPage() {
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="body2" color="text.secondary" sx={{ pl: 2 }}>
-                If you can't find the answer to your question here, please contact our support team. We're here to help you get the most out of JobTailorAI!
+                If you can't find the answer to your question here, please contact our support team. We're here to help you get the most out of Resume Optimizer!
               </Typography>
             </Box>
           </Box>
@@ -2125,7 +2125,7 @@ export function LandingPage() {
         </DialogTitle>
         <DialogContent sx={{ py: 3 }}>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Have a question, suggestion, or need help with JobTailorAI? We'd love to hear from you! 
+            Have a question, suggestion, or need help with Resume Optimizer? We'd love to hear from you! 
             Fill out the form below and we'll get back to you as soon as possible.
           </Typography>
 
@@ -2210,7 +2210,7 @@ export function LandingPage() {
             Last updated: {new Date().toLocaleDateString()}
           </Typography>
           <Typography variant="body1" sx={{ mb: 3 }}>
-            At JobTailorAI, we take your privacy seriously. This policy explains how we collect, use, and protect your information.
+            At Resume Optimizer, we take your privacy seriously. This policy explains how we collect, use, and protect your information.
           </Typography>
           
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
@@ -2242,7 +2242,7 @@ export function LandingPage() {
           </Typography>
 
           <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#666' }}>
-            For questions about this policy, contact us at privacy@jobtailorai.com
+            For questions about this policy, contact us at privacy@resumeoptimizer.com
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -2282,7 +2282,7 @@ export function LandingPage() {
             1. Service Description
           </Typography>
           <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
-            JobTailorAI provides AI-powered resume optimization services to help users create 
+            Resume Optimizer provides AI-powered resume optimization services to help users create 
             job-specific resumes that are tailored to particular job descriptions.
           </Typography>
 
@@ -2300,7 +2300,7 @@ export function LandingPage() {
             3. Intellectual Property
           </Typography>
           <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
-            You retain ownership of your resume content. JobTailorAI retains ownership 
+            You retain ownership of your resume content. Resume Optimizer retains ownership 
             of the AI technology and service infrastructure.
           </Typography>
 
@@ -2308,12 +2308,12 @@ export function LandingPage() {
             4. Limitation of Liability
           </Typography>
           <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
-            JobTailorAI provides resume optimization services but does not guarantee 
+            Resume Optimizer provides resume optimization services but does not guarantee 
             job placement or interview success. Use of our service is at your own discretion.
           </Typography>
 
           <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#666' }}>
-            For questions about these terms, contact us at legal@jobtailorai.com
+            For questions about these terms, contact us at legal@resumeoptimizer.com
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -2346,7 +2346,7 @@ export function LandingPage() {
         </DialogTitle>
         <DialogContent sx={{ py: 3 }}>
           <Typography variant="body1" sx={{ mb: 3 }}>
-            We use cookies to enhance your experience on JobTailorAI.
+            We use cookies to enhance your experience on Resume Optimizer.
           </Typography>
           
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
@@ -2397,7 +2397,7 @@ export function LandingPage() {
         </DialogTitle>
         <DialogContent sx={{ py: 3 }}>
           <Typography variant="body1" sx={{ mb: 3 }}>
-            Welcome to the JobTailorAI Help Center! Find answers to common questions and learn how to get the most out of our platform.
+            Welcome to the Resume Optimizer Help Center! Find answers to common questions and learn how to get the most out of our platform.
           </Typography>
 
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
@@ -2431,7 +2431,7 @@ export function LandingPage() {
           </Typography>
 
           <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#666' }}>
-            Still need help? Contact our support team at support@jobtailorai.com
+            Still need help? Contact our support team at support@resumeoptimizer.com
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

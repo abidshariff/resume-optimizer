@@ -1,6 +1,6 @@
 {
-  "short_name": "JobTailorAI",
-  "name": "JobTailorAI - AI-powered resume tailoring",
+  "short_name": "Resume Optimizer",
+  "name": "Resume Optimizer - AI-powered resume optimization",
   "icons": [
     {
       "src": "favicon.ico",
