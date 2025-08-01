@@ -738,46 +738,24 @@ export function LandingPage() {
                   </motion.div>
                   </Box>
 
-                  {/* Stats in the middle between resumes */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: { xs: 0.5, md: 1 },
-                    margin: { xs: '0 8px', sm: '0 25px' }, 
-                    zIndex: 2
-                  }}>
-                    {[
-                      { number: '3x', label: 'More Interviews' },
-                      { number: '95%', label: 'ATS Compatible' },
-                      { number: '30-45s', label: 'Processing Time' }
-                    ].map((stat, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.6, delay: 0.5 + index * 0.2 }}
-                      >
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h6" sx={{ 
-                            fontSize: { xs: '0.9rem', sm: '1.1rem', md: '1.3rem' },
-                            color: '#0A66C2', 
-                            fontWeight: 'bold',
-                            mb: 0.2
-                          }}>
-                            {stat.number}
-                          </Typography>
-                          <Typography variant="caption" sx={{ 
-                            color: '#666',
-                            fontSize: { xs: '8px', sm: '9px', md: '10px' },
-                            fontWeight: 500
-                          }}>
-                            {stat.label}
-                          </Typography>
-                        </Box>
-                      </motion.div>
-                    ))}
-                  </Box>
+                  {/* AI Transformation Arrow in the middle */}
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0.7 }}
+                    animate={{ scale: 1.2, opacity: 1 }}
+                    transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
+                    style={{ 
+                      margin: { xs: '0 8px', sm: '0 25px' }, 
+                      zIndex: 2,
+                      display: 'block'
+                    }}
+                  >
+                    <AutoAwesomeIcon sx={{ 
+                      fontSize: { xs: 24, sm: 35, md: 45 }, 
+                      color: '#0A66C2',
+                      filter: 'drop-shadow(0 0 15px rgba(10, 102, 194, 0.6))',
+                      transform: 'rotate(0deg)'
+                    }} />
+                  </motion.div>
 
                   {/* After Resume with Label */}
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -1035,6 +1013,44 @@ export function LandingPage() {
                   </Box>
                   </Box>
                   
+                  {/* Stats at the bottom */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    gap: { xs: 2, md: 4 }, 
+                    mt: { xs: 3, md: 4 },
+                    flexWrap: 'wrap'
+                  }}>
+                    {[
+                      { number: '3x', label: 'More Interviews' },
+                      { number: '95%', label: 'ATS Compatible' },
+                      { number: '30-45s', label: 'Processing Time' }
+                    ].map((stat, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
+                      >
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="h4" sx={{ 
+                            fontSize: { xs: '1.5rem', md: '2rem' },
+                            color: '#0A66C2', 
+                            fontWeight: 'bold',
+                            mb: 0.5
+                          }}>
+                            {stat.number}
+                          </Typography>
+                          <Typography variant="caption" sx={{ 
+                            color: '#cccccc',
+                            fontSize: { xs: '10px', md: '12px' }
+                          }}>
+                            {stat.label}
+                          </Typography>
+                        </Box>
+                      </motion.div>
+                    ))}
+                  </Box>
                 </Box>
               </motion.div>
             </Grid>
