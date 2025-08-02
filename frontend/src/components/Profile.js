@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import sessionManager from '../utils/sessionManager';
+import Logger from '../utils/logger';
 import { 
   Box, 
   Container, 
@@ -104,7 +105,7 @@ function Profile() {
         bio: attributes['custom:bio'] || ''
       });
     } catch (error) {
-      console.error('Error loading user data:', error);
+      Logger.error('Error loading user data:', error);
     }
   };
 
@@ -113,7 +114,7 @@ function Profile() {
       await signOut();
       navigate('/');
     } catch (error) {
-      console.error('Error signing out:', error);
+      Logger.error('Error signing out:', error);
     }
   };
 
@@ -377,7 +378,7 @@ function Profile() {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Download error:', error);
+      Logger.error('Download error:', error);
       setSnackbarMessage('Download failed - the link may have expired. Please re-optimize your resume.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

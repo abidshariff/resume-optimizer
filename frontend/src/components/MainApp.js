@@ -4,6 +4,7 @@ import { getCurrentUser, signOut, fetchAuthSession, fetchUserAttributes } from '
 import { useLoading } from '../contexts/LoadingContext';
 import LoadingScreen from './LoadingScreen';
 import config from '../config';
+import Logger from '../utils/logger';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
 import { 
@@ -222,9 +223,9 @@ function MainApp() {
       try {
         const parsedSettings = JSON.parse(savedSettings);
         setUserSettings(parsedSettings);
-        console.log('Loaded user settings:', parsedSettings);
+        Logger.log('Loaded user settings:', parsedSettings);
       } catch (error) {
-        console.error('Error parsing saved settings:', error);
+        Logger.error('Error parsing saved settings:', error);
       }
     }
   };
@@ -254,7 +255,7 @@ function MainApp() {
           setResumeName(resumeData.name);
           setResume(resumeData.content); // Set the data URL for resume content
         } catch (error) {
-          console.error('Error restoring resume file:', error);
+          Logger.error('Error restoring resume file:', error);
           localStorage.removeItem('currentResumeFile');
         }
       }
@@ -319,7 +320,7 @@ function MainApp() {
     // Listen for storage changes (when settings are updated)
     const handleStorageChange = (e) => {
       if (e.key === 'userSettings') {
-        console.log('Storage change detected, reloading settings');
+        Logger.log('Storage change detected, reloading settings');
         loadUserSettings();
       }
     };
@@ -349,11 +350,11 @@ function MainApp() {
     let statusInterval;
     
     if (isPolling && jobId) {
-      console.log('Starting status polling for jobId:', jobId);
+      Logger.log('Starting status polling for jobId:', jobId);
       
       statusInterval = setInterval(async () => {
         try {
-          console.log('Polling status for jobId:', jobId);
+          Logger.log('Polling status for jobId:', jobId);
           
           const { tokens } = await fetchAuthSession();
           const idToken = tokens.idToken.toString();
@@ -372,7 +373,7 @@ function MainApp() {
           }
           
           const statusData = await statusResponse.json();
-          console.log('Status response received:', statusData);
+          Logger.log('Status response received:', statusData);
           
           setJobStatus(statusData.status);
           setStatusMessage(statusData.message || 'Processing...');
@@ -407,7 +408,7 @@ function MainApp() {
             setSnackbarOpen(true);
           }
         } catch (error) {
-          console.error('Error polling status:', error);
+          Logger.error('Error polling status:', error);
           // Don't stop polling on network errors, but limit retries
           if (error.message.includes('Status check failed')) {
             setIsPolling(false);
@@ -421,7 +422,7 @@ function MainApp() {
     
     return () => {
       if (statusInterval) {
-        console.log('Clearing status polling interval');
+        Logger.log('Clearing status polling interval');
         clearInterval(statusInterval);
       }
     };
@@ -458,7 +459,7 @@ function MainApp() {
         const attributes = await fetchUserAttributes();
         setUserAttributes(attributes);
       } catch (attrError) {
-        console.log('Could not fetch user attributes:', attrError);
+        Logger.log('Could not fetch user attributes:', attrError);
         // Continue without attributes - will fall back to username
       }
       
@@ -477,7 +478,7 @@ function MainApp() {
         navigate('/');
       }, 2500);
     } catch (error) {
-      console.error('Error signing out:', error);
+      Logger.error('Error signing out:', error);
     }
   };
 
@@ -566,8 +567,8 @@ function MainApp() {
     
     try {
       const selectedFormat = userSettings.defaultOutputFormat || 'docx';
-      console.log('Current user settings:', userSettings);
-      console.log('Selected output format:', selectedFormat);
+      Logger.log('Current user settings:', userSettings);
+      Logger.log('Selected output format:', selectedFormat);
       
       const payload = {
         resume: resume,
@@ -575,7 +576,7 @@ function MainApp() {
         outputFormat: selectedFormat // Use user preference or default to docx
       };
       
-      console.log('API payload:', payload);
+      Logger.log('API payload:', payload);
       
       // Note: Removed localhost mock response to enable production-like testing locally
       
@@ -611,7 +612,7 @@ function MainApp() {
         throw new Error('No job ID returned from the API');
       }
     } catch (error) {
-      console.error('Error submitting job:', error);
+      Logger.error('Error submitting job:', error);
       setError(`Error submitting job: ${error.message}`);
       setSnackbarMessage(`Error: ${error.message}`);
       setSnackbarOpen(true);
@@ -656,7 +657,7 @@ function MainApp() {
       setSnackbarMessage('Resume downloaded successfully!');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error downloading resume:', error);
+      Logger.error('Error downloading resume:', error);
       setSnackbarMessage(`Error downloading resume: ${error.message}`);
       setSnackbarOpen(true);
     }
@@ -824,15 +825,15 @@ function MainApp() {
       let authToken = '';
       try {
         const { tokens } = await fetchAuthSession();
-        console.log('Auth session tokens:', tokens); // Debug log
+        Logger.log('Auth session tokens:', tokens); // Debug log
         
         if (tokens && tokens.idToken) {
           authToken = tokens.idToken.toString();
         } else {
-          console.warn('No idToken found in session');
+          Logger.warn('No idToken found in session');
         }
       } catch (tokenError) {
-        console.error('Error getting auth token:', tokenError);
+        Logger.error('Error getting auth token:', tokenError);
       }
 
       // Send to the contact API endpoint
@@ -845,11 +846,11 @@ function MainApp() {
         body: JSON.stringify(contactData)
       });
 
-      console.log('Contact API response status:', response.status); // Debug log
+      Logger.log('Contact API response status:', response.status); // Debug log
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('Contact API response:', responseData); // Debug log
+        Logger.log('Contact API response:', responseData); // Debug log
         
         // Success - clear form and show success dialog
         setContactTitle('');
@@ -871,7 +872,7 @@ function MainApp() {
         
       } else {
         const errorData = await response.text();
-        console.error('Contact API error:', response.status, errorData);
+        Logger.error('Contact API error:', response.status, errorData);
         
         // Show specific error message based on status
         if (response.status === 401) {
@@ -903,7 +904,7 @@ function MainApp() {
       }
       
     } catch (error) {
-      console.error('Error submitting contact form:', error);
+      Logger.error('Error submitting contact form:', error);
       
       // Show user-friendly error message
       setSnackbarMessage('There was an issue sending your message. Please try again or contact us directly.');
@@ -1497,7 +1498,7 @@ function MainApp() {
         onClose={() => setSettingsDialogOpen(false)}
         onSettingsChange={(newSettings) => {
           setUserSettings(newSettings);
-          console.log('MainApp received settings update:', newSettings);
+          Logger.log('MainApp received settings update:', newSettings);
         }}
       />
 

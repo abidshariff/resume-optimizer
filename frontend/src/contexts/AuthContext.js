@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import Logger from '../utils/logger';
 
 const AuthContext = createContext();
 
@@ -39,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error('Error signing out:', error);
+      Logger.error('Error signing out:', error);
     }
   };
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Logger from '../utils/logger';
 import {
   Dialog,
   DialogTitle,
@@ -44,7 +45,7 @@ function SettingsDialog({ open, onClose, onSettingsChange }) {
           const parsedSettings = JSON.parse(savedSettings);
           setSettings(prev => ({ ...prev, ...parsedSettings }));
         } catch (error) {
-          console.error('Error parsing saved settings:', error);
+          Logger.error('Error parsing saved settings:', error);
         }
       }
     }
@@ -73,13 +74,13 @@ function SettingsDialog({ open, onClose, onSettingsChange }) {
       onSettingsChange(newSettings);
     }
     
-    console.log('Settings updated:', newSettings);
+    Logger.log('Settings updated:', newSettings);
   };
 
   const handleSave = () => {
     // TODO: Save settings to backend or local storage
     localStorage.setItem('resumeOptimizerSettings', JSON.stringify(settings));
-    console.log('Settings saved:', settings);
+    Logger.log('Settings saved:', settings);
     onClose();
   };
 
@@ -116,7 +117,7 @@ function SettingsDialog({ open, onClose, onSettingsChange }) {
       }, 1000);
       
     } catch (error) {
-      console.error('Error deleting account:', error);
+      Logger.error('Error deleting account:', error);
       alert('Failed to delete account. Please try again.');
       setIsDeleting(false);
     }

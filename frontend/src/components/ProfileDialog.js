@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Logger from '../utils/logger';
 import {
   Dialog,
   DialogTitle,
@@ -43,7 +44,7 @@ function ProfileDialog({ open, onClose }) {
         phone: user.attributes?.phone_number || ''
       });
     } catch (err) {
-      console.error('Error loading user info:', err);
+      Logger.error('Error loading user info:', err);
       setError('Failed to load user information');
     }
   };
@@ -72,7 +73,7 @@ function ProfileDialog({ open, onClose }) {
       });
       setMessage('Profile updated successfully!');
     } catch (err) {
-      console.error('Error updating profile:', err);
+      Logger.error('Error updating profile:', err);
       setError(err.message || 'Failed to update profile');
     } finally {
       setLoading(false);
