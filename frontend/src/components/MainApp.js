@@ -2108,19 +2108,19 @@ function MainApp() {
           </IconButton>
         </DialogTitle>
         <DialogContent sx={{ 
-          py: { xs: 2, md: 3 },
-          px: { xs: 1, md: 3 }
+          py: { xs: 1, md: 3 }, // Reduced top/bottom padding on mobile
+          px: { xs: 0.5, md: 3 } // Reduced side padding on mobile for more text space
         }}>
           <Paper 
             variant="outlined" 
             sx={{ 
-              p: { xs: 1.5, md: 3 }, 
+              p: { xs: 2, md: 3 }, // Increased mobile padding from 1.5 to 2
               bgcolor: '#f8f9fa',
               maxHeight: { xs: 'calc(100vh - 200px)', md: '60vh' },
               overflow: 'auto',
               fontFamily: 'monospace',
-              fontSize: { xs: '12px', md: '14px' },
-              lineHeight: 1.6
+              fontSize: { xs: '16px', md: '14px' }, // Increased from 12px to 16px for mobile
+              lineHeight: { xs: 1.5, md: 1.6 }
             }}
           >
             <pre style={{ 
@@ -2195,8 +2195,8 @@ function MainApp() {
           </IconButton>
         </DialogTitle>
         <DialogContent sx={{ 
-          py: { xs: 2, md: 3 }, 
-          px: { xs: 1, md: 3 },
+          py: { xs: 1, md: 3 }, // Reduced padding for more content space
+          px: { xs: 0.5, md: 3 }, // Reduced side padding on mobile
           height: '100%',
           overflow: 'hidden'
         }}>
@@ -2221,13 +2221,13 @@ function MainApp() {
                 <Paper 
                   variant="outlined" 
                   sx={{ 
-                    p: { xs: 1.5, md: 3 }, 
+                    p: { xs: 2, md: 3 }, // Increased mobile padding from 1.5 to 2
                     bgcolor: '#fff3e0',
                     flex: 1,
                     overflow: 'auto',
                     fontFamily: 'monospace',
-                    fontSize: { xs: '12px', md: '14px' },
-                    lineHeight: 1.6,
+                    fontSize: { xs: '15px', md: '14px' }, // Increased from 12px to 15px for mobile
+                    lineHeight: { xs: 1.4, md: 1.6 },
                     border: '2px solid #ff9800',
                     minHeight: { xs: '200px', md: 'auto' }
                   }}
@@ -2265,13 +2265,13 @@ function MainApp() {
                 <Paper 
                   variant="outlined" 
                   sx={{ 
-                    p: { xs: 1.5, md: 3 }, 
+                    p: { xs: 2, md: 3 }, // Increased mobile padding from 1.5 to 2
                     bgcolor: '#e8f5e8',
                     flex: 1,
                     overflow: 'auto',
                     fontFamily: 'monospace',
-                    fontSize: { xs: '12px', md: '14px' },
-                    lineHeight: 1.6,
+                    fontSize: { xs: '15px', md: '14px' }, // Increased from 12px to 15px for mobile
+                    lineHeight: { xs: 1.4, md: 1.6 },
                     border: '2px solid #4caf50',
                     minHeight: { xs: '200px', md: 'auto' }
                   }}
