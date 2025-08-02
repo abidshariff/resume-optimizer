@@ -56,7 +56,7 @@ import { useDropzone } from 'react-dropzone';
 import emailjs from '@emailjs/browser';
 
 // File upload component
-function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
+function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onContinue }) {
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } = useDropzone({
     accept: acceptedFileTypes,
     onDrop: files => {
@@ -64,10 +64,14 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
         onFileAccepted(files[0]);
       }
     },
-    multiple: false
+    multiple: false,
+    // Mobile-specific improvements
+    noClick: false,
+    noKeyboard: false,
+    preventDropOnDocument: true
   });
 
-  const file = acceptedFiles[0];
+  const file = acceptedFiles[0] || resumeFile;
 
   return (
     <Box sx={{ mt: 2, mb: 3 }}>
@@ -82,21 +86,36 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
           cursor: 'pointer',
           transition: 'all 0.3s ease',
           backgroundColor: isDragActive ? 'rgba(63, 81, 181, 0.04)' : 'background.paper',
+          // Mobile-specific styles
+          minHeight: { xs: '120px', sm: '150px' },
           '&:hover': {
             borderColor: 'primary.main',
             backgroundColor: 'rgba(63, 81, 181, 0.04)',
+          },
+          // Improve touch targets on mobile
+          '@media (max-width: 600px)': {
+            p: 2,
+            minHeight: '100px'
           }
         }}
       >
         <input {...getInputProps()} />
-        <CloudUploadIcon sx={{ fontSize: 48, color: isDragActive ? 'primary.main' : 'text.secondary', mb: 2 }} />
-        <Typography variant="h6" gutterBottom>
+        <CloudUploadIcon sx={{ 
+          fontSize: { xs: 36, sm: 48 }, 
+          color: isDragActive ? 'primary.main' : 'text.secondary', 
+          mb: 2 
+        }} />
+        <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
           {isDragActive ? 'Drop the file here' : 'Drag & drop your resume here'}
         </Typography>
-        <Typography variant="body2" color="textSecondary">
+        <Typography variant="body2" color="textSecondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
           or click to browse files
         </Typography>
-        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 1 }}>
+        <Typography variant="caption" color="textSecondary" sx={{ 
+          display: 'block', 
+          mt: 1,
+          fontSize: { xs: '0.75rem', sm: '0.875rem' }
+        }}>
           Supported formats: PDF, DOC, DOCX
         </Typography>
       </Paper>
@@ -108,13 +127,40 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
           bgcolor: 'success.light', 
           borderRadius: 1,
           display: 'flex', 
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />
-          <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
-            {file.name} uploaded successfully! Proceeding to next step...
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, textAlign: 'center' }}>
+            <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />
+            <Typography variant="body2" sx={{ 
+              color: 'success.main', 
+              fontWeight: 500,
+              fontSize: { xs: '0.875rem', sm: '1rem' }
+            }}>
+              {file.name} uploaded successfully!
+            </Typography>
+          </Box>
+          
+          {/* Manual continue button for mobile users */}
+          <Button
+            variant="contained"
+            onClick={onContinue}
+            size="large"
+            sx={{
+              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+              color: 'white',
+              px: 4,
+              py: 1.5,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              minHeight: { xs: '44px', sm: '48px' }, // Better touch targets
+              '&:hover': {
+                background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+              }
+            }}
+          >
+            Continue to Job Description →
+          </Button>
         </Box>
       )}
     </Box>
@@ -502,6 +548,10 @@ function MainApp() {
       // Extract text content for comparison
       extractTextFromFile(file);
       
+      // Show immediate success message
+      setSnackbarMessage(`Resume "${file.name}" uploaded successfully! Proceeding to next step...`);
+      setSnackbarOpen(true);
+      
       const reader = new FileReader();
       reader.onload = (event) => {
         setResume(event.target.result);
@@ -516,16 +566,43 @@ function MainApp() {
         };
         localStorage.setItem('currentResumeFile', JSON.stringify(fileData));
         
-        // Show success message
-        setSnackbarMessage(`Resume "${file.name}" uploaded successfully! Proceeding to next step...`);
-        setSnackbarOpen(true);
+        Logger.log('File processed successfully, navigating to next step');
         
-        // Auto-navigate to next step after a brief delay
-        setTimeout(() => {
-          navigate('/app/job-description');
-        }, 1500);
+        // Navigate immediately after file processing is complete
+        navigate('/app/job-description');
       };
+      
+      reader.onerror = (error) => {
+        Logger.error('FileReader error:', error);
+        setSnackbarMessage('Error processing file. Please try again.');
+        setSnackbarOpen(true);
+      };
+      
+      // Add timeout as fallback for mobile devices
+      const navigationTimeout = setTimeout(() => {
+        Logger.log('Navigation timeout triggered, forcing navigation');
+        navigate('/app/job-description');
+      }, 3000);
+      
+      // Clear timeout if reader completes successfully
+      const originalOnLoad = reader.onload;
+      reader.onload = (event) => {
+        clearTimeout(navigationTimeout);
+        originalOnLoad(event);
+      };
+      
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Manual continue handler for mobile users
+  const handleManualContinue = () => {
+    if (resumeFile) {
+      Logger.log('Manual continue triggered');
+      navigate('/app/job-description');
+    } else {
+      setSnackbarMessage('Please upload a resume first');
+      setSnackbarOpen(true);
     }
   };
 
@@ -1155,6 +1232,8 @@ function MainApp() {
                 
                 <FileUploadZone 
                   onFileAccepted={handleResumeChange}
+                  resumeFile={resumeFile}
+                  onContinue={handleManualContinue}
                   acceptedFileTypes={{
                     'application/pdf': ['.pdf'],
                     'application/msword': ['.doc'],
