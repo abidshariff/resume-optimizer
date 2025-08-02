@@ -305,7 +305,8 @@ function MainApp() {
     // Try to restore resume file from localStorage on page refresh
     const restoreResumeFile = async () => {
       const savedResumeData = localStorage.getItem('currentResumeFile');
-      if (savedResumeData && !resumeFile) {
+      
+      if (savedResumeData) {
         try {
           const resumeData = JSON.parse(savedResumeData);
           // Convert data URL back to blob and create File object
@@ -318,18 +319,20 @@ function MainApp() {
           setResumeFile(restoredFile);
           setResumeName(resumeData.name);
           setResume(resumeData.content); // Set the data URL for resume content
+          Logger.log('Resume file restored successfully');
         } catch (error) {
           Logger.error('Error restoring resume file:', error);
           localStorage.removeItem('currentResumeFile');
+          // Only redirect to upload if we're on job-description and restoration failed
+          if (path === '/app/job-description') {
+            Logger.log('Resume restoration failed, redirecting to upload');
+            navigate('/app/upload');
+          }
         }
-      }
-      
-      // Handle navigation logic after restoration attempt
-      if (path === '/app/job-description') {
-        // If no resume file and no saved data, redirect to upload
-        if (!resumeFile && !savedResumeData) {
-          navigate('/app/upload');
-        }
+      } else if (path === '/app/job-description') {
+        // Only redirect if there's no saved data at all
+        Logger.log('No resume data found, redirecting to upload');
+        navigate('/app/upload');
       }
     };
     
@@ -364,18 +367,22 @@ function MainApp() {
       setSnackbarOpen(false);
       setSnackbarMessage('');
       
-      // Restore resume file and handle navigation
-      restoreResumeFile();
+      // Only try to restore if we don't already have a resume file
+      if (!resumeFile) {
+        restoreResumeFile();
+      }
     } else if (path === '/app/results') {
       // On results page - if no result data, redirect to upload
       if (!result && !isPolling) {
         navigate('/app/upload');
       }
     } else {
-      // For other paths, try to restore resume file
-      restoreResumeFile();
+      // For other paths, try to restore resume file if we don't have one
+      if (!resumeFile) {
+        restoreResumeFile();
+      }
     }
-  }, [location.pathname, navigate, resumeFile, result, isPolling]);
+  }, [location.pathname, navigate, result, isPolling]); // Removed resumeFile from dependencies
 
   // Load user settings from localStorage
   useEffect(() => {
