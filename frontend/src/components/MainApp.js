@@ -57,10 +57,12 @@ import emailjs from '@emailjs/browser';
 
 // File upload component
 function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onContinue }) {
+  const [showContinueButton, setShowContinueButton] = React.useState(false);
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } = useDropzone({
     accept: acceptedFileTypes,
     onDrop: files => {
       if (files && files[0]) {
+        setShowContinueButton(false); // Reset button state
         onFileAccepted(files[0]);
       }
     },
@@ -72,6 +74,17 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onConti
   });
 
   const file = acceptedFiles[0] || resumeFile;
+
+  // Show continue button after 4 seconds if automatic navigation hasn't happened
+  React.useEffect(() => {
+    if (file && !showContinueButton) {
+      const timer = setTimeout(() => {
+        setShowContinueButton(true);
+      }, 4000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [file, showContinueButton]);
 
   return (
     <Box sx={{ mt: 2, mb: 3 }}>
@@ -131,36 +144,41 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onConti
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, textAlign: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: showContinueButton ? 2 : 0, textAlign: 'center' }}>
             <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />
             <Typography variant="body2" sx={{ 
               color: 'success.main', 
               fontWeight: 500,
               fontSize: { xs: '0.875rem', sm: '1rem' }
             }}>
-              {file.name} uploaded successfully!
+              {showContinueButton 
+                ? `${file.name} uploaded successfully!`
+                : `${file.name} uploaded successfully! Proceeding to next step...`
+              }
             </Typography>
           </Box>
           
-          {/* Manual continue button for mobile users */}
-          <Button
-            variant="contained"
-            onClick={onContinue}
-            size="large"
-            sx={{
-              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-              color: 'white',
-              px: 4,
-              py: 1.5,
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              minHeight: { xs: '44px', sm: '48px' }, // Better touch targets
-              '&:hover': {
-                background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
-              }
-            }}
-          >
-            Continue to Job Description →
-          </Button>
+          {/* Continue button only shows if automatic navigation fails */}
+          {showContinueButton && (
+            <Button
+              variant="contained"
+              onClick={onContinue}
+              size="large"
+              sx={{
+                background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                color: 'white',
+                px: 4,
+                py: 1.5,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                minHeight: { xs: '44px', sm: '48px' }, // Better touch targets
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+                }
+              }}
+            >
+              Continue to Job Description →
+            </Button>
+          )}
         </Box>
       )}
     </Box>
@@ -553,6 +571,13 @@ function MainApp() {
       setSnackbarOpen(true);
       
       const reader = new FileReader();
+      
+      // Set up navigation timeout as primary method (works for both desktop and mobile)
+      const navigationTimeout = setTimeout(() => {
+        Logger.log('Automatic navigation triggered');
+        navigate('/app/job-description');
+      }, 1500); // 1.5 seconds like original
+      
       reader.onload = (event) => {
         setResume(event.target.result);
         
@@ -566,31 +591,17 @@ function MainApp() {
         };
         localStorage.setItem('currentResumeFile', JSON.stringify(fileData));
         
-        Logger.log('File processed successfully, navigating to next step');
-        
-        // Navigate immediately after file processing is complete
-        navigate('/app/job-description');
+        Logger.log('File processed successfully');
+        // Navigation will happen via timeout - don't navigate here to avoid double navigation
       };
       
       reader.onerror = (error) => {
         Logger.error('FileReader error:', error);
-        setSnackbarMessage('Error processing file. Please try again.');
-        setSnackbarOpen(true);
+        // Don't clear the timeout - let automatic navigation still work
+        Logger.log('FileReader failed, but automatic navigation will still proceed');
       };
       
-      // Add timeout as fallback for mobile devices
-      const navigationTimeout = setTimeout(() => {
-        Logger.log('Navigation timeout triggered, forcing navigation');
-        navigate('/app/job-description');
-      }, 3000);
-      
-      // Clear timeout if reader completes successfully
-      const originalOnLoad = reader.onload;
-      reader.onload = (event) => {
-        clearTimeout(navigationTimeout);
-        originalOnLoad(event);
-      };
-      
+      // Start reading the file (for data storage, not for navigation)
       reader.readAsDataURL(file);
     }
   };
