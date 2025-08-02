@@ -1543,12 +1543,19 @@ function MainApp() {
                     display: 'flex', 
                     justifyContent: 'space-between',
                     pt: 2,
-                    borderTop: '1px solid #e0e0e0'
+                    borderTop: '1px solid #e0e0e0',
+                    gap: 1,
+                    flexWrap: 'wrap'
                   }}>
                     <Button 
                       variant="outlined" 
                       onClick={resetForm}
                       size="medium"
+                      sx={{
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        minWidth: { xs: '120px', sm: 'auto' },
+                        flex: { xs: '1 1 45%', sm: 'none' }
+                      }}
                     >
                       Craft Another Resume
                     </Button>
@@ -1557,6 +1564,11 @@ function MainApp() {
                       color="primary"
                       onClick={handleSaveToProfile}
                       size="medium"
+                      sx={{
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        minWidth: { xs: '120px', sm: 'auto' },
+                        flex: { xs: '1 1 45%', sm: 'none' }
+                      }}
                     >
                       Save to Profile
                     </Button>
