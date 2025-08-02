@@ -7,6 +7,7 @@ import SettingsDialog from './SettingsDialog';
 import LoadingScreen from './LoadingScreen';
 import MobileResumeMockups from './MobileResumeMockups';
 import MobileStats from './MobileStats';
+import LoggerTest from './LoggerTest';
 import Logger from '../utils/logger';
 import { 
   Box, 
@@ -245,6 +246,9 @@ export function LandingPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Temporary Logger Test Component - Remove in production */}
+      {(process.env.NODE_ENV === 'development' || process.env.REACT_APP_TEST_MODE === 'true') && <LoggerTest />}
+      
       {/* Show loading state while checking authentication or during global loading */}
       {isLoading || globalLoading ? (
         <LoadingScreen 

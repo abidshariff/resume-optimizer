@@ -1,6 +1,8 @@
 // Configuration file for JobTailorAI
 // This file reads from environment variables set during deployment
 
+import Logger from './utils/logger';
+
 const config = {
   // AWS Cognito Configuration
   Auth: {
@@ -50,7 +52,7 @@ export const validateConfig = () => {
   }
   
   if (errors.length > 0) {
-    console.error('Configuration errors:', errors);
+    Logger.error('Configuration errors:', errors);
     return false;
   }
   

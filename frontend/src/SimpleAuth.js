@@ -4,6 +4,7 @@ import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword } fr
 import { useLoading } from './contexts/LoadingContext';
 import LoadingScreen from './components/LoadingScreen';
 import sessionManager from './utils/sessionManager';
+import Logger from './utils/logger';
 import {
   Box,
   Container,
@@ -164,7 +165,7 @@ function SimpleAuth() {
         }, 2000);
       }
     } catch (err) {
-      console.error('Sign in error:', err);
+      Logger.error('Sign in error:', err);
       setError(err.message || 'Failed to sign in');
       setLoading(false);
     }
@@ -176,22 +177,22 @@ function SimpleAuth() {
     setLoading(true);
     setError('');
     
-    // Debug: Log current Amplify configuration and versions
-    console.log('=== COMPREHENSIVE DEBUG ===');
-    console.log('Current config:', {
+    // Debug: Log current Amplify configuration and versions (only in development)
+    Logger.log('=== COMPREHENSIVE DEBUG ===');
+    Logger.log('Current config:', {
       userPoolId: process.env.REACT_APP_USER_POOL_ID || 'us-east-1_PdEKfFD9v',
       userPoolWebClientId: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID || 'sp5dfgb8mr3066luhs7e8h2rr',
       region: process.env.REACT_APP_AWS_REGION || 'us-east-1'
     });
     
     // Check if there are any environment variables overriding our config
-    console.log('Environment variables:', {
+    Logger.log('Environment variables:', {
       REACT_APP_USER_POOL_ID: process.env.REACT_APP_USER_POOL_ID,
       REACT_APP_USER_POOL_WEB_CLIENT_ID: process.env.REACT_APP_USER_POOL_WEB_CLIENT_ID,
       REACT_APP_AWS_REGION: process.env.REACT_APP_AWS_REGION
     });
     
-    console.log('=== END COMPREHENSIVE DEBUG ===');
+    Logger.log('=== END COMPREHENSIVE DEBUG ===');
     
     // Validate password requirements
     const { isValid } = validatePassword(formData.password);
@@ -210,7 +211,7 @@ function SimpleAuth() {
     try {
       const formattedPhone = formatPhoneForCognito(formData.phone);
       
-      console.log('Attempting sign-up with data:', {
+      Logger.log('Attempting sign-up with data:', {
         username: formData.email,
         options: {
           userAttributes: {
@@ -235,15 +236,15 @@ function SimpleAuth() {
         }
       });
       
-      console.log('Sign-up result:', result);
+      Logger.log('Sign-up result:', result);
       
       // Additional verification that email was properly set
       if (result.userSub) {
-        console.log('User created successfully with ID:', result.userSub);
+        Logger.log('User created successfully with ID:', result.userSub);
         if (result.codeDeliveryDetails) {
-          console.log('Verification email sent to:', result.codeDeliveryDetails.destination);
+          Logger.log('Verification email sent to:', result.codeDeliveryDetails.destination);
         } else {
-          console.warn('No code delivery details - verification email may not have been sent');
+          Logger.warn('No code delivery details - verification email may not have been sent');
         }
       }
       
@@ -259,22 +260,22 @@ function SimpleAuth() {
         setMessage('Please check your email for the verification code');
       }
     } catch (err) {
-      console.error('=== SIGN UP ERROR DEBUG ===');
-      console.error('Full error object:', err);
-      console.error('Error message:', err.message);
-      console.error('Error code:', err.code);
-      console.error('Error name:', err.name);
-      console.error('Error stack:', err.stack);
+      Logger.error('=== SIGN UP ERROR DEBUG ===');
+      Logger.error('Full error object:', err);
+      Logger.error('Error message:', err.message);
+      Logger.error('Error code:', err.code);
+      Logger.error('Error name:', err.name);
+      Logger.error('Error stack:', err.stack);
       
       if (err.response) {
-        console.error('Error response:', err.response);
+        Logger.error('Error response:', err.response);
       }
       
       if (err.request) {
-        console.error('Error request:', err.request);
+        Logger.error('Error request:', err.request);
       }
       
-      console.error('=== END DEBUG ===');
+      Logger.error('=== END DEBUG ===');
       
       // Handle specific Cognito errors
       if (err.code === 'UsernameExistsException') {
@@ -330,7 +331,7 @@ function SimpleAuth() {
         }, 1000);
       }
     } catch (err) {
-      console.error('Confirm sign up error:', err);
+      Logger.error('Confirm sign up error:', err);
       setError(err.message || 'Failed to confirm sign up');
     } finally {
       setLoading(false);
@@ -347,7 +348,7 @@ function SimpleAuth() {
       setMode('confirmResetPassword');
       setMessage('Please check your email for the reset code');
     } catch (err) {
-      console.error('Reset password error:', err);
+      Logger.error('Reset password error:', err);
       setError(err.message || 'Failed to reset password');
     } finally {
       setLoading(false);
@@ -383,7 +384,7 @@ function SimpleAuth() {
       setMode('signIn');
       setMessage('Password reset successfully. Please sign in with your new password.');
     } catch (err) {
-      console.error('Confirm reset password error:', err);
+      Logger.error('Confirm reset password error:', err);
       setError(err.message || 'Failed to reset password');
     } finally {
       setLoading(false);
