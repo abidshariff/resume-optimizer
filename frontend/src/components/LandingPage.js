@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
+import { useLoading } from '../contexts/LoadingContext';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
 import LoadingScreen from './LoadingScreen';
@@ -49,6 +50,7 @@ import { motion } from 'framer-motion';
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const { showLoading, hideLoading, isLoading: globalLoading, loadingMessage, loadingSubtitle } = useLoading();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -65,6 +67,7 @@ export function LandingPage() {
   const [contactDescription, setContactDescription] = useState('');
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [authDataLoaded, setAuthDataLoaded] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false); // Keep for menu button state
   
   // Additional dialog states for footer links
   const [privacyDialogOpen, setPrivacyDialogOpen] = useState(false);
@@ -131,17 +134,32 @@ export function LandingPage() {
 
   const handleSignOut = async () => {
     try {
+      setIsSigningOut(true); // For menu button loading state
       await signOut();
-      setCurrentUser(null);
-      setProfileMenuAnchor(null);
+      
+      // Show global loading screen with progress bar
+      showLoading("Signing out...", "Thanks for using JobTailorAI!", 2500);
+      
+      // Reset state after loading completes
+      setTimeout(() => {
+        setCurrentUser(null);
+        setUserAttributes(null);
+        setProfileMenuAnchor(null);
+        setIsSigningOut(false);
+      }, 2500);
     } catch (error) {
       console.error('Error signing out:', error);
+      setIsSigningOut(false);
+      hideLoading();
     }
   };
 
   const handleGetStarted = () => {
     if (currentUser) {
-      navigate('/app/upload');
+      showLoading("Loading workspace...", "Preparing your resume tools", 1500);
+      setTimeout(() => {
+        navigate('/app/upload');
+      }, 1500);
     } else {
       navigate('/auth');
     }
@@ -183,7 +201,10 @@ export function LandingPage() {
   };
 
   const handleStartCrafting = () => {
-    navigate('/app/upload');
+    showLoading("Starting resume crafting...", "Get ready to optimize your career", 1500);
+    setTimeout(() => {
+      navigate('/app/upload');
+    }, 1500);
   };
 
   const features = [
@@ -221,11 +242,12 @@ export function LandingPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* Show loading state while checking authentication */}
-      {isLoading ? (
+      {/* Show loading state while checking authentication or during global loading */}
+      {isLoading || globalLoading ? (
         <LoadingScreen 
-          message="Loading JobTailorAI..."
-          subtitle="Preparing your professional workspace"
+          message={globalLoading ? loadingMessage : "Loading JobTailorAI..."}
+          subtitle={globalLoading ? loadingSubtitle : "Preparing your professional workspace"}
+          showProgress={true}
         />
       ) : (
         <>
@@ -283,9 +305,10 @@ export function LandingPage() {
                         </Button>
                         {!isSmallMobile && (
                           <Typography variant="body2" sx={{ 
-                            color: '#666666',
+                            color: '#333333',
                             display: { xs: 'none', sm: 'block' },
-                            fontSize: { xs: '0.8rem', md: '0.9rem' }
+                            fontSize: { xs: '1rem', md: '1.1rem' },
+                            fontWeight: 'bold'
                           }}>
                             {(currentUser && authDataLoaded) ? `Welcome, ${getDisplayName()}` : ''}
                           </Typography>
@@ -335,7 +358,10 @@ export function LandingPage() {
                     >
                       <MenuItem onClick={() => {
                         setProfileMenuAnchor(null);
-                        navigate('/app/profile');
+                        showLoading("Loading profile...", "Accessing your account settings", 1200);
+                        setTimeout(() => {
+                          navigate('/app/profile');
+                        }, 1200);
                       }}>
                         <ListItemIcon>
                           <PersonIcon sx={{ color: '#0A66C2' }} />
@@ -373,15 +399,22 @@ export function LandingPage() {
                         <ListItemText primary="Contact Us" />
                       </MenuItem>
                       
-                      <MenuItem onClick={() => {
-                        console.log('Sign Out clicked');
-                        setProfileMenuAnchor(null);
-                        handleSignOut();
-                      }}>
+                      <MenuItem 
+                        onClick={() => {
+                          console.log('Sign Out clicked');
+                          // Don't close menu immediately so user can see loading state
+                          handleSignOut();
+                        }}
+                        disabled={isSigningOut}
+                      >
                         <ListItemIcon>
-                          <LogoutIcon sx={{ color: '#0A66C2' }} />
+                          {isSigningOut ? (
+                            <CircularProgress size={20} sx={{ color: '#0A66C2' }} />
+                          ) : (
+                            <LogoutIcon sx={{ color: '#0A66C2' }} />
+                          )}
                         </ListItemIcon>
-                        <ListItemText primary="Sign Out" />
+                        <ListItemText primary={isSigningOut ? "Signing out..." : "Sign Out"} />
                       </MenuItem>
                     </Menu>
                   </>
@@ -390,13 +423,23 @@ export function LandingPage() {
                 return (
                   <>
                     <Button 
-                      color="inherit" 
+                      variant="outlined"
                       onClick={handleSignIn}
                       size={isMobile ? "small" : "medium"}
                       sx={{ 
-                        color: '#666666', 
-                        fontSize: { xs: '0.8rem', md: '0.9rem' },
-                        '&:hover': { color: '#0A66C2' } 
+                        color: '#0A66C2',
+                        borderColor: '#0A66C2',
+                        fontSize: { xs: '0.85rem', md: '0.95rem' },
+                        fontWeight: 600,
+                        px: { xs: 2.5, md: 3.5 },
+                        py: { xs: 0.8, md: 1 },
+                        borderWidth: '2px',
+                        '&:hover': { 
+                          backgroundColor: '#0A66C2',
+                          color: 'white',
+                          borderColor: '#0A66C2',
+                          borderWidth: '2px'
+                        }
                       }}
                     >
                       Sign In
@@ -443,7 +486,7 @@ export function LandingPage() {
         }
       }}>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={{ xs: 3, md: 6 }} alignItems="center">
+          <Grid container spacing={{ xs: 3, md: 8 }} alignItems="center">
             <Grid item xs={12} md={6}>
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
@@ -451,15 +494,17 @@ export function LandingPage() {
                 transition={{ duration: 0.8 }}
               >
                 <Typography variant="h1" sx={{ 
-                  fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3.5rem' },
-                  fontWeight: 800,
+                  fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.8rem', lg: '3.2rem' },
+                  fontWeight: 700,
                   background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   mb: { xs: 2, md: 3 },
-                  lineHeight: 1.2,
-                  textAlign: { xs: 'center', md: 'left' }
+                  lineHeight: { xs: 1.3, md: 1.2 },
+                  textAlign: { xs: 'center', md: 'left' },
+                  maxWidth: { xs: '100%', md: '90%', lg: '85%' },
+                  letterSpacing: '-0.02em'
                 }}>
                   {(currentUser && authDataLoaded)
                     ? `Welcome back, ${getDisplayName()}!`
@@ -467,12 +512,14 @@ export function LandingPage() {
                   }
                 </Typography>
                 <Typography variant="h5" sx={{ 
-                  fontSize: { xs: '1rem', sm: '1.2rem', md: '1.5rem' },
+                  fontSize: { xs: '0.95rem', sm: '1.05rem', md: '1.2rem', lg: '1.3rem' },
                   color: '#cccccc',
-                  mb: { xs: 3, md: 4 }, 
+                  mb: { xs: 4, md: 5 }, 
                   fontWeight: 400,
-                  lineHeight: 1.4,
-                  textAlign: { xs: 'center', md: 'left' }
+                  lineHeight: { xs: 1.5, md: 1.4 },
+                  textAlign: { xs: 'center', md: 'left' },
+                  maxWidth: { xs: '100%', md: '85%', lg: '80%' },
+                  letterSpacing: '0.01em'
                 }}>
                   {currentUser
                     ? 'Ready to craft another resume? Let\'s get started with your next career opportunity.'
@@ -521,15 +568,15 @@ export function LandingPage() {
                   flexDirection: 'column',
                   justifyContent: 'flex-start',
                   alignItems: 'center',
-                  height: { xs: '320px', sm: '480px', md: '600px' },
+                  height: { xs: '260px', sm: '480px', md: '600px' },
                   pt: 2
                 }}>
                   {/* Resume Mockups Row */}
                   <Box sx={{
                     display: 'flex',
                     justifyContent: 'center',
-                    alignItems: 'flex-start',
-                    gap: { xs: 1, sm: 2, md: 3 },
+                    alignItems: 'center',
+                    gap: { xs: 0.5, sm: 2, md: 3 },
                     flexDirection: 'row'
                   }}>
                   {/* Before Resume with Label */}
@@ -553,20 +600,20 @@ export function LandingPage() {
                     transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
                   >
                     <Box sx={{
-                      width: { xs: '160px', sm: '240px', md: '280px' },
-                      height: { xs: '240px', sm: '360px', md: '420px' },
+                      width: { xs: '130px', sm: '240px', md: '280px' },
+                      height: { xs: '190px', sm: '360px', md: '420px' },
                       bgcolor: '#f9f9f9',
                       borderRadius: 2,
                       border: '2px solid #ddd',
                       position: 'relative',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                       overflow: 'hidden',
-                      p: { xs: 1, md: 1.5 }
+                      p: { xs: 0.8, md: 1.5 }
                     }}>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', borderBottom: '1px solid #ccc', pb: 1 }}>
                         <Typography sx={{ 
-                          fontSize: { xs: '9px', sm: '11px' }, 
+                          fontSize: { xs: '7px', sm: '10px' }, 
                           fontWeight: 'bold', 
                           color: '#333',
                           mb: 0.3
@@ -574,7 +621,7 @@ export function LandingPage() {
                           JOHN SMITH
                         </Typography>
                         <Typography sx={{ 
-                          fontSize: { xs: '6px', sm: '8px' }, 
+                          fontSize: { xs: '5px', sm: '8px' }, 
                           color: '#666',
                           mb: 0.3
                         }}>
@@ -591,7 +638,7 @@ export function LandingPage() {
                       {/* Summary Section */}
                       <Box sx={{ mb: 1.2 }}>
                         <Typography sx={{ 
-                          fontSize: { xs: '6px', sm: '8px' }, 
+                          fontSize: { xs: '5px', sm: '8px' }, 
                           fontWeight: 'bold', 
                           color: '#333',
                           mb: 0.5,
@@ -600,7 +647,7 @@ export function LandingPage() {
                           SUMMARY
                         </Typography>
                         <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          fontSize: { xs: '4px', sm: '6.5px' }, 
                           color: '#555',
                           lineHeight: 1.3
                         }}>
@@ -611,7 +658,7 @@ export function LandingPage() {
                       {/* Experience Section */}
                       <Box sx={{ mb: 1.2 }}>
                         <Typography sx={{ 
-                          fontSize: { xs: '6px', sm: '8px' }, 
+                          fontSize: { xs: '5px', sm: '8px' }, 
                           fontWeight: 'bold', 
                           color: '#333',
                           mb: 0.5,
@@ -625,7 +672,31 @@ export function LandingPage() {
                           color: '#444',
                           mb: 0.3
                         }}>
-                          Data Engineer - Tech Corp
+                          Data Engineer - TechCorp Inc (2022-2024)
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Built ETL pipelines using Python and SQL for data processing
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Managed PostgreSQL and MySQL databases for reporting
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Worked with team on data migration and cleanup projects
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
@@ -633,7 +704,40 @@ export function LandingPage() {
                           lineHeight: 1.2,
                           mb: 0.3
                         }}>
-                          • Built ETL pipelines using Python and SQL
+                          • Optimized database queries to improve performance
+                        </Typography>
+                        
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '7px' }, 
+                          fontWeight: 'bold',
+                          color: '#444',
+                          mb: 0.2
+                        }}>
+                          Junior Data Analyst - DataSoft LLC (2020-2022)
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Created weekly and monthly reports using Excel and SQL
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Analyzed sales data trends and customer behavior patterns
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Maintained data quality and performed data validation
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
@@ -641,22 +745,47 @@ export function LandingPage() {
                           lineHeight: 1.2,
                           mb: 0.3
                         }}>
-                          • Managed data warehouses and databases
+                          • Supported senior analysts with ad-hoc analysis requests
+                        </Typography>
+                        
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '7px' }, 
+                          fontWeight: 'bold',
+                          color: '#444',
+                          mb: 0.2
+                        }}>
+                          Intern - StartupXYZ (2019-2020)
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
                           color: '#555',
                           lineHeight: 1.2,
-                          mb: 0.3
+                          mb: 0.2
                         }}>
-                          • Performed data analysis and reporting
+                          • Performed data entry and validation for customer records
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Wrote basic SQL queries for generating simple reports
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#555',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Assisted with database maintenance and backup tasks
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
                           color: '#555',
                           lineHeight: 1.2
                         }}>
-                          • Collaborated with development teams
+                          • Learned data processing fundamentals and best practices
                         </Typography>
                       </Box>
 
@@ -676,7 +805,7 @@ export function LandingPage() {
                           color: '#555',
                           lineHeight: 1.3
                         }}>
-                          Python, SQL, PostgreSQL, MySQL, Hadoop, Spark, Airflow, Git, Linux
+                          Python, SQL, PostgreSQL, MySQL, Excel, Git
                         </Typography>
                       </Box>
                       
@@ -707,33 +836,6 @@ export function LandingPage() {
                           2018-2022 | GPA: 3.5
                         </Typography>
                       </Box>
-                      
-                      {/* Certifications */}
-                      <Box sx={{ mb: 1 }}>
-                        <Typography sx={{ 
-                          fontSize: { xs: '6px', sm: '8px' }, 
-                          fontWeight: 'bold', 
-                          color: '#333',
-                          mb: 0.5,
-                          textDecoration: 'underline'
-                        }}>
-                          CERTIFICATIONS
-                        </Typography>
-                        <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '6.5px' }, 
-                          color: '#555',
-                          lineHeight: 1.3
-                        }}>
-                          • AWS Certified Solutions Architect
-                        </Typography>
-                        <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '6.5px' }, 
-                          color: '#555',
-                          lineHeight: 1.3
-                        }}>
-                          • Google Cloud Professional Data Engineer
-                        </Typography>
-                      </Box>
                     </Box>
                   </motion.div>
                   </Box>
@@ -744,13 +846,13 @@ export function LandingPage() {
                     animate={{ scale: 1.2, opacity: 1 }}
                     transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
                     style={{ 
-                      margin: { xs: '0 8px', sm: '0 25px' }, 
+                      margin: { xs: '0 4px', sm: '0 25px' }, 
                       zIndex: 2,
                       display: 'block'
                     }}
                   >
                     <AutoAwesomeIcon sx={{ 
-                      fontSize: { xs: 24, sm: 35, md: 45 }, 
+                      fontSize: { xs: 18, sm: 35, md: 45 }, 
                       color: '#0A66C2',
                       filter: 'drop-shadow(0 0 15px rgba(10, 102, 194, 0.6))',
                       transform: 'rotate(0deg)'
@@ -778,15 +880,15 @@ export function LandingPage() {
                     transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
                   >
                     <Box sx={{
-                      width: { xs: '160px', sm: '240px', md: '280px' },
-                      height: { xs: '240px', sm: '360px', md: '420px' },
+                      width: { xs: '130px', sm: '240px', md: '280px' },
+                      height: { xs: '190px', sm: '360px', md: '420px' },
                       bgcolor: 'white',
                       borderRadius: 2,
                       border: '2px solid #0A66C2',
                       position: 'relative',
                       boxShadow: '0 8px 30px rgba(10, 102, 194, 0.3)',
                       overflow: 'hidden',
-                      p: { xs: 1, md: 1.5 }
+                      p: { xs: 0.8, md: 1.5 }
                     }}>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', bgcolor: '#f8fbff', mx: { xs: -1, md: -1.5 }, mt: { xs: -1, md: -1.5 }, p: { xs: 1, md: 1.5 }, borderBottom: '2px solid #0A66C2' }}>
@@ -804,7 +906,7 @@ export function LandingPage() {
                           fontWeight: 'bold',
                           mb: 0.3
                         }}>
-                          AI/ML Developer & Data Scientist
+                          AI/ML Developer
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7px' }, 
@@ -853,7 +955,7 @@ export function LandingPage() {
                           color: '#0A66C2',
                           mb: 0.3
                         }}>
-                          AI/ML Developer - Tech Corp
+                          Senior AI/ML Engineer - TechCorp Inc (2022-2024)
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
@@ -861,7 +963,31 @@ export function LandingPage() {
                           lineHeight: 1.2,
                           mb: 0.3
                         }}>
-                          • Developed ML pipelines using TensorFlow & PyTorch
+                          • Developed end-to-end ML pipelines using TensorFlow & PyTorch
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Built predictive models achieving 95% accuracy for forecasting
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Implemented MLOps practices for model deployment and monitoring
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Led cross-functional AI initiatives with engineering and product teams
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
@@ -869,7 +995,40 @@ export function LandingPage() {
                           lineHeight: 1.2,
                           mb: 0.3
                         }}>
-                          • Built predictive models with 95% accuracy
+                          • Optimized neural networks reducing inference time by 40%
+                        </Typography>
+                        
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '7px' }, 
+                          fontWeight: 'bold',
+                          color: '#0A66C2',
+                          mb: 0.2
+                        }}>
+                          Data Scientist - DataSoft LLC (2020-2022)
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Built advanced predictive analytics models for customer segmentation
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Implemented NLP solutions for sentiment analysis and text mining
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Developed recommendation systems increasing user engagement by 25%
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
@@ -877,14 +1036,47 @@ export function LandingPage() {
                           lineHeight: 1.2,
                           mb: 0.3
                         }}>
-                          • Implemented NLP and computer vision solutions
+                          • Collaborated with stakeholders to translate business needs into ML solutions
+                        </Typography>
+                        
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '7px' }, 
+                          fontWeight: 'bold',
+                          color: '#0A66C2',
+                          mb: 0.2
+                        }}>
+                          ML Engineer - StartupXYZ (2019-2020)
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Developed computer vision applications for object detection and classification
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Created deep learning models for image recognition with CNN architectures
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: { xs: '5px', sm: '6.5px' }, 
+                          color: '#333',
+                          lineHeight: 1.2,
+                          mb: 0.2
+                        }}>
+                          • Implemented data augmentation techniques improving model robustness
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
                           color: '#333',
                           lineHeight: 1.2
                         }}>
-                          • Led AI initiatives across cross-functional teams
+                          • Optimized model performance achieving real-time inference capabilities
                         </Typography>
                       </Box>
 
@@ -927,51 +1119,14 @@ export function LandingPage() {
                           color: '#0A66C2',
                           mb: 0.3
                         }}>
-                          MS Computer Science - Stanford University
-                        </Typography>
-                        <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '6.5px' }, 
-                          color: '#333',
-                          lineHeight: 1.2,
-                          mb: 0.3
-                        }}>
-                          Specialization: Machine Learning & AI | GPA: 3.9
+                          BS Computer Science
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '6.5px' }, 
                           color: '#333',
                           lineHeight: 1.2
                         }}>
-                          • AWS ML Specialty • Google Cloud ML Engineer • TensorFlow Developer
-                        </Typography>
-                      </Box>
-                      
-                      {/* Projects Section */}
-                      <Box sx={{ mb: 1 }}>
-                        <Typography sx={{ 
-                          fontSize: { xs: '6px', sm: '8px' }, 
-                          fontWeight: 'bold', 
-                          color: '#0A66C2',
-                          mb: 0.5,
-                          borderBottom: '1px solid #0A66C2',
-                          pb: 0.2
-                        }}>
-                          KEY PROJECTS
-                        </Typography>
-                        <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '6.5px' }, 
-                          color: '#333',
-                          lineHeight: 1.2,
-                          mb: 0.2
-                        }}>
-                          • Predictive Analytics Platform: Increased accuracy by 40%
-                        </Typography>
-                        <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '6.5px' }, 
-                          color: '#333',
-                          lineHeight: 1.2
-                        }}>
-                          • Computer Vision System: Reduced processing time by 60%
+                          State University (2018-2022) | GPA: 3.5
                         </Typography>
                       </Box>
                       
@@ -1034,7 +1189,7 @@ export function LandingPage() {
                       >
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h4" sx={{ 
-                            fontSize: { xs: '1.5rem', md: '2rem' },
+                            fontSize: { xs: '1.2rem', md: '2rem' },
                             color: '#0A66C2', 
                             fontWeight: 'bold',
                             mb: 0.5
@@ -1043,7 +1198,7 @@ export function LandingPage() {
                           </Typography>
                           <Typography variant="caption" sx={{ 
                             color: '#cccccc',
-                            fontSize: { xs: '10px', md: '12px' }
+                            fontSize: { xs: '8px', md: '12px' }
                           }}>
                             {stat.label}
                           </Typography>

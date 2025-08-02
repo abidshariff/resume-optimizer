@@ -608,7 +608,7 @@ def lambda_handler(event, context):
         resume_key = event.get('resumeKey')
         job_desc_key = event.get('jobDescriptionKey')
         status_key = event.get('statusKey')
-        output_format = event.get('outputFormat', 'text')  # 'text', 'word', 'docx', or 'pdf'
+        output_format = event.get('outputFormat', 'docx')  # 'text', 'word', 'docx', or 'pdf' - default to docx
         
         # Map frontend format names to backend format names
         format_mapping = {
@@ -1146,17 +1146,22 @@ def lambda_handler(event, context):
                 print(f"Experience {i+1} ({exp.get('title', 'Unknown')}) has {achievement_count} achievements")
             
             # Generate output based on requested format
+            print(f"Generating resume in format: {output_format}")
             if output_format.lower() == 'pdf':
                 try:
+                    print("Starting PDF generation...")
                     # Try to use reportlab for PDF generation
                     try:
+                        print("Installing reportlab...")
                         # Install reportlab in /tmp
                         subprocess.check_call(['pip', 'install', 'reportlab', '-t', '/tmp'])
                         sys.path.append('/tmp')
                         
+                        print("Importing PDF generator...")
                         # Import the PDF generator
                         from pdf_generator import create_pdf_resume
                         
+                        print("Creating PDF document...")
                         # Generate PDF document
                         pdf_content = create_pdf_resume(resume_json)
                         

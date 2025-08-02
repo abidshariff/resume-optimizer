@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentUser, signOut, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
+import { useLoading } from '../contexts/LoadingContext';
+import LoadingScreen from './LoadingScreen';
 import config from '../config';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
@@ -121,8 +123,10 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes }) {
 function MainApp() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showLoading, isLoading: globalLoading, loadingMessage, loadingSubtitle } = useLoading();
   const [currentUser, setCurrentUser] = useState(null);
   const [userAttributes, setUserAttributes] = useState(null);
+  const [authDataLoaded, setAuthDataLoaded] = useState(false);
   
   // Resume crafting state
   const [resume, setResume] = useState(null);
@@ -457,6 +461,9 @@ function MainApp() {
         console.log('Could not fetch user attributes:', attrError);
         // Continue without attributes - will fall back to username
       }
+      
+      // Mark auth data as loaded
+      setAuthDataLoaded(true);
     } catch (error) {
       navigate('/');
     }
@@ -465,7 +472,10 @@ function MainApp() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/');
+      showLoading("Signing out...", "Thanks for using JobTailorAI!", 2500);
+      setTimeout(() => {
+        navigate('/');
+      }, 2500);
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -907,7 +917,19 @@ function MainApp() {
   const isProcessing = isSubmitting || isPolling;
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <>
+      {/* Show loading screen during global loading */}
+      {globalLoading && (
+        <LoadingScreen 
+          message={loadingMessage}
+          subtitle={loadingSubtitle}
+          showProgress={true}
+        />
+      )}
+      
+      {/* Main app content - hide when loading */}
+      {!globalLoading && (
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
       <AppBar position="static" elevation={0}>
         <Toolbar sx={{ py: 1 }}>
@@ -920,7 +942,12 @@ function MainApp() {
                 opacity: 0.8
               }
             }}
-            onClick={() => navigate('/')}
+            onClick={() => {
+              showLoading("Going home...", "Returning to JobTailorAI", 1200);
+              setTimeout(() => {
+                navigate('/');
+              }, 1200);
+            }}
           >
             <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
             <Typography variant="h5" component="div" sx={{ 
@@ -936,10 +963,12 @@ function MainApp() {
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="body2" sx={{ 
-              color: '#666666',
-              display: { xs: 'none', sm: 'block' }
+              color: '#333333',
+              display: { xs: 'none', sm: 'block' },
+              fontSize: { xs: '1rem', md: '1.1rem' },
+              fontWeight: 'bold'
             }}>
-              Welcome, {getDisplayName()}
+              {(currentUser && authDataLoaded) ? `Welcome, ${getDisplayName()}` : ''}
             </Typography>
             
             {/* Refresh Button */}
@@ -993,7 +1022,10 @@ function MainApp() {
             >
               <MenuItem onClick={() => {
                 setProfileMenuAnchor(null);
-                navigate('/app/profile');
+                showLoading("Loading profile...", "Accessing your account settings", 1200);
+                setTimeout(() => {
+                  navigate('/app/profile');
+                }, 1200);
               }}>
                 <ListItemIcon>
                   <PersonIcon sx={{ color: '#0A66C2' }} />
@@ -1307,7 +1339,7 @@ function MainApp() {
                     }
                   }}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Cancel Crafting'}
+                  Cancel Crafting
                 </Button>
               </motion.div>
             )}
@@ -2189,7 +2221,9 @@ function MainApp() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+      )}
+    </>
   );
 }
 

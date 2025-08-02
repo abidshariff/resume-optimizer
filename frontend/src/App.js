@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material';
+import { LoadingProvider } from './contexts/LoadingContext';
 import SimpleAuth from './SimpleAuth';
 import MainApp from './components/MainApp';
 import Profile from './components/Profile';
@@ -11,23 +12,24 @@ import { LandingPage } from './components/LandingPage';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <Routes>
-          {/* Landing Page */}
-          <Route path="/" element={<LandingPage />} />
-          
-          {/* Authentication - Protected against already authenticated users */}
-          <Route path="/auth" element={
-            <AuthGuard>
-              <SimpleAuth />
-            </AuthGuard>
-          } />
-          
-          {/* Protected App Routes */}
-          <Route path="/app/*" element={
-            <ProtectedRoute>
-              <Routes>
+    <LoadingProvider>
+      <ThemeProvider theme={theme}>
+        <Router>
+          <Routes>
+            {/* Landing Page */}
+            <Route path="/" element={<LandingPage />} />
+            
+            {/* Authentication - Protected against already authenticated users */}
+            <Route path="/auth" element={
+              <AuthGuard>
+                <SimpleAuth />
+              </AuthGuard>
+            } />
+            
+            {/* Protected App Routes */}
+            <Route path="/app/*" element={
+              <ProtectedRoute>
+                <Routes>
                 <Route path="/" element={<Navigate to="/app/upload" replace />} />
                 <Route path="/upload" element={<MainApp />} />
                 <Route path="/job-description" element={<MainApp />} />
@@ -42,6 +44,7 @@ function App() {
         </Routes>
       </Router>
     </ThemeProvider>
+    </LoadingProvider>
   );
 }
 

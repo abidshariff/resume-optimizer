@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
+import { useLoading } from './contexts/LoadingContext';
+import LoadingScreen from './components/LoadingScreen';
+import sessionManager from './utils/sessionManager';
 import {
   Box,
   Container,
@@ -18,7 +21,9 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import { 
   AutoAwesome as AutoAwesomeIcon,
@@ -31,6 +36,7 @@ import {
 function SimpleAuth() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showLoading, isLoading: globalLoading, loadingMessage, loadingSubtitle } = useLoading();
   
   // Get the return path from location state, default to /app/upload
   const returnTo = location.state?.returnTo || '/app/upload';
@@ -46,11 +52,21 @@ function SimpleAuth() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
   const [countdown, setCountdown] = useState(5);
+
+  // Check for remembered credentials on mount
+  useEffect(() => {
+    const rememberedEmail = sessionManager.getRememberedEmail();
+    if (rememberedEmail) {
+      setFormData(prev => ({ ...prev, email: rememberedEmail }));
+      setRememberMe(true);
+    }
+  }, []);
 
   // Phone number formatting for Cognito (E.164 format)
   const formatPhoneForCognito = (phone) => {
@@ -119,19 +135,40 @@ function SimpleAuth() {
     try {
       const result = await signIn({
         username: formData.email,
-        password: formData.password
+        password: formData.password,
+        options: {
+          // Set session duration based on remember me
+          authFlowType: 'USER_SRP_AUTH',
+          ...(rememberMe && {
+            clientMetadata: {
+              rememberDevice: 'true'
+            }
+          })
+        }
       });
       
       if (result.isSignedIn) {
-        // Use replace to prevent back button from going to auth page
-        navigate(returnTo, { replace: true });
+        // Handle remember me preference
+        if (rememberMe) {
+          sessionManager.setRememberMe(formData.email);
+        } else {
+          sessionManager.clearRememberMe();
+        }
+        
+        // Show loading screen before navigation
+        showLoading("Welcome back!", "Setting up your workspace", 2000);
+        
+        // Navigate after loading screen
+        setTimeout(() => {
+          navigate(returnTo, { replace: true });
+        }, 2000);
       }
     } catch (err) {
       console.error('Sign in error:', err);
       setError(err.message || 'Failed to sign in');
-    } finally {
       setLoading(false);
     }
+    // Don't set loading to false here since we want to keep it during transition
   };
 
   const handleSignUp = async (e) => {
@@ -211,7 +248,12 @@ function SimpleAuth() {
       }
       
       if (result.isSignUpComplete) {
-        navigate(returnTo);
+        // Show loading screen before navigation
+        showLoading("Account created successfully!", "Welcome to JobTailorAI", 2000);
+        
+        setTimeout(() => {
+          navigate(returnTo);
+        }, 2000);
       } else {
         setMode('confirmSignUp');
         setMessage('Please check your email for the verification code');
@@ -275,7 +317,12 @@ function SimpleAuth() {
           setCountdown((prev) => {
             if (prev <= 1) {
               clearInterval(timer);
-              navigate('/app/upload');
+              // Show loading screen before navigation
+              showLoading("Email verified successfully!", "Welcome to JobTailorAI", 2000);
+              
+              setTimeout(() => {
+                navigate('/app/upload');
+              }, 2000);
               return 0;
             }
             return prev - 1;
@@ -394,6 +441,28 @@ function SimpleAuth() {
         }}
       />
       
+      {/* Remember Me Checkbox */}
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            sx={{ 
+              color: '#0A66C2',
+              '&.Mui-checked': {
+                color: '#0A66C2',
+              }
+            }}
+          />
+        }
+        label={
+          <Typography variant="body2" sx={{ color: '#666666', fontSize: '14px' }}>
+            Keep me signed in for 30 days
+          </Typography>
+        }
+        sx={{ mb: 2, alignSelf: 'flex-start' }}
+      />
+      
       <Button
         type="submit"
         fullWidth
@@ -450,9 +519,10 @@ function SimpleAuth() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 0.5
+          gap: 1,
+          flexWrap: 'wrap'
         }}>
-          New to JobTailorAI?
+          <span>New to JobTailorAI?</span>
           <Link
             component="button"
             type="button"
@@ -463,7 +533,8 @@ function SimpleAuth() {
               textDecoration: 'none',
               fontSize: '16px',
               lineHeight: 1.5,
-              display: 'inline',
+              display: 'inline-flex',
+              alignItems: 'center',
               '&:hover': { textDecoration: 'underline' }
             }}
           >
@@ -640,9 +711,10 @@ function SimpleAuth() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 0.5
+          gap: 1,
+          flexWrap: 'wrap'
         }}>
-          Already on JobTailorAI?
+          <span>Already on JobTailorAI?</span>
           <Link
             component="button"
             type="button"
@@ -653,7 +725,8 @@ function SimpleAuth() {
               textDecoration: 'none',
               fontSize: '16px',
               lineHeight: 1.5,
-              display: 'inline',
+              display: 'inline-flex',
+              alignItems: 'center',
               '&:hover': { textDecoration: 'underline' }
             }}
           >
@@ -983,23 +1056,35 @@ function SimpleAuth() {
   };
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      bgcolor: '#f5f5f5',
-      '& @keyframes bounce': {
-        '0%, 20%, 53%, 80%, 100%': {
-          transform: 'translate3d(0,0,0)'
-        },
-        '40%, 43%': {
-          transform: 'translate3d(0,-15px,0)'
-        },
-        '70%': {
-          transform: 'translate3d(0,-7px,0)'
-        },
-        '90%': {
-          transform: 'translate3d(0,-2px,0)'
-        }
-      }
+    <>
+      {/* Show loading screen during global loading */}
+      {globalLoading && (
+        <LoadingScreen 
+          message={loadingMessage}
+          subtitle={loadingSubtitle}
+          showProgress={true}
+        />
+      )}
+      
+      {/* Main auth content - hide when loading */}
+      {!globalLoading && (
+        <Box sx={{ 
+          minHeight: '100vh', 
+          bgcolor: '#f5f5f5',
+          '& @keyframes bounce': {
+            '0%, 20%, 53%, 80%, 100%': {
+              transform: 'translate3d(0,0,0)'
+            },
+            '40%, 43%': {
+              transform: 'translate3d(0,-15px,0)'
+            },
+            '70%': {
+              transform: 'translate3d(0,-7px,0)'
+            },
+            '90%': {
+              transform: 'translate3d(0,-2px,0)'
+            }
+          }
     }}>
       {/* Header */}
       <AppBar position="static" elevation={0} sx={{ 
@@ -1007,7 +1092,16 @@ function SimpleAuth() {
         borderBottom: '1px solid #e0e0e0'
       }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            cursor: 'pointer',
+            '&:hover': {
+              opacity: 0.8
+            }
+          }}
+          onClick={() => navigate('/')}
+          >
             <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
             <Typography variant="h5" sx={{ 
               fontWeight: 700,
@@ -1066,6 +1160,8 @@ function SimpleAuth() {
         </Container>
       </Box>
     </Box>
+    )}
+    </>
   );
 }
 
