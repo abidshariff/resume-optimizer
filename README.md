@@ -181,11 +181,21 @@ REACT_APP_AWS_REGION=us-east-1
 REACT_APP_USER_POOL_ID=us-east-1_PdEKfFD9v
 REACT_APP_USER_POOL_WEB_CLIENT_ID=sp5dfgb8mr3066luhs7e8h2rr
 REACT_APP_API_ENDPOINT=https://giocwxtmw9.execute-api.us-east-1.amazonaws.com/prod
+REACT_APP_TEST_MODE=false
 ```
 
 **Backend (Lambda Environment Variables)**:
 - `STORAGE_BUCKET`: S3 bucket for file storage
 - `USER_HISTORY_TABLE`: DynamoDB table for user history
+
+### Logging Configuration
+
+The application uses a custom Logger utility for conditional console output:
+- **Development**: Console logging enabled for debugging
+- **Production**: Console logging disabled for security and performance
+- **Test Mode**: Can be enabled via `REACT_APP_TEST_MODE=true`
+
+See `frontend/LOGGING.md` for detailed logging configuration and best practices.
 
 ### AWS Permissions Required
 

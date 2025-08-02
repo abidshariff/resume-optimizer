@@ -7,6 +7,7 @@ import SettingsDialog from './SettingsDialog';
 import LoadingScreen from './LoadingScreen';
 import MobileResumeMockups from './MobileResumeMockups';
 import MobileStats from './MobileStats';
+import Logger from '../utils/logger';
 import { 
   Box, 
   Container, 
@@ -107,16 +108,16 @@ export function LandingPage() {
       setAuthDataLoaded(false);
       
       const user = await getCurrentUser();
-      console.log('LandingPage - User loaded:', user);
+      Logger.log('LandingPage - User loaded:', user);
       
       // Try to get user attributes which might contain the first name
       let attributes = null;
       try {
         const { fetchUserAttributes } = await import('aws-amplify/auth');
         attributes = await fetchUserAttributes();
-        console.log('LandingPage - User attributes from fetchUserAttributes:', attributes);
+        Logger.log('LandingPage - User attributes from fetchUserAttributes:', attributes);
       } catch (attrError) {
-        console.log('LandingPage - Could not fetch user attributes:', attrError);
+        Logger.log('LandingPage - Could not fetch user attributes:', attrError);
       }
       
       // Set both user and attributes together to prevent flickering
@@ -125,7 +126,7 @@ export function LandingPage() {
       setAuthDataLoaded(true);
       
     } catch (error) {
-      console.log('LandingPage - No user found:', error.message);
+      Logger.log('LandingPage - No user found:', error.message);
       setCurrentUser(null);
       setUserAttributes(null);
       setAuthDataLoaded(true);
@@ -150,7 +151,7 @@ export function LandingPage() {
         setIsSigningOut(false);
       }, 2500);
     } catch (error) {
-      console.error('Error signing out:', error);
+      Logger.error('Error signing out:', error);
       setIsSigningOut(false);
       hideLoading();
     }
@@ -180,7 +181,7 @@ export function LandingPage() {
     
     try {
       // Simple contact form submission - you can integrate with your preferred service
-      console.log('Contact form submitted:', {
+      Logger.log('Contact form submitted:', {
         title: contactTitle,
         description: contactDescription,
         user: currentUser?.username || 'Anonymous'
@@ -195,7 +196,7 @@ export function LandingPage() {
       alert('Thank you for your message! We\'ll get back to you soon.');
       
     } catch (error) {
-      console.error('Error submitting contact form:', error);
+      Logger.error('Error submitting contact form:', error);
       alert('There was an issue sending your message. Please try again.');
     } finally {
       setIsSubmittingContact(false);
@@ -317,7 +318,7 @@ export function LandingPage() {
                         )}
                         <IconButton
                           onClick={(e) => {
-                            console.log('Avatar clicked!', e.currentTarget);
+                            Logger.log('Avatar clicked!', e.currentTarget);
                             setProfileMenuAnchor(e.currentTarget);
                           }}
                           sx={{ 
@@ -346,7 +347,7 @@ export function LandingPage() {
                       anchorEl={profileMenuAnchor}
                       open={Boolean(profileMenuAnchor)}
                       onClose={() => {
-                        console.log('Menu closing');
+                        Logger.log('Menu closing');
                         setProfileMenuAnchor(null);
                       }}
                       PaperProps={{
@@ -403,7 +404,7 @@ export function LandingPage() {
                       
                       <MenuItem 
                         onClick={() => {
-                          console.log('Sign Out clicked');
+                          Logger.log('Sign Out clicked');
                           // Don't close menu immediately so user can see loading state
                           handleSignOut();
                         }}
