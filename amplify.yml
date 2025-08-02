@@ -15,14 +15,3 @@ frontend:
   cache:
     paths:
       - frontend/node_modules/**/*
-  # Fix for client-side routing - redirect all routes to index.html
-  customHeaders:
-    - pattern: '**/*'
-      headers:
-        - key: 'Cache-Control'
-          value: 'no-cache'
-# Redirect configuration for React Router
-redirects:
-  - source: '/<*>'
-    target: '/index.html'
-    status: '200'
