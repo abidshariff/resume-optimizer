@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material';
 import { LoadingProvider } from './contexts/LoadingContext';
 import SimpleAuth from './SimpleAuth';
@@ -7,6 +7,7 @@ import MainApp from './components/MainApp';
 import Profile from './components/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthGuard from './components/AuthGuard';
+import NotFoundHandler from './components/NotFoundHandler';
 import { theme } from './theme';
 import { LandingPage } from './components/LandingPage';
 
@@ -39,8 +40,11 @@ function App() {
             </ProtectedRoute>
           } />
           
-          {/* Catch all route - redirect to landing */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* 404 Handler - attempts to redirect to correct route */}
+          <Route path="/404" element={<NotFoundHandler />} />
+          
+          {/* Catch all route - redirect to 404 handler first, then landing */}
+          <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </Router>
     </ThemeProvider>

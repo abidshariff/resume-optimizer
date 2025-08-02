@@ -1,0 +1,7 @@
+[
+    {
+        "source": "/app/<*>",
+        "target": "/index.html",
+        "status": "200"
+    }
+]

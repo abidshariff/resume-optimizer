@@ -1,0 +1,22 @@
+[
+    {
+        "source": "/app/upload",
+        "target": "/index.html",
+        "status": "200"
+    },
+    {
+        "source": "/app/job-description", 
+        "target": "/index.html",
+        "status": "200"
+    },
+    {
+        "source": "/app/results",
+        "target": "/index.html", 
+        "status": "200"
+    },
+    {
+        "source": "/app/profile",
+        "target": "/index.html",
+        "status": "200"
+    }
+]
