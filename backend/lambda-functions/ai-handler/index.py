@@ -785,9 +785,9 @@ def lambda_handler(event, context):
         job_keywords = extract_job_keywords(job_description)
         print(f"Extracted job keywords: {job_keywords}")
 
-        # Prepare enhanced prompt for Bedrock with strategic optimization
+        # Prepare enhanced prompt for Bedrock with systematic optimization
         prompt = f"""
-        You are an expert ATS resume optimizer and career consultant. Your mission is to STRATEGICALLY ENHANCE the provided resume to better match the job description while maintaining authenticity and truthfulness about the candidate's background.
+        You are an expert ATS resume optimizer and career consultant. Your mission is to SYSTEMATICALLY ENHANCE the provided resume to better match the job description while maintaining authenticity and truthfulness about the candidate's background.
 
         ORIGINAL RESUME:
         {resume_text}
@@ -800,68 +800,87 @@ def lambda_handler(event, context):
         ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
         ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_structure['bullet_points']} bullet points, estimated {original_structure['estimated_experience_sections']} experience sections
 
-        STRATEGIC OPTIMIZATION PRINCIPLES:
+        SYSTEMATIC OPTIMIZATION FRAMEWORK:
 
-        1. **SELECTIVE KEYWORD INTEGRATION**: 
-           - Focus on the TOP 5-7 most important technologies from the job description
-           - Only integrate keywords where they make logical sense given the candidate's background
-           - Prioritize enhancing existing experience rather than adding unrelated technologies
-           - If candidate has similar experience, reframe using job description terminology naturally
+        1. **TECHNOLOGY GROUPING RECOGNITION**:
+           - When job description lists technologies together (e.g., "using X, Y, Z, W"), treat ALL of them as equally important
+           - Look for phrases like "experience with X and Y" or "build systems using A, B, C" as requirement clusters
+           - Don't arbitrarily limit technology additions if multiple technologies are clearly required together
+           - Identify technology stacks mentioned as groups (e.g., streaming: Kafka + Flink, cloud: AWS + S3 + Lambda)
 
-        2. **AUTHENTIC EXPERIENCE ENHANCEMENT**:
-           - Enhance and reframe existing bullet points to highlight job-relevant aspects
-           - Use job description terminology where it naturally fits the candidate's actual work
+        2. **SYSTEMATIC GAP ANALYSIS**:
+           - Compare ALL technologies mentioned in job description against candidate's current skills
+           - For each missing technology, assess: "Could candidate reasonably have this given their background?"
+           - Prioritize adding missing technologies that are logical extensions of existing experience
+           - Don't skip technologies just because you've already added several others
+
+        3. **REQUIREMENT WEIGHT DETECTION**:
+           - Technologies mentioned multiple times in job description = higher priority
+           - Technologies in "must have" or "required" sections = highest priority
+           - Technologies mentioned with specific experience requirements (e.g., "5+ years of X") = critical
+           - Technologies in "nice to have" or "bonus" sections = lower priority
+           - Technologies in job title or role summary = maximum priority
+
+        4. **LOGICAL ADDITION FRAMEWORK**:
+           - If candidate has Technology A and job requires related Technology B, add Technology B if they're commonly used together
+           - Examples of logical additions:
+             * Spark experience → reasonable to add Flink (both big data processing)
+             * MySQL experience → reasonable to add PostgreSQL (both SQL databases)
+             * AWS Lambda → reasonable to add other AWS services (S3, EMR, etc.)
+             * Kafka → reasonable to add streaming technologies (Flink, Storm)
+           - Only add technologies that make sense within the candidate's domain expertise
+
+        5. **COMPLETENESS VALIDATION**:
+           - Before finalizing, verify: "Did we address the main technology clusters mentioned in the job?"
+           - Ensure we didn't miss entire categories mentioned in job requirements:
+             * Programming languages (Python, Scala, Java)
+             * Big data tools (Spark, Hadoop, Flink)
+             * Streaming systems (Kafka, Kinesis, Pulsar)
+             * Cloud platforms (AWS, GCP, Azure)
+             * Databases (PostgreSQL, MongoDB, Cassandra)
+             * Orchestration (Airflow, Kubernetes, Docker)
+
+        6. **AUTHENTIC EXPERIENCE ENHANCEMENT**:
+           - Enhance existing bullet points to naturally incorporate job-required technologies
+           - Use job description terminology where it fits the candidate's actual work
            - Quantify achievements using metrics that matter for the target role
            - Maintain the authentic voice and experience level of the candidate
 
-        3. **STRATEGIC SKILL ALIGNMENT**:
-           - Add skills from job description only if candidate likely has exposure through their experience
-           - Prioritize skills that are logical extensions of their current expertise
-           - Remove generic skills that don't add value for this specific role
-           - Ensure skills section reflects genuine capabilities demonstrated in experience
+        7. **JOB TITLE OPTIMIZATION**:
+           - If candidate's current role title is abbreviated (e.g., "Sr." → "Senior"), spell it out to match job posting
+           - If job posting mentions multiple levels (Senior/Lead/Principal), choose the one that best matches candidate's experience
+           - Only enhance titles for clarity and exact matching, never change the actual role or company
 
-        4. **NATURAL TECHNOLOGY MENTIONS**:
-           - Don't force every job-required technology into every bullet point
-           - Focus on 1-2 key technologies per bullet point maximum
-           - Only substitute technologies when it's a logical equivalent (e.g., MySQL → PostgreSQL for database work)
-           - Preserve the candidate's actual technology stack where it's relevant
-
-        5. **PROFESSIONAL SUMMARY REFINEMENT**:
-           - Highlight the candidate's strongest, most relevant qualifications
-           - Mention key technologies they actually have experience with
-           - Focus on years of experience and core competencies that match the role
-           - Keep it authentic to their actual background and seniority level
-
-        6. **CONTENT PRESERVATION**:
+        8. **CONTENT PRESERVATION**:
            - {length_guidance}
            - **PRESERVE ALL EXPERIENCE ENTRIES** from the original resume
            - **PRESERVE ALL BULLET POINTS** for each job - do not reduce the number
            - **MAINTAIN THE SAME LEVEL OF DETAIL** as the original resume
            - Enhance existing content rather than completely rewriting it
 
-        7. **EDUCATION PRESERVATION**:
+        9. **EDUCATION PRESERVATION**:
            - **DO NOT MODIFY THE EDUCATION SECTION**
            - Keep all education entries exactly as they appear in the original resume
 
-        ENHANCEMENT EXAMPLES (STRATEGIC, NOT AGGRESSIVE):
+        SYSTEMATIC ENHANCEMENT EXAMPLES:
 
-        **Example 1: Database Experience Enhancement**
-        - Original: "Managed database systems for customer data"
-        - Job Requires: PostgreSQL
-        - Enhanced: "Managed PostgreSQL database systems for customer data processing and analytics"
-        - Note: Only mention PostgreSQL if candidate actually worked with databases
+        **Example 1: Technology Stack Completion**
+        - Job mentions: "build pipelines using Spark, Flink, Kafka"
+        - Candidate has: Spark experience
+        - Action: Add Flink and Kafka to skills, enhance streaming-related bullets to mention these technologies
+        - Result: Complete coverage of the required technology stack
 
-        **Example 2: Cloud Experience Refinement**
-        - Original: "Deployed applications to cloud infrastructure"
-        - Job Requires: AWS Lambda, S3
-        - Enhanced: "Deployed serverless applications using AWS Lambda with S3 storage integration"
-        - Note: Only if candidate has cloud deployment experience
+        **Example 2: Missing Critical Tool**
+        - Job mentions: "experience with DBT for data transformation"
+        - Candidate has: ETL and data transformation experience
+        - Action: Add DBT to skills, enhance data transformation bullets to mention DBT usage
+        - Result: Addresses specific tool requirement with logical background
 
-        **Example 3: Programming Language Focus**
-        - Original: "Developed backend services"
-        - Job Requires: Python
-        - Enhanced: "Developed Python-based backend services for data processing workflows"
-        - Note: Only if candidate has backend development experience
+        **Example 3: Cloud Service Expansion**
+        - Job mentions: "AWS services including S3, EMR, Lambda, Glue"
+        - Candidate has: AWS experience but only mentions EC2, S3
+        - Action: Add EMR, Lambda, Glue to skills, enhance AWS bullets to mention these services
+        - Result: Comprehensive AWS coverage matching job requirements
 
         OUTPUT FORMAT:
         Provide your response in the following JSON structure:
@@ -869,26 +888,26 @@ def lambda_handler(event, context):
         {{
           "full_name": "Full Name from Resume",
           "contact_info": "Email | Phone | LinkedIn | Location",
-          "professional_summary": "2-3 sentences highlighting the candidate's most relevant qualifications and key technologies they actually have experience with (under 100 words)",
+          "professional_summary": "2-3 sentences highlighting the candidate's most relevant qualifications and key technologies, incorporating job-specific terminology (under 100 words)",
           "skills": [
-            "Focus on TOP 5-7 most important technologies from job description",
-            "Include skills candidate likely has based on their experience",
-            "Use exact terminology from job posting where appropriate",
-            "Remove generic skills that don't add value",
-            "Maximum 12 skills total, prioritize quality over quantity"
+            "Include ALL critical technologies from job description that candidate could reasonably have",
+            "Complete technology stacks mentioned together in job requirements",
+            "Use exact terminology from job posting",
+            "Prioritize based on requirement weight detection",
+            "Don't artificially limit if job clearly requires multiple technologies"
           ],
           "experience": [
             {{
-              "title": "Job Title (enhance only if it adds clarity)",
+              "title": "Job Title (spell out abbreviations, match job posting level terminology)",
               "company": "Company Name", 
               "dates": "Start Date - End Date",
               "achievements": [
-                "Enhanced bullet highlighting job-relevant aspects with 1-2 key technologies maximum",
-                "Quantified achievement using terminology that matches job requirements naturally",
-                "Improved bullet that showcases relevant skills without forcing unrelated technologies",
-                "PRESERVE ALL ORIGINAL BULLET POINTS - enhance, don't replace completely",
-                "Focus on authentic improvements that make sense for candidate's actual experience",
-                "Maintain the candidate's voice and experience level"
+                "Enhanced bullet incorporating job-required technologies naturally",
+                "Quantified achievement using job description terminology",
+                "Improved bullet addressing technology gaps identified in gap analysis",
+                "PRESERVE ALL ORIGINAL BULLET POINTS - enhance systematically",
+                "Focus on completing technology clusters mentioned in job requirements",
+                "Maintain authentic experience while addressing systematic gaps"
               ]
             }}
           ],
@@ -902,23 +921,23 @@ def lambda_handler(event, context):
           ]
         }}
 
-        QUALITY CONTROL CHECKLIST:
-        1. [CHECK] Does each technology mention make logical sense given the candidate's background?
-        2. [CHECK] Are we enhancing authentic experience rather than fabricating new capabilities?
-        3. [CHECK] Does the resume still sound like it was written by a human, not a keyword-stuffing bot?
-        4. [CHECK] Are we focusing on the most important job requirements rather than trying to hit every keyword?
-        5. [CHECK] Does the professional summary reflect genuine qualifications?
+        SYSTEMATIC VALIDATION CHECKLIST:
+        1. [CHECK] Did we identify and address all technology clusters mentioned together in job requirements?
+        2. [CHECK] Are we missing any critical technologies mentioned multiple times in the job description?
+        3. [CHECK] Does each added technology make logical sense given the candidate's background?
+        4. [CHECK] Did we complete partial technology stacks (e.g., if candidate has Spark, did we add Flink/Kafka if job requires them together)?
+        5. [CHECK] Does the resume still sound authentic and human-written?
         6. [CHECK] Same number of experience entries and bullets as original resume?
         7. [CHECK] Education section completely unchanged from original?
 
         **CRITICAL SUCCESS CRITERIA**:
-        - **AUTHENTICITY FIRST**: Enhance genuine experience rather than fabricating capabilities
-        - **STRATEGIC FOCUS**: Target the most important job requirements, not every possible keyword
-        - **NATURAL LANGUAGE**: Resume should sound human-written, not keyword-stuffed
-        - **LOGICAL CONSISTENCY**: Technology mentions should make sense given candidate's background
-        - **PRESERVATION**: All original content preserved, just strategically enhanced
+        - **SYSTEMATIC COVERAGE**: Address all major technology requirements, not just a arbitrary subset
+        - **LOGICAL CONSISTENCY**: Technology additions should make sense within candidate's domain
+        - **COMPLETENESS**: Don't leave gaps in technology stacks that are mentioned together
+        - **AUTHENTICITY**: Enhance genuine experience while systematically addressing job requirements
+        - **PRESERVATION**: All original content preserved, just systematically enhanced
 
-        Return ONLY the JSON structure with the strategically optimized resume content. No explanations or notes.
+        Return ONLY the JSON structure with the systematically optimized resume content. No explanations or notes.
         """
         
         # Call Amazon Bedrock with automatic model fallback
