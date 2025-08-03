@@ -5,6 +5,7 @@ Note: This version works with already-extracted text, not raw PDF files
 """
 
 import re
+from advanced_text_cleaner import clean_extracted_text
 
 def extract_text_with_formatting(pdf_content):
     """
@@ -26,10 +27,10 @@ def enhance_text_formatting(raw_text):
     if not raw_text:
         return "No text content found in PDF"
     
-    # Clean up the text
-    text = clean_pdf_artifacts(raw_text)
+    # First, apply advanced text cleaning to fix OCR artifacts
+    text = clean_extracted_text(raw_text)
     
-    # Apply intelligent formatting
+    # Then apply intelligent formatting
     text = add_section_formatting(text)
     text = format_contact_info(text)
     text = format_dates_and_locations(text)
