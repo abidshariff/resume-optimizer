@@ -785,7 +785,7 @@ def lambda_handler(event, context):
         job_keywords = extract_job_keywords(job_description)
         print(f"Extracted job keywords: {job_keywords}")
 
-        # Prepare enhanced prompt for Bedrock with systematic optimization
+        # Prepare enhanced prompt for Bedrock with systematic optimization and mandatory cross-validation
         prompt = f"""
         You are an expert ATS resume optimizer and career consultant. Your mission is to SYSTEMATICALLY ENHANCE the provided resume to better match the job description while maintaining authenticity and truthfulness about the candidate's background.
 
@@ -800,6 +800,9 @@ def lambda_handler(event, context):
         ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
         ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_structure['bullet_points']} bullet points, estimated {original_structure['estimated_experience_sections']} experience sections
 
+        CRITICAL RULE: EVERY SKILL MUST HAVE EXPERIENCE EVIDENCE
+        **NO EXCEPTIONS**: If you add a technology to the skills section, you MUST modify at least one experience bullet to show evidence of using that technology. If you cannot create logical evidence for a technology, DO NOT add it to skills.
+
         SYSTEMATIC OPTIMIZATION FRAMEWORK:
 
         1. **TECHNOLOGY GROUPING RECOGNITION**:
@@ -808,11 +811,11 @@ def lambda_handler(event, context):
            - Don't arbitrarily limit technology additions if multiple technologies are clearly required together
            - Identify technology stacks mentioned as groups (e.g., streaming: Kafka + Flink, cloud: AWS + S3 + Lambda)
 
-        2. **SYSTEMATIC GAP ANALYSIS**:
+        2. **SYSTEMATIC GAP ANALYSIS WITH EVIDENCE REQUIREMENT**:
            - Compare ALL technologies mentioned in job description against candidate's current skills
-           - For each missing technology, assess: "Could candidate reasonably have this given their background?"
-           - Prioritize adding missing technologies that are logical extensions of existing experience
-           - Don't skip technologies just because you've already added several others
+           - For each missing technology, assess: "Could candidate reasonably have this AND can I create logical evidence in their experience?"
+           - MANDATORY: For every technology you plan to add to skills, identify which experience bullet(s) you will enhance to show evidence
+           - If you cannot create logical evidence for a technology, DO NOT add it to skills
 
         3. **REQUIREMENT WEIGHT DETECTION**:
            - Technologies mentioned multiple times in job description = higher priority
@@ -821,66 +824,75 @@ def lambda_handler(event, context):
            - Technologies in "nice to have" or "bonus" sections = lower priority
            - Technologies in job title or role summary = maximum priority
 
-        4. **LOGICAL ADDITION FRAMEWORK**:
-           - If candidate has Technology A and job requires related Technology B, add Technology B if they're commonly used together
-           - Examples of logical additions:
-             * Spark experience → reasonable to add Flink (both big data processing)
-             * MySQL experience → reasonable to add PostgreSQL (both SQL databases)
-             * AWS Lambda → reasonable to add other AWS services (S3, EMR, etc.)
-             * Kafka → reasonable to add streaming technologies (Flink, Storm)
-           - Only add technologies that make sense within the candidate's domain expertise
+        4. **MANDATORY EVIDENCE CREATION**:
+           - BEFORE adding any technology to skills, you MUST enhance at least one experience bullet to demonstrate usage
+           - Examples of logical evidence creation:
+             * Adding Kafka → enhance streaming/real-time bullets to mention "using Apache Kafka for real-time data streaming"
+             * Adding Flink → enhance data processing bullets to mention "implemented using Apache Flink for stream processing"
+             * Adding DBT → enhance data transformation bullets to mention "using DBT for data transformation pipelines"
+             * Adding Airflow → enhance automation bullets to mention "orchestrated using Apache Airflow"
+           - If candidate has no relevant experience for a technology, DO NOT add it to skills
 
-        5. **COMPLETENESS VALIDATION**:
-           - Before finalizing, verify: "Did we address the main technology clusters mentioned in the job?"
-           - Ensure we didn't miss entire categories mentioned in job requirements:
-             * Programming languages (Python, Scala, Java)
-             * Big data tools (Spark, Hadoop, Flink)
-             * Streaming systems (Kafka, Kinesis, Pulsar)
-             * Cloud platforms (AWS, GCP, Azure)
-             * Databases (PostgreSQL, MongoDB, Cassandra)
-             * Orchestration (Airflow, Kubernetes, Docker)
+        5. **LOGICAL ADDITION FRAMEWORK WITH EVIDENCE VALIDATION**:
+           - If candidate has Technology A and job requires related Technology B, add Technology B ONLY if you can create logical evidence
+           - Examples of logical additions WITH evidence:
+             * Spark experience + job needs Flink → enhance big data bullets to mention both Spark and Flink
+             * MySQL experience + job needs PostgreSQL → enhance database bullets to mention PostgreSQL work
+             * AWS Lambda + job needs other AWS services → enhance AWS bullets to mention specific services
+           - RULE: No technology addition without corresponding experience enhancement
 
-        6. **AUTHENTIC EXPERIENCE ENHANCEMENT**:
-           - Enhance existing bullet points to naturally incorporate job-required technologies
+        6. **COMPLETENESS VALIDATION WITH EVIDENCE CHECK**:
+           - Before finalizing, verify: "Did we address the main technology clusters AND create evidence for each?"
+           - For each technology in skills section, confirm there is at least one experience bullet that mentions it
+           - Remove any skills that lack supporting evidence in experience bullets
+
+        7. **EXPERIENCE ENHANCEMENT REQUIREMENTS**:
+           - Every experience bullet should be enhanced to include job-relevant technologies naturally
+           - Focus on incorporating technologies that are both in the job requirements AND in your skills section
            - Use job description terminology where it fits the candidate's actual work
-           - Quantify achievements using metrics that matter for the target role
-           - Maintain the authentic voice and experience level of the candidate
+           - Maintain authentic voice while ensuring skills-experience alignment
 
-        7. **JOB TITLE OPTIMIZATION**:
+        8. **JOB TITLE OPTIMIZATION**:
            - If candidate's current role title is abbreviated (e.g., "Sr." → "Senior"), spell it out to match job posting
            - If job posting mentions multiple levels (Senior/Lead/Principal), choose the one that best matches candidate's experience
            - Only enhance titles for clarity and exact matching, never change the actual role or company
 
-        8. **CONTENT PRESERVATION**:
+        9. **CONTENT PRESERVATION**:
            - {length_guidance}
            - **PRESERVE ALL EXPERIENCE ENTRIES** from the original resume
            - **PRESERVE ALL BULLET POINTS** for each job - do not reduce the number
            - **MAINTAIN THE SAME LEVEL OF DETAIL** as the original resume
-           - Enhance existing content rather than completely rewriting it
+           - Enhance existing content to include job-relevant technologies
 
-        9. **EDUCATION PRESERVATION**:
-           - **DO NOT MODIFY THE EDUCATION SECTION**
-           - Keep all education entries exactly as they appear in the original resume
+        10. **EDUCATION PRESERVATION**:
+            - **DO NOT MODIFY THE EDUCATION SECTION**
+            - Keep all education entries exactly as they appear in the original resume
 
-        SYSTEMATIC ENHANCEMENT EXAMPLES:
+        MANDATORY EVIDENCE CREATION EXAMPLES:
 
-        **Example 1: Technology Stack Completion**
-        - Job mentions: "build pipelines using Spark, Flink, Kafka"
-        - Candidate has: Spark experience
-        - Action: Add Flink and Kafka to skills, enhance streaming-related bullets to mention these technologies
-        - Result: Complete coverage of the required technology stack
+        **Example 1: Adding Kafka and Flink**
+        - Job requires: "streaming systems like Flink and Kafka"
+        - Candidate has: real-time analytics experience
+        - Skills addition: Apache Kafka, Apache Flink
+        - MANDATORY evidence creation:
+          * Original: "Designed and implemented real-time analytic solutions"
+          * Enhanced: "Designed and implemented real-time analytic solutions using Apache Kafka for data streaming and Apache Flink for stream processing"
 
-        **Example 2: Missing Critical Tool**
-        - Job mentions: "experience with DBT for data transformation"
+        **Example 2: Adding DBT**
+        - Job requires: "experience with DBT for data transformation"
         - Candidate has: ETL and data transformation experience
-        - Action: Add DBT to skills, enhance data transformation bullets to mention DBT usage
-        - Result: Addresses specific tool requirement with logical background
+        - Skills addition: DBT
+        - MANDATORY evidence creation:
+          * Original: "Developed automated data workflows"
+          * Enhanced: "Developed automated data transformation workflows using DBT for scalable data pipeline management"
 
-        **Example 3: Cloud Service Expansion**
-        - Job mentions: "AWS services including S3, EMR, Lambda, Glue"
-        - Candidate has: AWS experience but only mentions EC2, S3
-        - Action: Add EMR, Lambda, Glue to skills, enhance AWS bullets to mention these services
-        - Result: Comprehensive AWS coverage matching job requirements
+        **Example 3: Adding Airflow**
+        - Job requires: "orchestration tools like Airflow"
+        - Candidate has: automation and pipeline experience
+        - Skills addition: Apache Airflow
+        - MANDATORY evidence creation:
+          * Original: "Developed an automation framework"
+          * Enhanced: "Developed an automation framework using Apache Airflow for orchestrating data pipeline workflows"
 
         OUTPUT FORMAT:
         Provide your response in the following JSON structure:
@@ -890,11 +902,11 @@ def lambda_handler(event, context):
           "contact_info": "Email | Phone | LinkedIn | Location",
           "professional_summary": "2-3 sentences highlighting the candidate's most relevant qualifications and key technologies, incorporating job-specific terminology (under 100 words)",
           "skills": [
-            "Include ALL critical technologies from job description that candidate could reasonably have",
+            "ONLY include technologies that have supporting evidence in experience bullets",
             "Complete technology stacks mentioned together in job requirements",
             "Use exact terminology from job posting",
             "Prioritize based on requirement weight detection",
-            "Don't artificially limit if job clearly requires multiple technologies"
+            "MANDATORY: Every skill listed here MUST be mentioned in at least one experience bullet"
           ],
           "experience": [
             {{
@@ -902,12 +914,12 @@ def lambda_handler(event, context):
               "company": "Company Name", 
               "dates": "Start Date - End Date",
               "achievements": [
-                "Enhanced bullet incorporating job-required technologies naturally",
+                "Enhanced bullet incorporating job-required technologies with specific mentions",
+                "MANDATORY: Include technologies from skills section in relevant bullets",
                 "Quantified achievement using job description terminology",
-                "Improved bullet addressing technology gaps identified in gap analysis",
-                "PRESERVE ALL ORIGINAL BULLET POINTS - enhance systematically",
-                "Focus on completing technology clusters mentioned in job requirements",
-                "Maintain authentic experience while addressing systematic gaps"
+                "PRESERVE ALL ORIGINAL BULLET POINTS - enhance to include skills evidence",
+                "Every bullet should support at least one technology from skills section",
+                "Maintain authentic experience while creating mandatory evidence"
               ]
             }}
           ],
@@ -921,23 +933,26 @@ def lambda_handler(event, context):
           ]
         }}
 
-        SYSTEMATIC VALIDATION CHECKLIST:
-        1. [CHECK] Did we identify and address all technology clusters mentioned together in job requirements?
-        2. [CHECK] Are we missing any critical technologies mentioned multiple times in the job description?
-        3. [CHECK] Does each added technology make logical sense given the candidate's background?
-        4. [CHECK] Did we complete partial technology stacks (e.g., if candidate has Spark, did we add Flink/Kafka if job requires them together)?
-        5. [CHECK] Does the resume still sound authentic and human-written?
-        6. [CHECK] Same number of experience entries and bullets as original resume?
-        7. [CHECK] Education section completely unchanged from original?
+        MANDATORY CROSS-VALIDATION CHECKLIST (MUST COMPLETE BEFORE RESPONDING):
+        1. [MANDATORY] For every technology in skills section, identify which experience bullet(s) mention it
+        2. [MANDATORY] Remove any skills that are not mentioned in experience bullets
+        3. [MANDATORY] Enhance experience bullets to include all technologies from skills section
+        4. [MANDATORY] Verify that technology clusters from job requirements are complete AND have evidence
+        5. [MANDATORY] Confirm each added technology makes logical sense given candidate's background
+        6. [MANDATORY] Ensure resume still sounds authentic and human-written
+        7. [MANDATORY] Verify same number of experience entries and bullets as original resume
+        8. [MANDATORY] Confirm education section completely unchanged from original
 
         **CRITICAL SUCCESS CRITERIA**:
-        - **SYSTEMATIC COVERAGE**: Address all major technology requirements, not just a arbitrary subset
-        - **LOGICAL CONSISTENCY**: Technology additions should make sense within candidate's domain
-        - **COMPLETENESS**: Don't leave gaps in technology stacks that are mentioned together
-        - **AUTHENTICITY**: Enhance genuine experience while systematically addressing job requirements
-        - **PRESERVATION**: All original content preserved, just systematically enhanced
+        - **PERFECT ALIGNMENT**: Every skill in skills section MUST have evidence in experience bullets
+        - **NO ORPHANED SKILLS**: If you cannot create logical evidence for a technology, do not add it to skills
+        - **SYSTEMATIC COVERAGE**: Address all major technology requirements that can be logically supported
+        - **AUTHENTICITY**: Technology mentions should make sense within candidate's actual experience
+        - **COMPLETENESS**: Don't leave gaps in technology stacks, but only include what can be evidenced
 
-        Return ONLY the JSON structure with the systematically optimized resume content. No explanations or notes.
+        FINAL VALIDATION: Before submitting your response, go through each skill in your skills section and confirm you can find it mentioned in at least one experience bullet. If not, remove it from skills or add it to an appropriate experience bullet.
+
+        Return ONLY the JSON structure with the systematically optimized and cross-validated resume content. No explanations or notes.
         """
         
         # Call Amazon Bedrock with automatic model fallback
