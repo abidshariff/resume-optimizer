@@ -2,11 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentUser, signOut, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import { useLoading } from '../contexts/LoadingContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import LoadingScreen from './LoadingScreen';
 import config from '../config';
 import Logger from '../utils/logger';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
+import PremiumBadge from './PremiumBadge';
+import PaywallModal from './PaywallModal';
+import UsageIndicator from './UsageIndicator';
+import PaywallTest from './PaywallTest';
 import { 
   Box, 
   Container, 
@@ -189,9 +194,22 @@ function MainApp() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showLoading, isLoading: globalLoading, loadingMessage, loadingSubtitle } = useLoading();
+  const { 
+    canUseFeature, 
+    incrementResumeEdits, 
+    hasReachedFreeLimit, 
+    upgradeToPremium,
+    isPaywallEnabled,
+    isPremium
+  } = useSubscription();
+  
   const [currentUser, setCurrentUser] = useState(null);
   const [userAttributes, setUserAttributes] = useState(null);
   const [authDataLoaded, setAuthDataLoaded] = useState(false);
+  
+  // Paywall state
+  const [paywallModalOpen, setPaywallModalOpen] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState('');
   
   // Resume crafting state
   const [resume, setResume] = useState(null);
@@ -655,6 +673,13 @@ function MainApp() {
       return;
     }
 
+    // Check paywall limits
+    if (isPaywallEnabled && !canUseFeature('resume_edit')) {
+      setPaywallFeature('resume_edit');
+      setPaywallModalOpen(true);
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setJobStatus('SUBMITTING');
@@ -700,6 +725,11 @@ function MainApp() {
         setStatusMessage(responseData.message || 'Job submitted and processing started');
         setIsPolling(true);
         setIsSubmitting(false);
+        
+        // Increment resume edits for paywall tracking
+        if (isPaywallEnabled) {
+          incrementResumeEdits();
+        }
         
         // Navigate to results page immediately to show loading state
         navigate('/app/results');
@@ -1046,15 +1076,19 @@ function MainApp() {
             }}
           >
             <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
-            <Typography variant="h5" component="div" sx={{ 
-              fontWeight: 700,
-              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              JobTailorAI
-            </Typography>
+            {isPaywallEnabled ? (
+              <PremiumBadge variant="logo" size="large" />
+            ) : (
+              <Typography variant="h5" component="div" sx={{ 
+                fontWeight: 700,
+                background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
+                JobTailorAI
+              </Typography>
+            )}
           </Box>
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -1247,6 +1281,11 @@ function MainApp() {
                 <Typography variant="body1" color="textSecondary" paragraph sx={{ mb: 4 }}>
                   Start by uploading your current resume in PDF or Word format.
                 </Typography>
+                
+                {/* Test Component - Remove in production */}
+                {(process.env.REACT_APP_ENVIRONMENT === 'gamma' || process.env.NODE_ENV === 'development') && <PaywallTest />}
+                
+                <UsageIndicator />
                 
                 <FileUploadZone 
                   onFileAccepted={handleResumeChange}
@@ -1510,12 +1549,21 @@ function MainApp() {
                       color="primary"
                       size="large"
                       startIcon={<VisibilityIcon />}
-                      onClick={() => setPreviewDialogOpen(true)}
+                      onClick={() => {
+                        if (isPaywallEnabled && !canUseFeature('preview')) {
+                          setPaywallFeature('preview');
+                          setPaywallModalOpen(true);
+                        } else {
+                          setPreviewDialogOpen(true);
+                        }
+                      }}
+                      disabled={isPaywallEnabled && !canUseFeature('preview')}
                       sx={{ 
                         px: { xs: 3, md: 4 }, 
                         py: { xs: 1.2, md: 1.5 }, 
                         fontSize: { xs: '14px', md: '16px' },
-                        minWidth: { xs: 'auto', sm: '160px' }
+                        minWidth: { xs: 'auto', sm: '160px' },
+                        opacity: (isPaywallEnabled && !canUseFeature('preview')) ? 0.6 : 1
                       }}
                     >
                       Preview Resume
@@ -1526,12 +1574,21 @@ function MainApp() {
                       color="secondary"
                       size="large"
                       startIcon={<CompareIcon />}
-                      onClick={() => setCompareDialogOpen(true)}
+                      onClick={() => {
+                        if (isPaywallEnabled && !canUseFeature('compare')) {
+                          setPaywallFeature('compare');
+                          setPaywallModalOpen(true);
+                        } else {
+                          setCompareDialogOpen(true);
+                        }
+                      }}
+                      disabled={isPaywallEnabled && !canUseFeature('compare')}
                       sx={{ 
                         px: { xs: 3, md: 4 }, 
                         py: { xs: 1.2, md: 1.5 }, 
                         fontSize: { xs: '14px', md: '16px' },
-                        minWidth: { xs: 'auto', sm: '160px' }
+                        minWidth: { xs: 'auto', sm: '160px' },
+                        opacity: (isPaywallEnabled && !canUseFeature('compare')) ? 0.6 : 1
                       }}
                     >
                       Compare Versions
@@ -1562,12 +1619,21 @@ function MainApp() {
                     <Button 
                       variant="outlined" 
                       color="primary"
-                      onClick={handleSaveToProfile}
+                      onClick={() => {
+                        if (isPaywallEnabled && !canUseFeature('save_to_profile')) {
+                          setPaywallFeature('save_to_profile');
+                          setPaywallModalOpen(true);
+                        } else {
+                          handleSaveToProfile();
+                        }
+                      }}
+                      disabled={isPaywallEnabled && !canUseFeature('save_to_profile')}
                       size="medium"
                       sx={{
                         fontSize: { xs: '0.75rem', sm: '0.875rem' },
                         minWidth: { xs: '120px', sm: 'auto' },
-                        flex: { xs: '1 1 45%', sm: 'none' }
+                        flex: { xs: '1 1 45%', sm: 'none' },
+                        opacity: (isPaywallEnabled && !canUseFeature('save_to_profile')) ? 0.6 : 1
                       }}
                     >
                       Save to Profile
@@ -2331,6 +2397,19 @@ function MainApp() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        open={paywallModalOpen}
+        onClose={() => setPaywallModalOpen(false)}
+        feature={paywallFeature}
+        onUpgrade={() => {
+          // For testing purposes, upgrade to premium
+          upgradeToPremium();
+          setSnackbarMessage('🎉 Upgraded to JobTailorAI Plus! Enjoy unlimited features.');
+          setSnackbarOpen(true);
+        }}
+      />
       </Box>
       )}
     </>

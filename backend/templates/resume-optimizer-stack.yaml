@@ -48,6 +48,31 @@ Resources:
         - AttributeName: jobId
           KeyType: RANGE
 
+  # Stripe Customer Management Tables
+  CustomersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'ResumeOptimizerCustomers-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+
+  SubscriptionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'ResumeOptimizerSubscriptions-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+
   # Authentication Layer
   UserPool:
     Type: AWS::Cognito::UserPool
@@ -696,6 +721,135 @@ Resources:
         gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
         gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
         gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+
+  # Stripe Integration Lambda Functions
+  StripeCheckoutRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: StripeCheckoutPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:UpdateItem'
+                Resource: 
+                  - !GetAtt CustomersTable.Arn
+                  - !GetAtt SubscriptionsTable.Arn
+
+  StripeCheckoutLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ResumeOptimizerStripeCheckout-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt StripeCheckoutRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          CUSTOMERS_TABLE: !Ref CustomersTable
+          SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+          STRIPE_SECRET_KEY: !Sub '{{resolve:secretsmanager:stripe-keys-${Environment}:SecretString:secret_key}}'
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+
+  StripePortalRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: StripePortalPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:GetItem'
+                Resource: !GetAtt CustomersTable.Arn
+
+  StripePortalLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ResumeOptimizerStripePortal-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt StripePortalRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          CUSTOMERS_TABLE: !Ref CustomersTable
+          STRIPE_SECRET_KEY: !Sub '{{resolve:secretsmanager:stripe-keys-${Environment}:SecretString:secret_key}}'
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+
+  StripeWebhookRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: StripeWebhookPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:UpdateItem'
+                Resource: 
+                  - !GetAtt CustomersTable.Arn
+                  - !GetAtt SubscriptionsTable.Arn
+
+  StripeWebhookLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ResumeOptimizerStripeWebhook-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt StripeWebhookRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          CUSTOMERS_TABLE: !Ref CustomersTable
+          SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+          STRIPE_SECRET_KEY: !Sub '{{resolve:secretsmanager:stripe-keys-${Environment}:SecretString:secret_key}}'
+          STRIPE_WEBHOOK_SECRET: !Sub '{{resolve:secretsmanager:stripe-keys-${Environment}:SecretString:webhook_secret}}'
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
 
   # Lambda permissions for API Gateway
   ResumeProcessorPermission:
