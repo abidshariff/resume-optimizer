@@ -1310,7 +1310,7 @@ function MainApp() {
                   Enter Job Description
                 </Typography>
                 <Typography variant="body1" color="textSecondary" paragraph sx={{ mb: 4 }}>
-                  Paste the job description you want to craft your resume for.
+                  Paste the complete job description you want to craft your resume for. Include the job title, key responsibilities, required skills, and qualifications for best results.
                 </Typography>
                 
                 <TextField
@@ -1321,7 +1321,7 @@ function MainApp() {
                   variant="outlined"
                   value={jobDescription}
                   onChange={handleJobDescriptionChange}
-                  placeholder="Paste job description here..."
+                  placeholder="*Please ensure you include the job role name and key responsibilities to help the AI craft your resume better. Paste the complete job description here..."
                   sx={{ mb: 4 }}
                 />
                 
