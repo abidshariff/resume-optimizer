@@ -763,24 +763,120 @@ def lambda_handler(event, context):
 
         # Extract key information from job description for targeted optimization
         def extract_job_keywords(job_desc):
-            """Extract key technical skills, tools, and requirements from job description"""
-            # Common technical keywords to look for
-            tech_patterns = [
-                'Python', 'Java', 'JavaScript', 'React', 'Node.js', 'AWS', 'Docker', 'Kubernetes',
-                'SQL', 'MongoDB', 'PostgreSQL', 'Git', 'CI/CD', 'Agile', 'Scrum', 'REST API',
-                'GraphQL', 'TypeScript', 'Vue.js', 'Angular', 'Spring', 'Django', 'Flask',
-                'Microservices', 'DevOps', 'Jenkins', 'Terraform', 'Linux', 'Machine Learning',
-                'Data Science', 'Analytics', 'Tableau', 'Power BI', 'Spark', 'Hadoop'
-            ]
+            """Dynamically extract key technical skills, tools, and requirements from job description"""
+            import re
             
-            found_keywords = []
+            # Convert to lowercase for processing
             job_lower = job_desc.lower()
             
-            for keyword in tech_patterns:
-                if keyword.lower() in job_lower:
-                    found_keywords.append(keyword)
+            # Comprehensive technology patterns - dynamically expandable
+            tech_categories = {
+                'cloud_platforms': [
+                    'aws', 'amazon web services', 'azure', 'microsoft azure', 'gcp', 'google cloud', 
+                    'google cloud platform', 'snowflake', 'databricks', 'redshift', 'bigquery'
+                ],
+                'programming_languages': [
+                    'python', 'java', 'javascript', 'typescript', 'scala', 'r', 'go', 'rust',
+                    'c++', 'c#', 'php', 'ruby', 'kotlin', 'swift', 'sql', 'pyspark'
+                ],
+                'data_tools': [
+                    'spark', 'apache spark', 'hadoop', 'kafka', 'apache kafka', 'flink', 'apache flink',
+                    'airflow', 'apache airflow', 'dbt', 'fivetran', 'snowpipe', 'tableau', 'power bi',
+                    'looker', 'quicksight', 'amazon quicksight', 'superset', 'metabase'
+                ],
+                'databases': [
+                    'postgresql', 'postgres', 'mysql', 'mongodb', 'cassandra', 'redis', 'elasticsearch',
+                    'oracle', 'sql server', 'dynamodb', 'cosmos db', 'neo4j', 'clickhouse'
+                ],
+                'frameworks_libraries': [
+                    'react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask', 'spring',
+                    'spring boot', 'tensorflow', 'pytorch', 'scikit-learn', 'pandas', 'numpy'
+                ],
+                'devops_tools': [
+                    'docker', 'kubernetes', 'jenkins', 'gitlab ci', 'github actions', 'terraform',
+                    'ansible', 'chef', 'puppet', 'helm', 'istio', 'prometheus', 'grafana'
+                ],
+                'methodologies': [
+                    'agile', 'scrum', 'kanban', 'devops', 'ci/cd', 'tdd', 'bdd', 'microservices',
+                    'rest api', 'graphql', 'etl', 'elt', 'data modeling', 'data warehousing'
+                ]
+            }
             
-            return found_keywords
+            # Flatten all technologies into a single list
+            all_technologies = []
+            for category, techs in tech_categories.items():
+                all_technologies.extend(techs)
+            
+            # Find exact matches and partial matches
+            found_keywords = []
+            
+            # Method 1: Exact word boundary matches
+            for tech in all_technologies:
+                # Use word boundaries to avoid partial matches like 'spark' in 'sparkle'
+                pattern = r'\b' + re.escape(tech.lower()) + r'\b'
+                if re.search(pattern, job_lower):
+                    # Preserve original casing for common technologies
+                    original_case = tech.title() if tech.islower() else tech
+                    if original_case not in found_keywords:
+                        found_keywords.append(original_case)
+            
+            # Method 2: Extract technology clusters (e.g., "using X, Y, Z")
+            cluster_patterns = [
+                r'using\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
+                r'experience\s+with\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
+                r'proficiency\s+in\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
+                r'knowledge\s+of\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
+                r'expertise\s+in\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
+                r'tools\s+such\s+as\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
+                r'including\s+([^.]+?)(?:\s+for|\s+to|\.|$)'
+            ]
+            
+            for pattern in cluster_patterns:
+                matches = re.finditer(pattern, job_lower, re.IGNORECASE)
+                for match in matches:
+                    cluster_text = match.group(1)
+                    # Split by common separators and clean up
+                    cluster_items = re.split(r'[,;/\s+and\s+|\s+or\s+]', cluster_text)
+                    for item in cluster_items:
+                        item = item.strip().strip('()')
+                        if len(item) > 2 and item not in [word.lower() for word in found_keywords]:
+                            # Check if this item matches any of our known technologies
+                            for tech in all_technologies:
+                                if tech.lower() in item.lower() or item.lower() in tech.lower():
+                                    original_case = tech.title() if tech.islower() else tech
+                                    if original_case not in found_keywords:
+                                        found_keywords.append(original_case)
+            
+            # Method 3: Extract capitalized technology names (likely proper nouns)
+            capitalized_pattern = r'\b[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*\b'
+            capitalized_matches = re.findall(capitalized_pattern, job_desc)
+            
+            # Filter capitalized matches to likely technologies
+            tech_indicators = ['sql', 'api', 'db', 'cloud', 'data', 'analytics', 'pipeline', 'stream', 'batch']
+            for match in capitalized_matches:
+                match_lower = match.lower()
+                # Include if it's a known technology or contains tech indicators
+                if (any(indicator in match_lower for indicator in tech_indicators) or 
+                    any(tech.lower() in match_lower for tech in all_technologies) or
+                    match in ['Snowflake', 'DBT', 'Fivetran', 'Snowpipe', 'Kafka', 'Flink', 'Spark']):
+                    if match not in found_keywords and len(match) > 2:
+                        found_keywords.append(match)
+            
+            # Remove duplicates and sort by relevance (frequency in job description)
+            unique_keywords = list(set(found_keywords))
+            
+            # Sort by frequency of mention in job description
+            keyword_frequency = []
+            for keyword in unique_keywords:
+                frequency = len(re.findall(r'\b' + re.escape(keyword.lower()) + r'\b', job_lower))
+                keyword_frequency.append((keyword, frequency))
+            
+            # Sort by frequency (descending) and take top technologies
+            sorted_keywords = sorted(keyword_frequency, key=lambda x: x[1], reverse=True)
+            final_keywords = [kw[0] for kw in sorted_keywords if kw[1] > 0]
+            
+            # Limit to top 15 most relevant technologies
+            return final_keywords[:15]
 
         job_keywords = extract_job_keywords(job_description)
         print(f"Extracted job keywords: {job_keywords}")
