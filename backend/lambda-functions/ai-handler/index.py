@@ -330,12 +330,19 @@ def extract_text_from_docx(docx_content):
             print(f"All extraction methods failed: {str(fallback_error)}")
             return "Unable to extract text from the Word document. Please try converting it to PDF format."
 
-def format_original_resume_text(raw_text):
+from enhanced_pdf_extractor import enhance_text_formatting, create_formatted_header
+
+def format_original_resume_text(raw_text, is_pdf_extracted=False):
     """
     Format the raw extracted resume text to make it more readable for comparison.
-    This function attempts to identify and structure common resume sections.
+    Uses enhanced formatting for PDF-extracted text.
     """
     try:
+        if is_pdf_extracted:
+            # Use enhanced PDF formatting
+            return enhance_text_formatting(raw_text)
+        
+        # Original formatting logic for non-PDF text
         lines = raw_text.split('\n')
         formatted_lines = []
         
@@ -644,8 +651,11 @@ def lambda_handler(event, context):
             # Store the original extracted text for comparison purposes
             formatted_original_text = resume_text  # Default fallback
             try:
+                # Check if this is a PDF file for enhanced formatting
+                is_pdf = resume_key.lower().endswith('.pdf')
+                
                 # Format the original text for better comparison readability
-                formatted_original_text = format_original_resume_text(resume_text)
+                formatted_original_text = format_original_resume_text(resume_text, is_pdf_extracted=is_pdf)
                 
                 original_text_key = f"users/{user_id}/original/{job_id}/original_text.txt"
                 s3.put_object(
@@ -785,7 +795,7 @@ def lambda_handler(event, context):
         job_keywords = extract_job_keywords(job_description)
         print(f"Extracted job keywords: {job_keywords}")
 
-        # Prepare enhanced prompt for Bedrock with aggressive optimization
+        # Prepare enhanced prompt for Bedrock with aggressive optimization and skills-experience alignment
         prompt = f"""
         You are an expert ATS resume optimizer and career consultant. Your mission is to COMPLETELY TRANSFORM the provided resume to perfectly match the job description while maintaining truthfulness about the candidate's background.
 
@@ -800,113 +810,164 @@ def lambda_handler(event, context):
         ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
         ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_structure['bullet_points']} bullet points, estimated {original_structure['estimated_experience_sections']} experience sections
 
+        CRITICAL ALIGNMENT REQUIREMENT:
+        **SKILLS AND EXPERIENCE MUST BE PERFECTLY ALIGNED**
+        - If you add "Google Cloud" to skills, experience bullets MUST mention Google Cloud projects/work
+        - If you add "React" to skills, experience bullets MUST show React development work
+        - If you add "Python" to skills, experience bullets MUST demonstrate Python usage
+        - NO SKILL should appear in the skills section without corresponding evidence in experience bullets
+
         CRITICAL OPTIMIZATION REQUIREMENTS:
 
-        1. **AGGRESSIVE KEYWORD INTEGRATION**: 
-           - Identify ALL technical skills, tools, frameworks, and buzzwords from the job description
-           - Integrate these keywords naturally throughout the resume, especially in experience bullets
-           - If the candidate has ANY related experience, reframe it using job description terminology
-           - Add relevant keywords to skills section even if not explicitly mentioned in original resume (but candidate likely has exposure)
+        1. **TECHNOLOGY SUBSTITUTION AND ALIGNMENT**: 
+           - IDENTIFY similar technologies between original resume and job requirements
+           - SUBSTITUTE original technologies with job-required ones where logical
+           - Example: If original mentions "AWS Lambda" and job needs "Google Cloud Functions", 
+             change experience bullets to mention "Google Cloud Functions" instead
+           - Example: If original mentions "MySQL" and job needs "PostgreSQL",
+             update experience bullets to mention "PostgreSQL" work
+           - ENSURE every skill in the skills section has supporting evidence in experience bullets
 
-        2. **COMPLETE EXPERIENCE TRANSFORMATION**:
-           - REWRITE every single bullet point to align with job requirements
-           - Transform generic accomplishments into role-specific achievements
-           - Use action verbs and terminology that match the job description exactly
-           - Quantify achievements wherever possible, even if you need to reframe existing numbers
-           - Focus on impact and results that matter for this specific role
+        2. **AGGRESSIVE KEYWORD INTEGRATION WITH EVIDENCE**: 
+           - Identify ALL technical skills, tools, frameworks from job description
+           - For EACH skill added to skills section, CREATE corresponding experience bullet evidence
+           - Transform existing experience bullets to incorporate new technologies naturally
+           - If candidate worked with similar technology, reframe using job description terminology
+           - Add specific project examples using job-required technologies
 
-        3. **STRATEGIC SKILL ENHANCEMENT**:
-           - Add technical skills from job description that the candidate likely has but didn't mention
+        3. **COMPLETE EXPERIENCE TRANSFORMATION WITH TECHNOLOGY FOCUS**:
+           - REWRITE every bullet point to include job-relevant technologies
+           - Replace original technology mentions with job-required equivalents
+           - Transform generic accomplishments into technology-specific achievements
+           - Use exact technology names from job description
+           - Quantify achievements with technology-specific metrics
+           - Focus on impact using the technologies mentioned in job posting
+
+        4. **CROSS-SECTION VALIDATION**:
+           - After creating skills section, VERIFY each skill has evidence in experience
+           - After creating experience section, VERIFY it supports all listed skills
+           - Remove any skills that cannot be supported by experience bullets
+           - Add experience details for any skills that lack supporting evidence
+
+        5. **STRATEGIC SKILL ENHANCEMENT WITH PROOF**:
+           - Add technical skills from job description that candidate likely has
+           - For EACH new skill added, modify at least one experience bullet to show usage
            - Reorganize skills to prioritize job-relevant technologies
-           - Include both hard and soft skills mentioned in job posting
-           - Use exact terminology from job description (e.g., if job says "React.js", use "React.js" not "React")
+           - Use exact terminology from job description
+           - Ensure skills section and experience section tell the same story
 
-        4. **PROFESSIONAL SUMMARY OVERHAUL**:
-           - Completely rewrite to sound like the perfect candidate for this specific role
-           - Include years of experience in relevant areas
-           - Mention key technologies and methodologies from job description
-           - Highlight leadership/collaboration aspects if mentioned in job posting
+        6. **PROFESSIONAL SUMMARY TECHNOLOGY ALIGNMENT**:
+           - Mention ONLY technologies that appear in both skills and experience sections
+           - Include years of experience with job-relevant technologies
+           - Highlight specific technology combinations mentioned in job posting
+           - Ensure summary reflects the technology focus shown in experience
 
-        5. **CONTENT PRESERVATION AND PRIORITIZATION**:
+        7. **CONTENT PRESERVATION AND PRIORITIZATION**:
            - {length_guidance}
            - **PRESERVE ALL EXPERIENCE ENTRIES** from the original resume
            - **PRESERVE ALL BULLET POINTS** for each job - do not reduce the number
            - **MAINTAIN THE SAME LEVEL OF DETAIL** as the original resume
-           - Only reorder experiences if it significantly improves relevance to the job
-           - Transform and enhance existing content rather than removing it
+           - Transform existing content to include job-relevant technologies
+           - Substitute similar technologies rather than adding unrelated ones
 
-        6. **ATS OPTIMIZATION**:
-           - Use exact phrases from job description where appropriate
-           - Include industry-standard terminology
-           - Ensure keyword density is high but natural
+        8. **ATS OPTIMIZATION WITH CONSISTENCY**:
+           - Use exact phrases from job description in both skills and experience
+           - Ensure keyword density is high but natural across all sections
+           - Maintain consistent technology terminology throughout resume
            - Format for maximum ATS compatibility
 
-        7. **EDUCATION PRESERVATION**:
+        9. **EDUCATION PRESERVATION**:
            - **DO NOT MODIFY THE EDUCATION SECTION**
            - Keep all education entries exactly as they appear in the original resume
-           - Do not add coursework, projects, or details that weren't in the original
-           - Preserve original degree names, institution names, dates, and any existing details
 
-        TRANSFORMATION EXAMPLES (PRESERVE ALL ORIGINAL POINTS):
-        - Original: "Developed web applications" → "Built responsive React.js applications with Node.js backend and AWS deployment"
-        - Original: "Worked with databases" → "Designed and optimized PostgreSQL databases, implemented complex queries for data analytics"
-        - Original: "Team collaboration" → "Led cross-functional Agile teams using Scrum methodology, facilitated daily standups and sprint planning"
-        - **IMPORTANT**: If original has 6 bullet points, output must have 6 bullet points (enhanced, not removed)
+        TECHNOLOGY TRANSFORMATION EXAMPLES:
+
+        **Example 1: Cloud Platform Substitution**
+        - Original Skill: "AWS"
+        - Job Requires: "Google Cloud Platform"
+        - Skills Section: Add "Google Cloud Platform, Compute Engine, Cloud Storage"
+        - Experience Transformation: 
+          - Original: "Deployed applications on AWS EC2 instances"
+          - New: "Deployed applications on Google Cloud Compute Engine instances"
+          - Original: "Used AWS S3 for file storage"
+          - New: "Implemented file storage solutions using Google Cloud Storage"
+
+        **Example 2: Programming Language Focus**
+        - Original Skill: "Java"
+        - Job Requires: "Python"
+        - Skills Section: Emphasize "Python, Django, Flask, pandas"
+        - Experience Transformation:
+          - Original: "Developed backend services in Java"
+          - New: "Developed backend services in Python using Django framework"
+          - Original: "Built data processing applications"
+          - New: "Built data processing applications using Python pandas and NumPy"
+
+        **Example 3: Database Technology Alignment**
+        - Original Skill: "MySQL"
+        - Job Requires: "PostgreSQL"
+        - Skills Section: Add "PostgreSQL, SQL optimization, database design"
+        - Experience Transformation:
+          - Original: "Managed MySQL databases"
+          - New: "Designed and optimized PostgreSQL databases for high-performance applications"
+          - Original: "Wrote complex SQL queries"
+          - New: "Developed complex PostgreSQL queries with advanced indexing strategies"
 
         OUTPUT FORMAT:
         Provide your response in the following JSON structure:
 
-        ```json
         {{
           "full_name": "Full Name from Resume",
           "contact_info": "Email | Phone | LinkedIn | Location",
-          "professional_summary": "2-3 sentences that make this candidate sound perfect for the target role, incorporating key job requirements and technologies (under 100 words)",
+          "professional_summary": "2-3 sentences mentioning ONLY technologies that appear in both skills and experience sections (under 100 words)",
           "skills": [
-            "Include ALL relevant technical skills from job description",
+            "Job-relevant technologies that WILL BE MENTIONED in experience bullets",
             "Prioritize job-mentioned technologies first",
-            "Add related skills candidate likely has",
             "Use exact terminology from job posting",
-            "Maximum 15 skills total, most relevant first"
+            "Maximum 15 skills total, each must have experience evidence",
+            "Remove any skills that cannot be supported by experience"
           ],
           "experience": [
             {{
               "title": "Job Title (enhanced if needed to sound more relevant)",
-              "company": "Company Name",
+              "company": "Company Name", 
               "dates": "Start Date - End Date",
               "achievements": [
-                "COMPLETELY rewritten bullet focusing on job-relevant impact with specific technologies/methodologies",
-                "Quantified achievement using job description terminology and relevant metrics",
-                "Another transformed bullet that showcases skills mentioned in job posting",
-                "PRESERVE ALL ORIGINAL BULLET POINTS - if original has 6 bullets, output must have 6 bullets",
-                "Each bullet should be 1-2 lines, highly targeted to job requirements",
-                "Transform existing content rather than removing it"
+                "Bullet mentioning specific job-relevant technology with quantified impact",
+                "Achievement using job-required tools/frameworks with specific metrics",
+                "Technology-focused accomplishment that supports skills section claims",
+                "EVERY bullet must include at least one technology from skills section",
+                "Transform original technology mentions to job-relevant equivalents",
+                "Maintain same number of bullets as original, just enhanced with relevant tech"
               ]
             }}
           ],
           "education": [
             {{
               "degree": "EXACT degree name from original resume - DO NOT CHANGE",
-              "institution": "EXACT institution name from original resume - DO NOT CHANGE", 
-              "dates": "EXACT dates from original resume - DO NOT CHANGE",
+              "institution": "EXACT institution name from original resume - DO NOT CHANGE",
+              "dates": "EXACT dates from original resume - DO NOT CHANGE", 
               "details": "EXACT details from original resume if any existed - DO NOT ADD NEW CONTENT"
             }}
           ]
         }}
-        ```
+
+        VALIDATION CHECKLIST BEFORE RESPONDING:
+        1. [CHECK] Every skill in skills section has supporting evidence in experience bullets
+        2. [CHECK] Every experience bullet mentions at least one technology from skills section  
+        3. [CHECK] Technology terminology is consistent between skills and experience
+        4. [CHECK] Original technologies replaced with job-relevant equivalents where logical
+        5. [CHECK] Professional summary only mentions technologies proven in experience
+        6. [CHECK] Same number of experience entries and bullets as original resume
+        7. [CHECK] Education section completely unchanged from original
 
         **CRITICAL SUCCESS CRITERIA**:
-        - **PRESERVE ALL ORIGINAL CONTENT**: Same number of jobs, same number of bullet points per job
-        - Every bullet point should feel like it was written specifically for this job
-        - Resume should contain 80%+ of the technical keywords from job description
-        - Candidate should sound like the ideal fit based on resume content
-        - Maintain truthfulness - enhance and reframe, don't fabricate experiences
-        - Final resume should be significantly different from original while staying factual and complete
-        - **EDUCATION SECTION MUST REMAIN COMPLETELY UNCHANGED FROM ORIGINAL**
-        - **NO CONTENT SHOULD BE LOST** - only enhanced and optimized
+        - **PERFECT ALIGNMENT**: Skills section and experience section must tell the same technology story
+        - **LOGICAL SUBSTITUTION**: Replace similar technologies rather than adding unrelated ones
+        - **EVIDENCE-BASED**: Every skill claim must be backed by experience bullet proof
+        - **CONSISTENCY**: Same technology terminology used throughout all sections
+        - **PRESERVATION**: All original content preserved, just enhanced with relevant technologies
 
-        **REMEMBER**: This is not just editing - this is a complete strategic transformation to make this candidate irresistible for this specific role. However, the education section should be preserved exactly as it appears in the original resume.
-
-        Return ONLY the JSON structure with the completely optimized resume content. No explanations or notes.
+        Return ONLY the JSON structure with the completely optimized and aligned resume content. No explanations or notes.
         """
         
         # Call Amazon Bedrock with automatic model fallback
@@ -1030,7 +1091,7 @@ def lambda_handler(event, context):
                     
                     # Validate the response
                     if optimized_resume and len(optimized_resume.strip()) > 100:
-                        print(f"✅ Successfully used {model['name']}")
+                        print(f"[SUCCESS] Successfully used {model['name']}")
                         print(f"Response length: {len(optimized_resume)} characters")
                         
                         # Estimate cost for this request
@@ -1065,10 +1126,10 @@ def lambda_handler(event, context):
                     ]
                     
                     if any(error_type in error_msg for error_type in recoverable_errors):
-                        print(f"   → Recoverable error with {model['name']}, trying next model...")
+                        print(f"   -> Recoverable error with {model['name']}, trying next model...")
                         continue
                     else:
-                        print(f"   → Unexpected error with {model['name']}: {error_msg}")
+                        print(f"   -> Unexpected error with {model['name']}: {error_msg}")
                         continue
             
             # If all models failed, raise the last error
@@ -1118,7 +1179,7 @@ def lambda_handler(event, context):
     }}
   ]
 }}
-```"""
+"""
             model_used = "Emergency Fallback"
         
         # Update status to finalizing
