@@ -1282,7 +1282,7 @@ function MainApp() {
                   variant="outlined"
                   value={jobDescription}
                   onChange={handleJobDescriptionChange}
-                  placeholder="Paste job description here..."
+                  placeholder="Include Job title, skills and responsibilites for better results"
                   sx={{ mb: 4 }}
                 />
                 
