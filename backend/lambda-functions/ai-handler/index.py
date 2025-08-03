@@ -785,9 +785,9 @@ def lambda_handler(event, context):
         job_keywords = extract_job_keywords(job_description)
         print(f"Extracted job keywords: {job_keywords}")
 
-        # Prepare enhanced prompt for Bedrock with aggressive optimization and skills-experience alignment
+        # Prepare enhanced prompt for Bedrock with strategic optimization
         prompt = f"""
-        You are an expert ATS resume optimizer and career consultant. Your mission is to COMPLETELY TRANSFORM the provided resume to perfectly match the job description while maintaining truthfulness about the candidate's background.
+        You are an expert ATS resume optimizer and career consultant. Your mission is to STRATEGICALLY ENHANCE the provided resume to better match the job description while maintaining authenticity and truthfulness about the candidate's background.
 
         ORIGINAL RESUME:
         {resume_text}
@@ -800,107 +800,68 @@ def lambda_handler(event, context):
         ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
         ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_structure['bullet_points']} bullet points, estimated {original_structure['estimated_experience_sections']} experience sections
 
-        CRITICAL ALIGNMENT REQUIREMENT:
-        **SKILLS AND EXPERIENCE MUST BE PERFECTLY ALIGNED**
-        - If you add "Google Cloud" to skills, experience bullets MUST mention Google Cloud projects/work
-        - If you add "React" to skills, experience bullets MUST show React development work
-        - If you add "Python" to skills, experience bullets MUST demonstrate Python usage
-        - NO SKILL should appear in the skills section without corresponding evidence in experience bullets
+        STRATEGIC OPTIMIZATION PRINCIPLES:
 
-        CRITICAL OPTIMIZATION REQUIREMENTS:
+        1. **SELECTIVE KEYWORD INTEGRATION**: 
+           - Focus on the TOP 5-7 most important technologies from the job description
+           - Only integrate keywords where they make logical sense given the candidate's background
+           - Prioritize enhancing existing experience rather than adding unrelated technologies
+           - If candidate has similar experience, reframe using job description terminology naturally
 
-        1. **TECHNOLOGY SUBSTITUTION AND ALIGNMENT**: 
-           - IDENTIFY similar technologies between original resume and job requirements
-           - SUBSTITUTE original technologies with job-required ones where logical
-           - Example: If original mentions "AWS Lambda" and job needs "Google Cloud Functions", 
-             change experience bullets to mention "Google Cloud Functions" instead
-           - Example: If original mentions "MySQL" and job needs "PostgreSQL",
-             update experience bullets to mention "PostgreSQL" work
-           - ENSURE every skill in the skills section has supporting evidence in experience bullets
+        2. **AUTHENTIC EXPERIENCE ENHANCEMENT**:
+           - Enhance and reframe existing bullet points to highlight job-relevant aspects
+           - Use job description terminology where it naturally fits the candidate's actual work
+           - Quantify achievements using metrics that matter for the target role
+           - Maintain the authentic voice and experience level of the candidate
 
-        2. **AGGRESSIVE KEYWORD INTEGRATION WITH EVIDENCE**: 
-           - Identify ALL technical skills, tools, frameworks from job description
-           - For EACH skill added to skills section, CREATE corresponding experience bullet evidence
-           - Transform existing experience bullets to incorporate new technologies naturally
-           - If candidate worked with similar technology, reframe using job description terminology
-           - Add specific project examples using job-required technologies
+        3. **STRATEGIC SKILL ALIGNMENT**:
+           - Add skills from job description only if candidate likely has exposure through their experience
+           - Prioritize skills that are logical extensions of their current expertise
+           - Remove generic skills that don't add value for this specific role
+           - Ensure skills section reflects genuine capabilities demonstrated in experience
 
-        3. **COMPLETE EXPERIENCE TRANSFORMATION WITH TECHNOLOGY FOCUS**:
-           - REWRITE every bullet point to include job-relevant technologies
-           - Replace original technology mentions with job-required equivalents
-           - Transform generic accomplishments into technology-specific achievements
-           - Use exact technology names from job description
-           - Quantify achievements with technology-specific metrics
-           - Focus on impact using the technologies mentioned in job posting
+        4. **NATURAL TECHNOLOGY MENTIONS**:
+           - Don't force every job-required technology into every bullet point
+           - Focus on 1-2 key technologies per bullet point maximum
+           - Only substitute technologies when it's a logical equivalent (e.g., MySQL → PostgreSQL for database work)
+           - Preserve the candidate's actual technology stack where it's relevant
 
-        4. **CROSS-SECTION VALIDATION**:
-           - After creating skills section, VERIFY each skill has evidence in experience
-           - After creating experience section, VERIFY it supports all listed skills
-           - Remove any skills that cannot be supported by experience bullets
-           - Add experience details for any skills that lack supporting evidence
+        5. **PROFESSIONAL SUMMARY REFINEMENT**:
+           - Highlight the candidate's strongest, most relevant qualifications
+           - Mention key technologies they actually have experience with
+           - Focus on years of experience and core competencies that match the role
+           - Keep it authentic to their actual background and seniority level
 
-        5. **STRATEGIC SKILL ENHANCEMENT WITH PROOF**:
-           - Add technical skills from job description that candidate likely has
-           - For EACH new skill added, modify at least one experience bullet to show usage
-           - Reorganize skills to prioritize job-relevant technologies
-           - Use exact terminology from job description
-           - Ensure skills section and experience section tell the same story
-
-        6. **PROFESSIONAL SUMMARY TECHNOLOGY ALIGNMENT**:
-           - Mention ONLY technologies that appear in both skills and experience sections
-           - Include years of experience with job-relevant technologies
-           - Highlight specific technology combinations mentioned in job posting
-           - Ensure summary reflects the technology focus shown in experience
-
-        7. **CONTENT PRESERVATION AND PRIORITIZATION**:
+        6. **CONTENT PRESERVATION**:
            - {length_guidance}
            - **PRESERVE ALL EXPERIENCE ENTRIES** from the original resume
            - **PRESERVE ALL BULLET POINTS** for each job - do not reduce the number
            - **MAINTAIN THE SAME LEVEL OF DETAIL** as the original resume
-           - Transform existing content to include job-relevant technologies
-           - Substitute similar technologies rather than adding unrelated ones
+           - Enhance existing content rather than completely rewriting it
 
-        8. **ATS OPTIMIZATION WITH CONSISTENCY**:
-           - Use exact phrases from job description in both skills and experience
-           - Ensure keyword density is high but natural across all sections
-           - Maintain consistent technology terminology throughout resume
-           - Format for maximum ATS compatibility
-
-        9. **EDUCATION PRESERVATION**:
+        7. **EDUCATION PRESERVATION**:
            - **DO NOT MODIFY THE EDUCATION SECTION**
            - Keep all education entries exactly as they appear in the original resume
 
-        TECHNOLOGY TRANSFORMATION EXAMPLES:
+        ENHANCEMENT EXAMPLES (STRATEGIC, NOT AGGRESSIVE):
 
-        **Example 1: Cloud Platform Substitution**
-        - Original Skill: "AWS"
-        - Job Requires: "Google Cloud Platform"
-        - Skills Section: Add "Google Cloud Platform, Compute Engine, Cloud Storage"
-        - Experience Transformation: 
-          - Original: "Deployed applications on AWS EC2 instances"
-          - New: "Deployed applications on Google Cloud Compute Engine instances"
-          - Original: "Used AWS S3 for file storage"
-          - New: "Implemented file storage solutions using Google Cloud Storage"
+        **Example 1: Database Experience Enhancement**
+        - Original: "Managed database systems for customer data"
+        - Job Requires: PostgreSQL
+        - Enhanced: "Managed PostgreSQL database systems for customer data processing and analytics"
+        - Note: Only mention PostgreSQL if candidate actually worked with databases
 
-        **Example 2: Programming Language Focus**
-        - Original Skill: "Java"
-        - Job Requires: "Python"
-        - Skills Section: Emphasize "Python, Django, Flask, pandas"
-        - Experience Transformation:
-          - Original: "Developed backend services in Java"
-          - New: "Developed backend services in Python using Django framework"
-          - Original: "Built data processing applications"
-          - New: "Built data processing applications using Python pandas and NumPy"
+        **Example 2: Cloud Experience Refinement**
+        - Original: "Deployed applications to cloud infrastructure"
+        - Job Requires: AWS Lambda, S3
+        - Enhanced: "Deployed serverless applications using AWS Lambda with S3 storage integration"
+        - Note: Only if candidate has cloud deployment experience
 
-        **Example 3: Database Technology Alignment**
-        - Original Skill: "MySQL"
-        - Job Requires: "PostgreSQL"
-        - Skills Section: Add "PostgreSQL, SQL optimization, database design"
-        - Experience Transformation:
-          - Original: "Managed MySQL databases"
-          - New: "Designed and optimized PostgreSQL databases for high-performance applications"
-          - Original: "Wrote complex SQL queries"
-          - New: "Developed complex PostgreSQL queries with advanced indexing strategies"
+        **Example 3: Programming Language Focus**
+        - Original: "Developed backend services"
+        - Job Requires: Python
+        - Enhanced: "Developed Python-based backend services for data processing workflows"
+        - Note: Only if candidate has backend development experience
 
         OUTPUT FORMAT:
         Provide your response in the following JSON structure:
@@ -908,26 +869,26 @@ def lambda_handler(event, context):
         {{
           "full_name": "Full Name from Resume",
           "contact_info": "Email | Phone | LinkedIn | Location",
-          "professional_summary": "2-3 sentences mentioning ONLY technologies that appear in both skills and experience sections (under 100 words)",
+          "professional_summary": "2-3 sentences highlighting the candidate's most relevant qualifications and key technologies they actually have experience with (under 100 words)",
           "skills": [
-            "Job-relevant technologies that WILL BE MENTIONED in experience bullets",
-            "Prioritize job-mentioned technologies first",
-            "Use exact terminology from job posting",
-            "Maximum 15 skills total, each must have experience evidence",
-            "Remove any skills that cannot be supported by experience"
+            "Focus on TOP 5-7 most important technologies from job description",
+            "Include skills candidate likely has based on their experience",
+            "Use exact terminology from job posting where appropriate",
+            "Remove generic skills that don't add value",
+            "Maximum 12 skills total, prioritize quality over quantity"
           ],
           "experience": [
             {{
-              "title": "Job Title (enhanced if needed to sound more relevant)",
+              "title": "Job Title (enhance only if it adds clarity)",
               "company": "Company Name", 
               "dates": "Start Date - End Date",
               "achievements": [
-                "Bullet mentioning specific job-relevant technology with quantified impact",
-                "Achievement using job-required tools/frameworks with specific metrics",
-                "Technology-focused accomplishment that supports skills section claims",
-                "EVERY bullet must include at least one technology from skills section",
-                "Transform original technology mentions to job-relevant equivalents",
-                "Maintain same number of bullets as original, just enhanced with relevant tech"
+                "Enhanced bullet highlighting job-relevant aspects with 1-2 key technologies maximum",
+                "Quantified achievement using terminology that matches job requirements naturally",
+                "Improved bullet that showcases relevant skills without forcing unrelated technologies",
+                "PRESERVE ALL ORIGINAL BULLET POINTS - enhance, don't replace completely",
+                "Focus on authentic improvements that make sense for candidate's actual experience",
+                "Maintain the candidate's voice and experience level"
               ]
             }}
           ],
@@ -941,23 +902,23 @@ def lambda_handler(event, context):
           ]
         }}
 
-        VALIDATION CHECKLIST BEFORE RESPONDING:
-        1. [CHECK] Every skill in skills section has supporting evidence in experience bullets
-        2. [CHECK] Every experience bullet mentions at least one technology from skills section  
-        3. [CHECK] Technology terminology is consistent between skills and experience
-        4. [CHECK] Original technologies replaced with job-relevant equivalents where logical
-        5. [CHECK] Professional summary only mentions technologies proven in experience
-        6. [CHECK] Same number of experience entries and bullets as original resume
-        7. [CHECK] Education section completely unchanged from original
+        QUALITY CONTROL CHECKLIST:
+        1. [CHECK] Does each technology mention make logical sense given the candidate's background?
+        2. [CHECK] Are we enhancing authentic experience rather than fabricating new capabilities?
+        3. [CHECK] Does the resume still sound like it was written by a human, not a keyword-stuffing bot?
+        4. [CHECK] Are we focusing on the most important job requirements rather than trying to hit every keyword?
+        5. [CHECK] Does the professional summary reflect genuine qualifications?
+        6. [CHECK] Same number of experience entries and bullets as original resume?
+        7. [CHECK] Education section completely unchanged from original?
 
         **CRITICAL SUCCESS CRITERIA**:
-        - **PERFECT ALIGNMENT**: Skills section and experience section must tell the same technology story
-        - **LOGICAL SUBSTITUTION**: Replace similar technologies rather than adding unrelated ones
-        - **EVIDENCE-BASED**: Every skill claim must be backed by experience bullet proof
-        - **CONSISTENCY**: Same technology terminology used throughout all sections
-        - **PRESERVATION**: All original content preserved, just enhanced with relevant technologies
+        - **AUTHENTICITY FIRST**: Enhance genuine experience rather than fabricating capabilities
+        - **STRATEGIC FOCUS**: Target the most important job requirements, not every possible keyword
+        - **NATURAL LANGUAGE**: Resume should sound human-written, not keyword-stuffed
+        - **LOGICAL CONSISTENCY**: Technology mentions should make sense given candidate's background
+        - **PRESERVATION**: All original content preserved, just strategically enhanced
 
-        Return ONLY the JSON structure with the completely optimized and aligned resume content. No explanations or notes.
+        Return ONLY the JSON structure with the strategically optimized resume content. No explanations or notes.
         """
         
         # Call Amazon Bedrock with automatic model fallback
