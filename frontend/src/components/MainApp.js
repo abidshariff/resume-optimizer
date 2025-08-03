@@ -6,6 +6,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import LoadingScreen from './LoadingScreen';
 import config from '../config';
 import Logger from '../utils/logger';
+import { formatResumeText, formatForComparison, createFilePreview } from '../utils/textFormatter';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
 import PremiumBadge from './PremiumBadge';
@@ -486,7 +487,7 @@ function MainApp() {
             
             // Set the original text for comparison if available
             if (statusData.originalText) {
-              setOriginalResumeText(statusData.originalText);
+              setOriginalResumeText(formatResumeText(statusData.originalText, 'extracted'));
             }
             
             navigate('/app/results');
@@ -651,14 +652,8 @@ function MainApp() {
       };
       reader.readAsText(file);
     } else {
-      // For non-text files, show a helpful message
-      const fileTypeMap = {
-        'application/pdf': 'PDF',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word Document',
-        'application/msword': 'Word Document'
-      };
-      const fileType = fileTypeMap[file.type] || 'this file type';
-      setOriginalResumeText(`Text extraction in progress for ${fileType} file.\n\nThe original resume text will be available for comparison after the optimization is complete.\n\nFor immediate text preview, you can:\n1. Convert your resume to a .txt file\n2. Re-upload the .txt version\n\nOr proceed with the current file - the comparison will be available once processing is done.`);
+      // For non-text files, show an enhanced preview
+      setOriginalResumeText(createFilePreview(file));
     }
   };
 
@@ -2321,10 +2316,16 @@ function MainApp() {
                     margin: 0, 
                     whiteSpace: 'pre-wrap', 
                     wordWrap: 'break-word',
-                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                    fontSize: 'inherit'
+                    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    color: '#333',
+                    backgroundColor: '#fafafa',
+                    padding: '16px',
+                    borderRadius: '8px',
+                    border: '1px solid #e0e0e0'
                   }}>
-                    {originalResumeText || 'Original resume text not available for this job.\n\nThis feature is available for new resume optimizations.\nFor existing jobs, the original text was not stored for comparison.\n\nTo see a comparison:\n1. Upload your resume again\n2. Run a new optimization\n3. The comparison will show both versions'}
+                    {formatForComparison(originalResumeText, true) || 'Original resume text not available for this job.\n\nThis feature is available for new resume optimizations.\nFor existing jobs, the original text was not stored for comparison.\n\nTo see a comparison:\n1. Upload your resume again\n2. Run a new optimization\n3. The comparison will show both versions'}
                   </pre>
                 </Paper>
               </Box>

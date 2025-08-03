@@ -330,12 +330,19 @@ def extract_text_from_docx(docx_content):
             print(f"All extraction methods failed: {str(fallback_error)}")
             return "Unable to extract text from the Word document. Please try converting it to PDF format."
 
-def format_original_resume_text(raw_text):
+from enhanced_pdf_extractor import enhance_text_formatting, create_formatted_header
+
+def format_original_resume_text(raw_text, is_pdf_extracted=False):
     """
     Format the raw extracted resume text to make it more readable for comparison.
-    This function attempts to identify and structure common resume sections.
+    Uses enhanced formatting for PDF-extracted text.
     """
     try:
+        if is_pdf_extracted:
+            # Use enhanced PDF formatting
+            return enhance_text_formatting(raw_text)
+        
+        # Original formatting logic for non-PDF text
         lines = raw_text.split('\n')
         formatted_lines = []
         
@@ -644,8 +651,11 @@ def lambda_handler(event, context):
             # Store the original extracted text for comparison purposes
             formatted_original_text = resume_text  # Default fallback
             try:
+                # Check if this is a PDF file for enhanced formatting
+                is_pdf = resume_key.lower().endswith('.pdf')
+                
                 # Format the original text for better comparison readability
-                formatted_original_text = format_original_resume_text(resume_text)
+                formatted_original_text = format_original_resume_text(resume_text, is_pdf_extracted=is_pdf)
                 
                 original_text_key = f"users/{user_id}/original/{job_id}/original_text.txt"
                 s3.put_object(
