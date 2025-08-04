@@ -1531,10 +1531,30 @@ function MainApp() {
                         px: { xs: 3, md: 4 }, 
                         py: { xs: 1.2, md: 1.5 }, 
                         fontSize: { xs: '14px', md: '16px' },
-                        minWidth: { xs: 'auto', sm: '160px' }
+                        minWidth: { xs: 'auto', sm: '160px' },
+                        position: 'relative'
                       }}
                     >
                       Compare Versions
+                      <Box
+                        component="span"
+                        sx={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -8,
+                          backgroundColor: '#ff9800',
+                          color: 'white',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          padding: '2px 6px',
+                          borderRadius: '8px',
+                          lineHeight: 1,
+                          textTransform: 'uppercase',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        Beta
+                      </Box>
                     </Button>
                   </Box>
 
@@ -2204,9 +2224,41 @@ function MainApp() {
             <CompareIcon sx={{ mr: 1, fontSize: { xs: '1.2rem', md: '1.5rem' } }} />
             <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
               Resume Comparison: Original vs Crafted
+              <Box
+                component="span"
+                sx={{
+                  ml: 1,
+                  backgroundColor: '#ff9800',
+                  color: 'white',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  textTransform: 'uppercase',
+                  verticalAlign: 'middle'
+                }}
+              >
+                Beta
+              </Box>
             </Box>
             <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
               Comparison
+              <Box
+                component="span"
+                sx={{
+                  ml: 1,
+                  backgroundColor: '#ff9800',
+                  color: 'white',
+                  fontSize: '9px',
+                  fontWeight: 'bold',
+                  padding: '1px 4px',
+                  borderRadius: '6px',
+                  textTransform: 'uppercase',
+                  verticalAlign: 'middle'
+                }}
+              >
+                Beta
+              </Box>
             </Box>
           </Box>
           <IconButton onClick={() => setCompareDialogOpen(false)}>

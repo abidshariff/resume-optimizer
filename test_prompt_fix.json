@@ -1,0 +1,8 @@
+{
+  "userId": "test-user",
+  "jobId": "test-job-123",
+  "resumeKey": "test-resume.txt",
+  "jobDescriptionKey": "test-job-desc.txt",
+  "statusKey": "test-status.json",
+  "outputFormat": "txt"
+}

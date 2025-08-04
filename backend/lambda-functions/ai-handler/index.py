@@ -10,6 +10,8 @@ import urllib.parse
 import datetime
 from datetime import datetime
 from minimal_word_generator import create_minimal_word_resume
+from prompt_template import get_resume_optimization_prompt
+from skills_manager import SkillsManager
 
 # AI Model Configuration - Models are tried in order of cost (most expensive to least expensive)
 # This hierarchy balances performance with cost optimization
@@ -84,6 +86,7 @@ bedrock_runtime = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
 bucket_name = os.environ.get('STORAGE_BUCKET')
 table_name = os.environ.get('USER_HISTORY_TABLE')
+skills_table_name = os.environ.get('SKILLS_TABLE')
 
 # CORS headers for all responses
 def get_cors_headers(origin=None):
@@ -691,6 +694,55 @@ def lambda_handler(event, context):
                 'headers': get_cors_headers()
             }
         
+        # Process skills extraction and update database
+        skills_processing_result = {}
+        if skills_table_name:
+            try:
+                print("Starting adaptive skills processing...")
+                update_job_status(bucket_name, status_key, 'PROCESSING', 'Extracting and updating skills database')
+                
+                # Initialize skills manager
+                skills_manager = SkillsManager(skills_table_name)
+                
+                # Extract skills from job description
+                extracted_skills = skills_manager.extract_skills_from_text(job_description)
+                print(f"Extracted {len(extracted_skills)} skills from job description")
+                
+                # Process the extracted skills (add new ones, update frequencies)
+                skills_processing_result = skills_manager.process_extracted_skills(extracted_skills)
+                print(f"Skills processing result: {skills_processing_result}")
+                
+                # Get updated skills for optimization
+                organized_skills = skills_manager.get_skills_for_optimization()
+                print(f"Retrieved organized skills: {sum(len(skills) for skills in organized_skills.values())} total skills")
+                
+            except Exception as e:
+                print(f"Warning: Skills processing failed: {str(e)}")
+                # Continue with empty skills if processing fails
+                organized_skills = {
+                    'technical': [],
+                    'soft': [],
+                    'industry': [],
+                    'tools': [],
+                    'frameworks': [],
+                    'languages': [],
+                    'certifications': [],
+                    'general': []
+                }
+                skills_processing_result = {'error': str(e)}
+        else:
+            print("Skills table not configured, skipping skills processing")
+            organized_skills = {
+                'technical': [],
+                'soft': [],
+                'industry': [],
+                'tools': [],
+                'frameworks': [],
+                'languages': [],
+                'certifications': [],
+                'general': []
+            }
+        
         # Update status to AI processing
         update_job_status(bucket_name, status_key, 'PROCESSING', 'Generating optimized resume with AI')
         
@@ -735,321 +787,21 @@ def lambda_handler(event, context):
         else:
             length_guidance = "Preserve all original content while optimizing for keywords. Include all experience entries and bullet points from the original resume, maintaining the same level of detail."
 
-        # Analyze original resume structure for content preservation
-        def analyze_resume_structure(resume_text):
-            """Analyze the original resume to understand its structure and content density."""
-            lines = resume_text.split('\n')
-            bullet_points = [line for line in lines if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*')]
+        # Generate the prompt using the external template with dynamic skills
+        # Convert organized skills to a formatted string for the prompt
+        skills_text = ""
+        if organized_skills:
+            skills_sections = []
+            for category, skills_list in organized_skills.items():
+                if skills_list:  # Only include categories that have skills
+                    category_title = category.replace('_', ' ').title()
+                    skills_sections.append(f"{category_title}: {', '.join(skills_list[:20])}")  # Limit to top 20 per category
             
-            # Estimate number of experience sections
-            experience_indicators = ['experience', 'work history', 'employment', 'professional background']
-            education_indicators = ['education', 'academic', 'degree', 'university', 'college']
-            
-            experience_sections = 0
-            for line in lines:
-                line_lower = line.lower()
-                if any(indicator in line_lower for indicator in experience_indicators):
-                    experience_sections += 1
-            
-            return {
-                'total_lines': len(lines),
-                'bullet_points': len(bullet_points),
-                'estimated_experience_sections': max(1, experience_sections),
-                'avg_bullets_per_section': len(bullet_points) // max(1, experience_sections) if experience_sections > 0 else len(bullet_points)
-            }
+            if skills_sections:
+                skills_text = "Dynamic Skills Database (prioritize these skills when relevant):\n" + "\n".join(skills_sections)
+                print(f"Generated skills text with {len(skills_sections)} categories")
         
-        original_structure = analyze_resume_structure(resume_text)
-        print(f"Original resume structure: {original_structure}")
-
-        # Extract key information from job description for targeted optimization
-        def extract_job_keywords(job_desc):
-            """Dynamically extract key technical skills, tools, and requirements from job description"""
-            import re
-            
-            # Convert to lowercase for processing
-            job_lower = job_desc.lower()
-            
-            # Comprehensive technology patterns - dynamically expandable
-            tech_categories = {
-                'cloud_platforms': [
-                    'aws', 'amazon web services', 'azure', 'microsoft azure', 'gcp', 'google cloud', 
-                    'google cloud platform', 'snowflake', 'databricks', 'redshift', 'bigquery'
-                ],
-                'programming_languages': [
-                    'python', 'java', 'javascript', 'typescript', 'scala', 'r', 'go', 'rust',
-                    'c++', 'c#', 'php', 'ruby', 'kotlin', 'swift', 'sql', 'pyspark'
-                ],
-                'data_tools': [
-                    'spark', 'apache spark', 'hadoop', 'kafka', 'apache kafka', 'flink', 'apache flink',
-                    'airflow', 'apache airflow', 'dbt', 'fivetran', 'snowpipe', 'tableau', 'power bi',
-                    'looker', 'quicksight', 'amazon quicksight', 'superset', 'metabase'
-                ],
-                'databases': [
-                    'postgresql', 'postgres', 'mysql', 'mongodb', 'cassandra', 'redis', 'elasticsearch',
-                    'oracle', 'sql server', 'dynamodb', 'cosmos db', 'neo4j', 'clickhouse'
-                ],
-                'frameworks_libraries': [
-                    'react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask', 'spring',
-                    'spring boot', 'tensorflow', 'pytorch', 'scikit-learn', 'pandas', 'numpy'
-                ],
-                'devops_tools': [
-                    'docker', 'kubernetes', 'jenkins', 'gitlab ci', 'github actions', 'terraform',
-                    'ansible', 'chef', 'puppet', 'helm', 'istio', 'prometheus', 'grafana'
-                ],
-                'methodologies': [
-                    'agile', 'scrum', 'kanban', 'devops', 'ci/cd', 'tdd', 'bdd', 'microservices',
-                    'rest api', 'graphql', 'etl', 'elt', 'data modeling', 'data warehousing'
-                ]
-            }
-            
-            # Flatten all technologies into a single list
-            all_technologies = []
-            for category, techs in tech_categories.items():
-                all_technologies.extend(techs)
-            
-            # Find exact matches and partial matches
-            found_keywords = []
-            
-            # Method 1: Exact word boundary matches
-            for tech in all_technologies:
-                # Use word boundaries to avoid partial matches like 'spark' in 'sparkle'
-                pattern = r'\b' + re.escape(tech.lower()) + r'\b'
-                if re.search(pattern, job_lower):
-                    # Preserve original casing for common technologies
-                    original_case = tech.title() if tech.islower() else tech
-                    if original_case not in found_keywords:
-                        found_keywords.append(original_case)
-            
-            # Method 2: Extract technology clusters (e.g., "using X, Y, Z")
-            cluster_patterns = [
-                r'using\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
-                r'experience\s+with\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
-                r'proficiency\s+in\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
-                r'knowledge\s+of\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
-                r'expertise\s+in\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
-                r'tools\s+such\s+as\s+([^.]+?)(?:\s+for|\s+to|\.|$)',
-                r'including\s+([^.]+?)(?:\s+for|\s+to|\.|$)'
-            ]
-            
-            for pattern in cluster_patterns:
-                matches = re.finditer(pattern, job_lower, re.IGNORECASE)
-                for match in matches:
-                    cluster_text = match.group(1)
-                    # Split by common separators and clean up
-                    cluster_items = re.split(r'[,;/\s+and\s+|\s+or\s+]', cluster_text)
-                    for item in cluster_items:
-                        item = item.strip().strip('()')
-                        if len(item) > 2 and item not in [word.lower() for word in found_keywords]:
-                            # Check if this item matches any of our known technologies
-                            for tech in all_technologies:
-                                if tech.lower() in item.lower() or item.lower() in tech.lower():
-                                    original_case = tech.title() if tech.islower() else tech
-                                    if original_case not in found_keywords:
-                                        found_keywords.append(original_case)
-            
-            # Method 3: Extract capitalized technology names (likely proper nouns)
-            capitalized_pattern = r'\b[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*\b'
-            capitalized_matches = re.findall(capitalized_pattern, job_desc)
-            
-            # Filter capitalized matches to likely technologies
-            tech_indicators = ['sql', 'api', 'db', 'cloud', 'data', 'analytics', 'pipeline', 'stream', 'batch']
-            for match in capitalized_matches:
-                match_lower = match.lower()
-                # Include if it's a known technology or contains tech indicators
-                if (any(indicator in match_lower for indicator in tech_indicators) or 
-                    any(tech.lower() in match_lower for tech in all_technologies) or
-                    match in ['Snowflake', 'DBT', 'Fivetran', 'Snowpipe', 'Kafka', 'Flink', 'Spark']):
-                    if match not in found_keywords and len(match) > 2:
-                        found_keywords.append(match)
-            
-            # Remove duplicates and sort by relevance (frequency in job description)
-            unique_keywords = list(set(found_keywords))
-            
-            # Sort by frequency of mention in job description
-            keyword_frequency = []
-            for keyword in unique_keywords:
-                frequency = len(re.findall(r'\b' + re.escape(keyword.lower()) + r'\b', job_lower))
-                keyword_frequency.append((keyword, frequency))
-            
-            # Sort by frequency (descending) and take top technologies
-            sorted_keywords = sorted(keyword_frequency, key=lambda x: x[1], reverse=True)
-            final_keywords = [kw[0] for kw in sorted_keywords if kw[1] > 0]
-            
-            # Limit to top 15 most relevant technologies
-            return final_keywords[:15]
-
-        job_keywords = extract_job_keywords(job_description)
-        print(f"Extracted job keywords: {job_keywords}")
-
-        # Prepare enhanced prompt for Bedrock with systematic optimization and mandatory cross-validation
-        prompt = f"""
-        You are an expert ATS resume optimizer and career consultant. Your mission is to SYSTEMATICALLY ENHANCE the provided resume to better match the job description while maintaining authenticity and truthfulness about the candidate's background.
-
-        ORIGINAL RESUME:
-        {resume_text}
-
-        TARGET JOB DESCRIPTION:
-        {job_description}
-
-        EXTRACTED KEY TECHNOLOGIES/SKILLS FROM JOB: {', '.join(job_keywords) if job_keywords else 'General skills optimization'}
-
-        ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
-        ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_structure['bullet_points']} bullet points, estimated {original_structure['estimated_experience_sections']} experience sections
-
-        CRITICAL RULE: EVERY SKILL MUST HAVE EXPERIENCE EVIDENCE
-        **NO EXCEPTIONS**: If you add a technology to the skills section, you MUST modify at least one experience bullet to show evidence of using that technology. If you cannot create logical evidence for a technology, DO NOT add it to skills.
-
-        SYSTEMATIC OPTIMIZATION FRAMEWORK:
-
-        1. **TECHNOLOGY GROUPING RECOGNITION**:
-           - When job description lists technologies together (e.g., "using X, Y, Z, W"), treat ALL of them as equally important
-           - Look for phrases like "experience with X and Y" or "build systems using A, B, C" as requirement clusters
-           - Don't arbitrarily limit technology additions if multiple technologies are clearly required together
-           - Identify technology stacks mentioned as groups (e.g., streaming: Kafka + Flink, cloud: AWS + S3 + Lambda)
-
-        2. **SYSTEMATIC GAP ANALYSIS WITH EVIDENCE REQUIREMENT**:
-           - Compare ALL technologies mentioned in job description against candidate's current skills
-           - For each missing technology, assess: "Could candidate reasonably have this AND can I create logical evidence in their experience?"
-           - MANDATORY: For every technology you plan to add to skills, identify which experience bullet(s) you will enhance to show evidence
-           - If you cannot create logical evidence for a technology, DO NOT add it to skills
-
-        3. **REQUIREMENT WEIGHT DETECTION**:
-           - Technologies mentioned multiple times in job description = higher priority
-           - Technologies in "must have" or "required" sections = highest priority
-           - Technologies mentioned with specific experience requirements (e.g., "5+ years of X") = critical
-           - Technologies in "nice to have" or "bonus" sections = lower priority
-           - Technologies in job title or role summary = maximum priority
-
-        4. **MANDATORY EVIDENCE CREATION**:
-           - BEFORE adding any technology to skills, you MUST enhance at least one experience bullet to demonstrate usage
-           - Examples of logical evidence creation:
-             * Adding Kafka → enhance streaming/real-time bullets to mention "using Apache Kafka for real-time data streaming"
-             * Adding Flink → enhance data processing bullets to mention "implemented using Apache Flink for stream processing"
-             * Adding DBT → enhance data transformation bullets to mention "using DBT for data transformation pipelines"
-             * Adding Airflow → enhance automation bullets to mention "orchestrated using Apache Airflow"
-           - If candidate has no relevant experience for a technology, DO NOT add it to skills
-
-        5. **LOGICAL ADDITION FRAMEWORK WITH EVIDENCE VALIDATION**:
-           - If candidate has Technology A and job requires related Technology B, add Technology B ONLY if you can create logical evidence
-           - Examples of logical additions WITH evidence:
-             * Spark experience + job needs Flink → enhance big data bullets to mention both Spark and Flink
-             * MySQL experience + job needs PostgreSQL → enhance database bullets to mention PostgreSQL work
-             * AWS Lambda + job needs other AWS services → enhance AWS bullets to mention specific services
-           - RULE: No technology addition without corresponding experience enhancement
-
-        6. **COMPLETENESS VALIDATION WITH EVIDENCE CHECK**:
-           - Before finalizing, verify: "Did we address the main technology clusters AND create evidence for each?"
-           - For each technology in skills section, confirm there is at least one experience bullet that mentions it
-           - Remove any skills that lack supporting evidence in experience bullets
-
-        7. **EXPERIENCE ENHANCEMENT REQUIREMENTS**:
-           - Every experience bullet should be enhanced to include job-relevant technologies naturally
-           - Focus on incorporating technologies that are both in the job requirements AND in your skills section
-           - Use job description terminology where it fits the candidate's actual work
-           - Maintain authentic voice while ensuring skills-experience alignment
-
-        8. **JOB TITLE OPTIMIZATION**:
-           - If candidate's current role title is abbreviated (e.g., "Sr." → "Senior"), spell it out to match job posting
-           - If job posting mentions multiple levels (Senior/Lead/Principal), choose the one that best matches candidate's experience
-           - Only enhance titles for clarity and exact matching, never change the actual role or company
-
-        9. **CONTENT PRESERVATION**:
-           - {length_guidance}
-           - **PRESERVE ALL EXPERIENCE ENTRIES** from the original resume
-           - **PRESERVE ALL BULLET POINTS** for each job - do not reduce the number
-           - **MAINTAIN THE SAME LEVEL OF DETAIL** as the original resume
-           - Enhance existing content to include job-relevant technologies
-
-        10. **EDUCATION PRESERVATION**:
-            - **DO NOT MODIFY THE EDUCATION SECTION**
-            - Keep all education entries exactly as they appear in the original resume
-
-        MANDATORY EVIDENCE CREATION EXAMPLES:
-
-        **Example 1: Adding Kafka and Flink**
-        - Job requires: "streaming systems like Flink and Kafka"
-        - Candidate has: real-time analytics experience
-        - Skills addition: Apache Kafka, Apache Flink
-        - MANDATORY evidence creation:
-          * Original: "Designed and implemented real-time analytic solutions"
-          * Enhanced: "Designed and implemented real-time analytic solutions using Apache Kafka for data streaming and Apache Flink for stream processing"
-
-        **Example 2: Adding DBT**
-        - Job requires: "experience with DBT for data transformation"
-        - Candidate has: ETL and data transformation experience
-        - Skills addition: DBT
-        - MANDATORY evidence creation:
-          * Original: "Developed automated data workflows"
-          * Enhanced: "Developed automated data transformation workflows using DBT for scalable data pipeline management"
-
-        **Example 3: Adding Airflow**
-        - Job requires: "orchestration tools like Airflow"
-        - Candidate has: automation and pipeline experience
-        - Skills addition: Apache Airflow
-        - MANDATORY evidence creation:
-          * Original: "Developed an automation framework"
-          * Enhanced: "Developed an automation framework using Apache Airflow for orchestrating data pipeline workflows"
-
-        OUTPUT FORMAT:
-        Provide your response in the following JSON structure:
-
-        {{
-          "full_name": "Full Name from Resume",
-          "contact_info": "Email | Phone | LinkedIn | Location",
-          "professional_summary": "2-3 sentences highlighting the candidate's most relevant qualifications and key technologies, incorporating job-specific terminology (under 100 words)",
-          "skills": [
-            "ONLY include technologies that have supporting evidence in experience bullets",
-            "Complete technology stacks mentioned together in job requirements",
-            "Use exact terminology from job posting",
-            "Prioritize based on requirement weight detection",
-            "MANDATORY: Every skill listed here MUST be mentioned in at least one experience bullet"
-          ],
-          "experience": [
-            {{
-              "title": "Job Title (spell out abbreviations, match job posting level terminology)",
-              "company": "Company Name", 
-              "dates": "Start Date - End Date",
-              "achievements": [
-                "Enhanced bullet incorporating job-required technologies with specific mentions",
-                "MANDATORY: Include technologies from skills section in relevant bullets",
-                "Quantified achievement using job description terminology",
-                "PRESERVE ALL ORIGINAL BULLET POINTS - enhance to include skills evidence",
-                "Every bullet should support at least one technology from skills section",
-                "Maintain authentic experience while creating mandatory evidence"
-              ]
-            }}
-          ],
-          "education": [
-            {{
-              "degree": "EXACT degree name from original resume - DO NOT CHANGE",
-              "institution": "EXACT institution name from original resume - DO NOT CHANGE",
-              "dates": "EXACT dates from original resume - DO NOT CHANGE", 
-              "details": "EXACT details from original resume if any existed - DO NOT ADD NEW CONTENT"
-            }}
-          ]
-        }}
-
-        MANDATORY CROSS-VALIDATION CHECKLIST (MUST COMPLETE BEFORE RESPONDING):
-        1. [MANDATORY] For every technology in skills section, identify which experience bullet(s) mention it
-        2. [MANDATORY] Remove any skills that are not mentioned in experience bullets
-        3. [MANDATORY] Enhance experience bullets to include all technologies from skills section
-        4. [MANDATORY] Verify that technology clusters from job requirements are complete AND have evidence
-        5. [MANDATORY] Confirm each added technology makes logical sense given candidate's background
-        6. [MANDATORY] Ensure resume still sounds authentic and human-written
-        7. [MANDATORY] Verify same number of experience entries and bullets as original resume
-        8. [MANDATORY] Confirm education section completely unchanged from original
-
-        **CRITICAL SUCCESS CRITERIA**:
-        - **PERFECT ALIGNMENT**: Every skill in skills section MUST have evidence in experience bullets
-        - **NO ORPHANED SKILLS**: If you cannot create logical evidence for a technology, do not add it to skills
-        - **SYSTEMATIC COVERAGE**: Address all major technology requirements that can be logically supported
-        - **AUTHENTICITY**: Technology mentions should make sense within candidate's actual experience
-        - **COMPLETENESS**: Don't leave gaps in technology stacks, but only include what can be evidenced
-
-        FINAL VALIDATION: Before submitting your response, go through each skill in your skills section and confirm you can find it mentioned in at least one experience bullet. If not, remove it from skills or add it to an appropriate experience bullet.
-
-        Return ONLY the JSON structure with the systematically optimized and cross-validated resume content. No explanations or notes.
-        """
+        prompt = get_resume_optimization_prompt(resume_text, job_description, skills_text, length_guidance)
         
         # Call Amazon Bedrock with automatic model fallback
         def call_bedrock_with_fallback(prompt):
@@ -1091,9 +843,8 @@ def lambda_handler(event, context):
                     elif model['id'].startswith('amazon.'):
                         # Amazon models (Nova, Titan) use different formats
                         if 'nova' in model['id']:
-                            # Nova models use messages format similar to Anthropic
+                            # Nova models use messages format similar to Anthropic but without max_tokens
                             request_body = {
-                                "max_tokens": model['max_tokens'],
                                 "temperature": 0.5,
                                 "system": [{"text": "You are an expert ATS resume optimizer that preserves document formatting."}],
                                 "messages": [
@@ -1604,13 +1355,21 @@ def lambda_handler(event, context):
                 # Continue even if DynamoDB recording fails
         
         # Update status to completed
-        completion_message = f'Resume optimization complete using {model_used}'
+        skills_summary = ""
+        if skills_processing_result:
+            new_skills = skills_processing_result.get('new_skills_added', 0)
+            updated_skills = skills_processing_result.get('existing_skills_updated', 0)
+            if new_skills > 0 or updated_skills > 0:
+                skills_summary = f" | Skills: +{new_skills} new, {updated_skills} updated"
+        
+        completion_message = f'Resume optimization complete using {model_used}{skills_summary}'
         update_job_status(bucket_name, status_key, 'COMPLETED', completion_message, {
             'optimizedResumeUrl': optimized_url,
             'fileType': output_extension,
             'contentType': content_type,
             'downloadFilename': download_filename,
             'aiModel': model_used,
+            'skillsProcessing': skills_processing_result,
             'previewText': preview_text if 'preview_text' in locals() else None,
             'originalText': formatted_original_text if 'formatted_original_text' in locals() else (resume_text if 'resume_text' in locals() else None)
         })

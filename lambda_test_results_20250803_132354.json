@@ -1,0 +1,22 @@
+{
+  "snowflake_data_engineer": {
+    "success": false,
+    "error": "No response body"
+  },
+  "streaming_data_engineer": {
+    "success": false,
+    "error": "No response body"
+  },
+  "ml_data_engineer": {
+    "success": false,
+    "error": "No response body"
+  },
+  "aws_data_engineer": {
+    "success": false,
+    "error": "No response body"
+  },
+  "analytics_engineer": {
+    "success": false,
+    "error": "No response body"
+  }
+}

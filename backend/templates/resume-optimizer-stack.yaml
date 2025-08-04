@@ -48,6 +48,41 @@ Resources:
         - AttributeName: jobId
           KeyType: RANGE
 
+  # Skills Database Table
+  SkillsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'resume-optimizer-skills-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: skill_id
+          AttributeType: S
+        - AttributeName: skill_name_lower
+          AttributeType: S
+        - AttributeName: category
+          AttributeType: S
+      KeySchema:
+        - AttributeName: skill_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: skill-name-index
+          KeySchema:
+            - AttributeName: skill_name_lower
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: category-index
+          KeySchema:
+            - AttributeName: category
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Project
+          Value: ResumeOptimizer
+        - Key: Environment
+          Value: !Ref Environment
+
   # Authentication Layer
   UserPool:
     Type: AWS::Cognito::UserPool
@@ -215,6 +250,18 @@ Resources:
                 Resource: !GetAtt UserHistoryTable.Arn
               - Effect: Allow
                 Action:
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:Query'
+                  - 'dynamodb:Scan'
+                  - 'dynamodb:BatchGetItem'
+                  - 'dynamodb:BatchWriteItem'
+                Resource:
+                  - !GetAtt SkillsTable.Arn
+                  - !Sub '${SkillsTable.Arn}/index/*'
+              - Effect: Allow
+                Action:
                   - 'bedrock:InvokeModel'
                 Resource: '*'
 
@@ -262,6 +309,7 @@ Resources:
         Variables:
           STORAGE_BUCKET: !Ref ResumeStorageBucket
           USER_HISTORY_TABLE: !Ref UserHistoryTable
+          SKILLS_TABLE: !Ref SkillsTable
       Code:
         ZipFile: |
           # Placeholder - will be replaced with actual code
