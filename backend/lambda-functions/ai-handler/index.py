@@ -610,6 +610,8 @@ def lambda_handler(event, context):
         job_id = event.get('jobId')
         resume_key = event.get('resumeKey')
         job_desc_key = event.get('jobDescriptionKey')
+        job_title_key = event.get('jobTitleKey')  # Add job title key
+        company_name_key = event.get('companyNameKey')  # Add company name key (optional)
         status_key = event.get('statusKey')
         output_format = event.get('outputFormat', 'docx')  # 'text', 'word', 'docx', or 'pdf' - default to docx
         
@@ -622,7 +624,7 @@ def lambda_handler(event, context):
         output_format = format_mapping.get(output_format, output_format)
         
         # Validate inputs
-        if not job_id or not resume_key or not job_desc_key or not status_key:
+        if not job_id or not resume_key or not job_desc_key or not job_title_key or not status_key:
             error_msg = 'Missing required parameters'
             if status_key:
                 update_job_status(bucket_name, status_key, 'FAILED', error_msg)
@@ -685,6 +687,20 @@ def lambda_handler(event, context):
             # Get job description
             job_desc_obj = s3.get_object(Bucket=bucket_name, Key=job_desc_key)
             job_description = job_desc_obj['Body'].read().decode('utf-8')
+            
+            # Get job title
+            job_title_obj = s3.get_object(Bucket=bucket_name, Key=job_title_key)
+            job_title = job_title_obj['Body'].read().decode('utf-8').strip()
+            
+            # Get company name (optional)
+            company_name = ""
+            if company_name_key:
+                try:
+                    company_name_obj = s3.get_object(Bucket=bucket_name, Key=company_name_key)
+                    company_name = company_name_obj['Body'].read().decode('utf-8').strip()
+                except Exception as e:
+                    print(f"Company name not found or error retrieving: {str(e)}")
+                    company_name = ""
         except Exception as e:
             error_msg = f'Error retrieving or processing files: {str(e)}'
             print(f"Error retrieving or processing files from S3: {str(e)}")
@@ -801,7 +817,7 @@ def lambda_handler(event, context):
                 skills_text = "Dynamic Skills Database (prioritize these skills when relevant):\n" + "\n".join(skills_sections)
                 print(f"Generated skills text with {len(skills_sections)} categories")
         
-        prompt = get_resume_optimization_prompt(resume_text, job_description, skills_text, length_guidance)
+        prompt = get_resume_optimization_prompt(resume_text, job_description, job_title, company_name, skills_text, length_guidance)
         
         # Call Amazon Bedrock with automatic model fallback
         def call_bedrock_with_fallback(prompt):

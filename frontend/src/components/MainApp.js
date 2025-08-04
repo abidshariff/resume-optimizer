@@ -197,6 +197,8 @@ function MainApp() {
   const [resume, setResume] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeName, setResumeName] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [jobId, setJobId] = useState(null);
   const [jobStatus, setJobStatus] = useState(null);
@@ -649,8 +651,26 @@ function MainApp() {
   };
 
   const handleOptimize = async () => {
-    if (!resume || !jobDescription) {
-      setSnackbarMessage('Please upload a resume and enter a job description');
+    if (!resume || !jobDescription || !jobTitle.trim()) {
+      let message = 'Please ';
+      const missing = [];
+      if (!resume) missing.push('upload a resume');
+      if (!jobTitle.trim()) missing.push('enter the job title');
+      if (!jobDescription) missing.push('enter a job description');
+      message += missing.join(', ');
+      setSnackbarMessage(message);
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (jobTitle.length > 100) {
+      setSnackbarMessage('Job title must be 100 characters or less');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (companyName.length > 100) {
+      setSnackbarMessage('Company name must be 100 characters or less');
       setSnackbarOpen(true);
       return;
     }
@@ -667,6 +687,8 @@ function MainApp() {
       
       const payload = {
         resume: resume,
+        jobTitle: jobTitle.trim(),
+        companyName: companyName.trim(),
         jobDescription: jobDescription,
         outputFormat: selectedFormat // Use user preference or default to docx
       };
@@ -1268,21 +1290,63 @@ function MainApp() {
                 transition={{ duration: 0.5 }}
               >
                 <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-                  Enter Job Description
+                  Enter Job Details
                 </Typography>
                 <Typography variant="body1" color="textSecondary" paragraph sx={{ mb: 4 }}>
-                  Paste the job description you want to craft your resume for.
+                  Enter the job title and paste the complete job description for optimal resume crafting.
                 </Typography>
                 
+                {/* Job Title Field */}
+                <TextField
+                  label="Job Title"
+                  fullWidth
+                  variant="outlined"
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  placeholder="e.g., Senior Data Engineer, Software Developer, Product Manager"
+                  required
+                  inputProps={{ maxLength: 100 }}
+                  sx={{ mb: 3 }}
+                  helperText={
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <span style={{ color: '#666' }}>Enter the exact job title from the posting</span>
+                      <span style={{ color: jobTitle.length > 90 ? '#d32f2f' : '#999' }}>
+                        {jobTitle.length}/100
+                      </span>
+                    </Box>
+                  }
+                />
+                
+                {/* Company Name Field */}
+                <TextField
+                  label="Company Name (Optional)"
+                  fullWidth
+                  variant="outlined"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="e.g., Google, Amazon, Microsoft, Apple"
+                  inputProps={{ maxLength: 100 }}
+                  sx={{ mb: 3 }}
+                  helperText={
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <span style={{ color: '#666' }}>Company name helps tailor the resume for the organization</span>
+                      <span style={{ color: companyName.length > 90 ? '#d32f2f' : '#999' }}>
+                        {companyName.length}/100
+                      </span>
+                    </Box>
+                  }
+                />
+                
+                {/* Job Description Field */}
                 <TextField
                   label="Job Description"
                   multiline
-                  rows={12}
+                  rows={10}
                   fullWidth
                   variant="outlined"
                   value={jobDescription}
                   onChange={handleJobDescriptionChange}
-                  placeholder="Include Job title, skills and responsibilites for better results"
+                  placeholder="Paste the complete job description including responsibilities, requirements, and qualifications"
                   sx={{ mb: 4 }}
                 />
                 
@@ -1297,7 +1361,7 @@ function MainApp() {
                   <Button 
                     variant="contained" 
                     endIcon={<AutoAwesomeIcon />}
-                    disabled={!jobDescription}
+                    disabled={!jobTitle.trim() || !jobDescription}
                     onClick={handleOptimize}
                     size="large"
                     sx={{

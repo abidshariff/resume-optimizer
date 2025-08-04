@@ -271,6 +271,8 @@ def handle_job_submission(event, cors_headers):
         # Extract data from the request
         resume_content_base64 = body.get('resume')
         job_description = body.get('jobDescription')
+        job_title = body.get('jobTitle')
+        company_name = body.get('companyName', '')  # Optional field
         output_format = body.get('outputFormat', 'word')  # Default to Word format now
         
         # Get user ID from Cognito authorizer if available
@@ -295,6 +297,34 @@ def handle_job_submission(event, cors_headers):
                 'headers': cors_headers,
                 'body': json.dumps({
                     'message': 'Job description is required'
+                })
+            }
+        
+        if not job_title or not job_title.strip():
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'message': 'Job title is required'
+                })
+            }
+        
+        if len(job_title.strip()) > 100:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'message': 'Job title must be 100 characters or less'
+                })
+            }
+        
+        # Validate company name length if provided
+        if company_name and len(company_name.strip()) > 100:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'message': 'Company name must be 100 characters or less'
                 })
             }
         
@@ -324,6 +354,8 @@ def handle_job_submission(event, cors_headers):
         # Store files in S3
         resume_key = f"users/{user_id}/original/{job_id}/resume.pdf"
         job_desc_key = f"users/{user_id}/original/{job_id}/job_description.txt"
+        job_title_key = f"users/{user_id}/original/{job_id}/job_title.txt"
+        company_name_key = f"users/{user_id}/original/{job_id}/company_name.txt"
         
         # Upload resume file to S3
         s3.put_object(
@@ -341,7 +373,25 @@ def handle_job_submission(event, cors_headers):
             ContentType='text/plain'
         )
         
-        print(f"Stored original files in S3: {resume_key} and {job_desc_key}")
+        # Upload job title to S3
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=job_title_key,
+            Body=job_title.strip().encode('utf-8'),
+            ContentType='text/plain'
+        )
+        
+        # Upload company name to S3 (if provided)
+        if company_name and company_name.strip():
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=company_name_key,
+                Body=company_name.strip().encode('utf-8'),
+                ContentType='text/plain'
+            )
+        
+        print(f"Stored original files in S3: {resume_key}, {job_desc_key}, {job_title_key}" + 
+              (f", and {company_name_key}" if company_name and company_name.strip() else ""))
         
         # Store initial job status
         status_key = f"users/{user_id}/status/{job_id}/status.json"
@@ -365,6 +415,8 @@ def handle_job_submission(event, cors_headers):
             'jobId': job_id,
             'resumeKey': resume_key,
             'jobDescriptionKey': job_desc_key,
+            'jobTitleKey': job_title_key,
+            'companyNameKey': company_name_key if company_name and company_name.strip() else None,
             'statusKey': status_key,
             'outputFormat': output_format
         }

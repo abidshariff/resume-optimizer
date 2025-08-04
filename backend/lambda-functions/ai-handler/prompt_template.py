@@ -82,13 +82,15 @@ def estimate_page_count(text):
         return min(3, round(estimated_pages * 2) / 2)  # Cap at 3 pages max
 
 
-def get_resume_optimization_prompt(resume_text, job_description, keywords_text, length_guidance):
+def get_resume_optimization_prompt(resume_text, job_description, job_title, company_name, keywords_text, length_guidance):
     """
     Generate the complete prompt for resume optimization using the proven GitHub methodology.
     
     Args:
         resume_text (str): The original resume content
         job_description (str): The job description to optimize for
+        job_title (str): The specific job title to target
+        company_name (str): The company name (optional)
         keywords_text (str): Extracted keywords from the job description (legacy parameter)
         length_guidance (str): Content preservation guidance
     
@@ -117,6 +119,9 @@ You are an expert ATS resume optimizer and career consultant. Your mission is to
 ORIGINAL RESUME:
 {resume_text}
 
+TARGET JOB TITLE: {job_title}
+{f"TARGET COMPANY: {company_name}" if company_name else ""}
+
 TARGET JOB DESCRIPTION:
 {job_description}
 
@@ -127,32 +132,90 @@ ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_
 
 CRITICAL OPTIMIZATION REQUIREMENTS:
 
-1. **AGGRESSIVE KEYWORD INTEGRATION**: 
+1. **TARGET ROLE ALIGNMENT**: 
+   - Optimize the entire resume specifically for the "{job_title}" position{f" at {company_name}" if company_name else ""}
+   - Ensure the professional summary clearly positions the candidate for this exact role{f" and company culture" if company_name else ""}
+   - Align all experience descriptions to demonstrate relevance to "{job_title}" responsibilities
+   - Use terminology and keywords that hiring managers for "{job_title}" positions expect to see
+   {f"- Research and incorporate {company_name}'s values, culture, and industry focus where appropriate" if company_name else ""}
+
+2. **AGGRESSIVE KEYWORD INTEGRATION**: 
+2. **AGGRESSIVE KEYWORD INTEGRATION**: 
    - Identify ALL technical skills, tools, frameworks, and buzzwords from the job description
    - Integrate these keywords naturally throughout the resume, especially in experience bullets
    - If the candidate has ANY related experience, reframe it using job description terminology
    - Add relevant keywords to skills section even if not explicitly mentioned in original resume (but candidate likely has exposure)
 
-2. **COMPLETE EXPERIENCE TRANSFORMATION**:
+3. **JOB TITLE ALIGNMENT IN EXPERIENCE**:
+   - Update job titles in the experience section to align with the target "{job_title}" role
+   - Use progressive title evolution showing growth toward the target position (e.g., "Software Engineer" → "Senior Software Engineer" → "Lead Software Engineer")
+   - Replace generic titles with industry-standard titles that match the target role terminology
+   - Ensure consistency in title terminology throughout the resume
+   - Maintain truthfulness while using more relevant and impactful job titles
+   - Show clear career progression that logically leads to the target "{job_title}" position
+
+4. **STRATEGIC EXPERIENCE ENHANCEMENT**:
+   - **PRESERVE the core story and context** of each original bullet point
+   - **ENHANCE with relevant technical details** that would logically be part of the work described
+   - **ADD industry-standard technologies** that align with the described responsibilities
+   - **EXPAND on implied skills** that would naturally be involved in the original work
+   - **REFRAME accomplishments** using job-relevant terminology and metrics
+   - **MAINTAIN truthfulness** while maximizing keyword relevance
+   - **AVOID major fabrications** like entirely new projects or drastically different roles - **do this only if absolutely necessary** to meet critical job requirements
+   - **PRIORITIZE enhancement over invention** - exhaust all realistic enhancements before considering fabrication
+
+   **Enhancement Hierarchy:**
+   1. **First**: Add logical technical details and industry terminology
+   2. **Second**: Expand on implied responsibilities and skills
+   3. **Third**: Add reasonable metrics and quantifications
+   4. **Last Resort**: Create new elements only when essential for job match
+
+5. **SKILLS-EXPERIENCE ALIGNMENT**:
+   - **ENSURE EVERY SKILL** listed in Core Competencies/Technical Skills is demonstrated in at least one experience bullet
+   - **CROSS-REFERENCE** skills section with experience bullets to verify alignment
+   - **ENHANCE EXISTING BULLETS** to naturally incorporate skills that are listed but not demonstrated
+   - **AVOID ADDING SKILLS** to competencies unless they can be logically demonstrated in experience
+   - **PRIORITIZE SKILLS** that appear in both job description AND can be shown in experience bullets
+   - **CREATE SKILL-TO-EXPERIENCE MAPPING** ensuring no orphaned skills in competencies section
+
+   **Alignment Rules:**
+   - If you add "DBT" to skills → Must show DBT usage in at least one experience bullet
+   - If you add "KSQL" to skills → Must demonstrate KSQL experience in bullets
+   - If you add "API Design" to skills → Must show API development/design work in experience
+   - If you add "Agile/Scrum" to skills → Must mention Agile/Scrum methodology in experience
+
+   **Skills Validation Checklist:**
+   □ Every technical skill in competencies appears in experience bullets
+   □ Every tool/technology mentioned is demonstrated with specific usage
+   □ No skills are listed without corresponding experience evidence
+   □ Experience bullets support the skills claimed in competencies section
+
+6. **COMPLETE EXPERIENCE TRANSFORMATION**:
+   - REWRITE every single bullet point to align with job requirements
+4. **COMPLETE EXPERIENCE TRANSFORMATION**:
+   - REWRITE every single bullet point to align with job requirements
+5. **COMPLETE EXPERIENCE TRANSFORMATION**:
+   - REWRITE every single bullet point to align with job requirements
+6. **COMPLETE EXPERIENCE TRANSFORMATION**:
    - REWRITE every single bullet point to align with job requirements
    - Transform generic accomplishments into role-specific achievements
    - Use action verbs and terminology that match the job description exactly
    - Quantify achievements wherever possible, even if you need to reframe existing numbers
    - Focus on impact and results that matter for this specific role
 
-3. **STRATEGIC SKILL ENHANCEMENT**:
+7. **STRATEGIC SKILL ENHANCEMENT**:
    - Add technical skills from job description that the candidate likely has but didn't mention
    - Reorganize skills to prioritize job-relevant technologies
    - Include both hard and soft skills mentioned in job posting
    - Use exact terminology from job description (e.g., if job says "React.js", use "React.js" not "React")
 
-4. **PROFESSIONAL SUMMARY OVERHAUL**:
+8. **PROFESSIONAL SUMMARY OVERHAUL**:
    - Completely rewrite to sound like the perfect candidate for this specific role
    - Include years of experience in relevant areas
    - Mention key technologies and methodologies from job description
    - Highlight leadership/collaboration aspects if mentioned in job posting
 
-5. **CONTENT PRESERVATION AND PRIORITIZATION**:
+9. **CONTENT PRESERVATION AND PRIORITIZATION**:
    - {length_guidance}
    - **PRESERVE ALL EXPERIENCE ENTRIES** from the original resume
    - **PRESERVE THE NUMBER OF BULLET POINTS** for each job - do not reduce the number
@@ -160,13 +223,21 @@ CRITICAL OPTIMIZATION REQUIREMENTS:
    - Only reorder experiences if it significantly improves relevance to the job
    - Transform and enhance existing content rather than removing it
 
-6. **ATS OPTIMIZATION**:
+10. **AVOID REDUNDANCY AND REPETITION**:
+   - Use DIFFERENT action verbs for each bullet point (avoid repeating "Developed", "Built", "Implemented")
+   - Ensure each bullet point highlights a UNIQUE aspect of the candidate's contributions
+   - Vary sentence structures and lengths for better readability
+   - Distribute key technologies across different bullets rather than clustering them
+   - Show progressive responsibility and diverse skill application across experience entries
+   - Each bullet should tell a different story about the candidate's capabilities
+
+11. **ATS OPTIMIZATION**:
    - Use exact phrases from job description where appropriate
    - Include industry-standard terminology
    - Ensure keyword density is high but natural
    - Format for maximum ATS compatibility
 
-7. **EDUCATION PRESERVATION**:
+12. **EDUCATION PRESERVATION**:
    - **DO NOT MODIFY THE EDUCATION SECTION**
    - Keep all education entries exactly as they appear in the original resume
    - Do not add coursework, projects, or details that weren't in the original
