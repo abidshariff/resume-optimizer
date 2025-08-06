@@ -88,7 +88,7 @@ def get_resume_optimization_prompt(resume_text, job_description, job_title, comp
     
     Args:
         resume_text (str): The original resume content
-        job_description (str): The job description to optimize for
+        job_description (str): The job description to optimize for (optional)
         job_title (str): The specific job title to target
         company_name (str): The company name (optional)
         keywords_text (str): Extracted keywords from the job description (legacy parameter)
@@ -102,9 +102,13 @@ def get_resume_optimization_prompt(resume_text, job_description, job_title, comp
     original_structure = analyze_resume_structure(resume_text)
     print(f"Original resume structure: {original_structure}")
     
-    # Extract job keywords using comprehensive method
-    job_keywords = extract_job_keywords(job_description)
-    print(f"Extracted job keywords: {job_keywords}")
+    # Extract job keywords using comprehensive method (only if job description provided)
+    job_keywords = []
+    if job_description and job_description.strip():
+        job_keywords = extract_job_keywords(job_description)
+        print(f"Extracted job keywords: {job_keywords}")
+    else:
+        print("No job description provided - optimizing for general job title")
     
     # Estimate page count
     original_page_count = estimate_page_count(resume_text)
@@ -113,19 +117,29 @@ def get_resume_optimization_prompt(resume_text, job_description, job_title, comp
     # Determine content preservation guidance - same rule for all resume lengths
     length_guidance = "Preserve all original content while optimizing for keywords. Maintain the same number of experience entries and bullet points as the original resume."
     
+    # Build job description section
+    job_desc_section = ""
+    if job_description and job_description.strip():
+        job_desc_section = f"""
+TARGET JOB DESCRIPTION:
+{job_description}
+
+EXTRACTED KEY TECHNOLOGIES/SKILLS FROM JOB: {', '.join(job_keywords) if job_keywords else 'General skills optimization'}"""
+    else:
+        job_desc_section = """
+TARGET JOB DESCRIPTION: Not provided - optimize for general job title requirements
+
+EXTRACTED KEY TECHNOLOGIES/SKILLS FROM JOB: General skills optimization based on job title"""
+    
     prompt = f"""
-You are an expert ATS resume optimizer and career consultant. Your mission is to COMPLETELY TRANSFORM the provided resume to perfectly match the job description while maintaining truthfulness about the candidate's background.
+You are an expert ATS resume optimizer and career consultant. Your mission is to COMPLETELY TRANSFORM the provided resume to perfectly match the job title{' and job description' if job_description and job_description.strip() else ''} while maintaining truthfulness about the candidate's background.
 
 ORIGINAL RESUME:
 {resume_text}
 
 TARGET JOB TITLE: {job_title}
 {f"TARGET COMPANY: {company_name}" if company_name else ""}
-
-TARGET JOB DESCRIPTION:
-{job_description}
-
-EXTRACTED KEY TECHNOLOGIES/SKILLS FROM JOB: {', '.join(job_keywords) if job_keywords else 'General skills optimization'}
+{job_desc_section}
 
 ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
 ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_structure['bullet_points']} bullet points, estimated {original_structure['estimated_experience_sections']} experience sections
@@ -141,10 +155,13 @@ CRITICAL OPTIMIZATION REQUIREMENTS:
 
 2. **AGGRESSIVE KEYWORD INTEGRATION**: 
 2. **AGGRESSIVE KEYWORD INTEGRATION**: 
-   - Identify ALL technical skills, tools, frameworks, and buzzwords from the job description
+   {f'''- Identify ALL technical skills, tools, frameworks, and buzzwords from the job description
    - Integrate these keywords naturally throughout the resume, especially in experience bullets
    - If the candidate has ANY related experience, reframe it using job description terminology
-   - Add relevant keywords to skills section even if not explicitly mentioned in original resume (but candidate likely has exposure)
+   - Add relevant keywords to skills section even if not explicitly mentioned in original resume (but candidate likely has exposure)''' if job_description and job_description.strip() else '''- Focus on industry-standard keywords and skills relevant to the "{job_title}" position
+   - Research common requirements for "{job_title}" roles and integrate relevant keywords
+   - Enhance technical skills section with technologies commonly used in "{job_title}" positions
+   - Use industry-standard terminology throughout the resume'''}
 
 3. **JOB TITLE ALIGNMENT IN EXPERIENCE**:
    - Update job titles in the experience section to align with the target "{job_title}" role

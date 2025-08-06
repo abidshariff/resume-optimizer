@@ -273,7 +273,11 @@ def handle_job_submission(event, cors_headers):
         job_description = body.get('jobDescription')
         job_title = body.get('jobTitle')
         company_name = body.get('companyName', '')  # Optional field
-        output_format = body.get('outputFormat', 'word')  # Default to Word format now
+        generate_cv = body.get('generateCV', False)  # Generate CV flag
+        output_format = body.get('outputFormat', 'docx')  # Default to docx format to match frontend
+        
+        print(f"Resume processor received output format: {output_format}")
+        print(f"Full body outputFormat value: {body.get('outputFormat')}")
         
         # Get user ID from Cognito authorizer if available
         user_id = "anonymous"
@@ -291,21 +295,22 @@ def handle_job_submission(event, cors_headers):
                 })
             }
         
-        if not job_description:
-            return {
-                'statusCode': 400,
-                'headers': cors_headers,
-                'body': json.dumps({
-                    'message': 'Job description is required'
-                })
-            }
-        
         if not job_title or not job_title.strip():
             return {
                 'statusCode': 400,
                 'headers': cors_headers,
                 'body': json.dumps({
                     'message': 'Job title is required'
+                })
+            }
+        
+        # Validate Generate CV requirements
+        if generate_cv and (not company_name or not company_name.strip()):
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'message': 'Company name is required when Generate CV is enabled'
                 })
             }
         
@@ -417,6 +422,7 @@ def handle_job_submission(event, cors_headers):
             'jobDescriptionKey': job_desc_key,
             'jobTitleKey': job_title_key,
             'companyNameKey': company_name_key if company_name and company_name.strip() else None,
+            'generateCV': generate_cv,  # Include Generate CV flag
             'statusKey': status_key,
             'outputFormat': output_format
         }

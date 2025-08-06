@@ -387,6 +387,58 @@ function Profile() {
     }
   };
 
+  const handleDownloadCoverLetter = async (resume) => {
+    setDownloadingResumeId(`${resume.id}-cover`);
+    
+    try {
+      // Check if this is mock data (localhost with # URL)
+      if (window.location.hostname === 'localhost' && (!resume.coverLetterUrl || resume.coverLetterUrl === '#')) {
+        setSnackbarMessage('This is demo data - cover letter download not available');
+        setSnackbarSeverity('info');
+        setSnackbarOpen(true);
+        return;
+      }
+
+      // Check if URL is empty or invalid
+      if (!resume.coverLetterUrl || resume.coverLetterUrl === '') {
+        setSnackbarMessage('Cover letter download URL not available');
+        setSnackbarSeverity('warning');
+        setSnackbarOpen(true);
+        return;
+      }
+
+      // For S3 pre-signed URLs or valid URLs, attempt download
+      const response = await fetch(resume.coverLetterUrl, {
+        method: 'GET'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cover letter download failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${resume.title}_cover_letter.${resume.coverLetterFormat || resume.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setSnackbarMessage('Cover letter downloaded successfully!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      Logger.error('Cover letter download error:', error);
+      setSnackbarMessage('Cover letter download failed - the link may have expired. Please re-optimize your resume.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setDownloadingResumeId(null);
+    }
+  };
+
   const handleViewDetails = (resume) => {
     setSelectedResumeDetails(resume);
     setDetailsDialogOpen(true);
@@ -552,6 +604,18 @@ function Profile() {
                           fontSize: '0.75rem'
                         }}
                       />
+                      {resume.hasCoverLetter && (
+                        <Chip 
+                          label="+ Cover Letter" 
+                          size="small" 
+                          sx={{ 
+                            bgcolor: '#4CAF50',
+                            color: 'white',
+                            fontWeight: 600,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      )}
                     </Box>
 
                     {/* Creation time and view details */}
@@ -582,30 +646,58 @@ function Profile() {
                   </CardContent>
                   
                   <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2, pt: 0 }}>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={downloadingResumeId === resume.id ? 
-                        <CircularProgress size={16} color="inherit" /> : 
-                        <DownloadIcon />
-                      }
-                      onClick={() => handleDownloadResume(resume)}
-                      disabled={downloadingResumeId === resume.id}
-                      sx={{
-                        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                        '&:hover': {
-                          background: 'linear-gradient(45deg, #0A66C2 60%, #378FE9 100%)',
-                        },
-                        '&:disabled': {
-                          background: '#ccc',
-                        },
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        minWidth: 100
-                      }}
-                    >
-                      {downloadingResumeId === resume.id ? 'Downloading...' : 'Download'}
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={downloadingResumeId === resume.id ? 
+                          <CircularProgress size={16} color="inherit" /> : 
+                          <DownloadIcon />
+                        }
+                        onClick={() => handleDownloadResume(resume)}
+                        disabled={downloadingResumeId === resume.id}
+                        sx={{
+                          background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                          '&:hover': {
+                            background: 'linear-gradient(45deg, #0A66C2 60%, #378FE9 100%)',
+                          },
+                          '&:disabled': {
+                            background: '#ccc',
+                          },
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          minWidth: 100
+                        }}
+                      >
+                        {downloadingResumeId === resume.id ? 'Downloading...' : 'Resume'}
+                      </Button>
+                      {resume.hasCoverLetter && (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          startIcon={downloadingResumeId === `${resume.id}-cover` ? 
+                            <CircularProgress size={16} color="inherit" /> : 
+                            <DownloadIcon />
+                          }
+                          onClick={() => handleDownloadCoverLetter(resume)}
+                          disabled={downloadingResumeId === `${resume.id}-cover`}
+                          sx={{
+                            background: 'linear-gradient(45deg, #4CAF50 30%, #66BB6A 90%)',
+                            '&:hover': {
+                              background: 'linear-gradient(45deg, #4CAF50 60%, #66BB6A 100%)',
+                            },
+                            '&:disabled': {
+                              background: '#ccc',
+                            },
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            minWidth: 100
+                          }}
+                        >
+                          {downloadingResumeId === `${resume.id}-cover` ? 'Downloading...' : 'Cover Letter'}
+                        </Button>
+                      )}
+                    </Box>
                     <IconButton
                       size="small"
                       onClick={() => {
@@ -667,7 +759,7 @@ function Profile() {
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="body2" sx={{ 
-              color: '#666666',
+              color: 'text.secondary',
               display: { xs: 'none', sm: 'block' }
             }}>
               Welcome, {getDisplayName()}
@@ -699,7 +791,6 @@ function Profile() {
               onClose={() => setProfileMenuAnchor(null)}
               PaperProps={{
                 sx: {
-                  bgcolor: '#FFFFFF',
                   border: '1px solid #0A66C2',
                   mt: 1,
                   minWidth: 200
@@ -711,7 +802,7 @@ function Profile() {
                 navigate('/app/profile');
               }}>
                 <ListItemIcon>
-                  <PersonIcon sx={{ color: '#0A66C2' }} />
+                  <PersonIcon />
                 </ListItemIcon>
                 <ListItemText primary="Profile" />
               </MenuItem>
@@ -721,7 +812,7 @@ function Profile() {
                 handleSignOut();
               }}>
                 <ListItemIcon>
-                  <LogoutIcon sx={{ color: '#0A66C2' }} />
+                  <LogoutIcon />
                 </ListItemIcon>
                 <ListItemText primary="Sign Out" />
               </MenuItem>
@@ -969,6 +1060,72 @@ function Profile() {
                     </Button>
                   </Paper>
                 </Grid>
+                
+                {/* Cover Letter Information */}
+                {selectedResumeDetails.hasCoverLetter && (
+                  <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 2, bgcolor: '#e8f5e8', borderRadius: 1 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#4CAF50' }}>
+                        Cover Letter Information
+                      </Typography>
+                      <Box sx={{ mb: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>Format:</Typography>
+                        <Chip 
+                          label={(selectedResumeDetails.coverLetterFormat || selectedResumeDetails.format).toUpperCase()} 
+                          size="small" 
+                          sx={{ 
+                            bgcolor: '#4CAF50',
+                            color: 'white',
+                            fontWeight: 600,
+                            fontSize: '0.75rem',
+                            mt: 0.5
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>Download Status:</Typography>
+                        {selectedResumeDetails.coverLetterUrl && selectedResumeDetails.coverLetterUrl !== '' && selectedResumeDetails.coverLetterUrl !== '#' ? (
+                          <Chip 
+                            label="Available" 
+                            color="success" 
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        ) : (
+                          <Chip 
+                            label="Not Available" 
+                            color="error" 
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        )}
+                      </Box>
+                      <Button
+                        variant="contained"
+                        startIcon={downloadingResumeId === `${selectedResumeDetails.id}-cover` ? 
+                          <CircularProgress size={16} color="inherit" /> : 
+                          <DownloadIcon />
+                        }
+                        onClick={() => handleDownloadCoverLetter(selectedResumeDetails)}
+                        disabled={downloadingResumeId === `${selectedResumeDetails.id}-cover`}
+                        fullWidth
+                        sx={{
+                          background: 'linear-gradient(45deg, #4CAF50 30%, #66BB6A 90%)',
+                          '&:hover': {
+                            background: 'linear-gradient(45deg, #4CAF50 60%, #66BB6A 100%)',
+                          },
+                          '&:disabled': {
+                            background: '#ccc',
+                          },
+                          textTransform: 'none',
+                          fontWeight: 600
+                        }}
+                      >
+                        {downloadingResumeId === `${selectedResumeDetails.id}-cover` ? 'Downloading...' : 'Download Cover Letter'}
+                      </Button>
+                    </Paper>
+                  </Grid>
+                )}
                 
                 <Grid item xs={12}>
                   <Paper sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 1 }}>

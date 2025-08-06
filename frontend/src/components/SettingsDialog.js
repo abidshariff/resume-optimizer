@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Logger from '../utils/logger';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   Dialog,
   DialogTitle,
@@ -28,12 +29,11 @@ import { Settings as SettingsIcon, DeleteForever as DeleteForeverIcon, CheckCirc
 import { deleteUser } from 'aws-amplify/auth';
 
 function SettingsDialog({ open, onClose, onSettingsChange }) {
+  const { darkMode, toggleDarkMode } = useTheme();
   const [settings, setSettings] = useState({
     emailNotifications: true,
     autoSave: true,
-    darkMode: false,
-    defaultOutputFormat: 'docx', // 'txt', 'docx', or 'pdf'
-    optimizationLevel: 'balanced'
+    darkMode: darkMode
   });
 
   // Load settings from localStorage when dialog opens
@@ -59,9 +59,18 @@ function SettingsDialog({ open, onClose, onSettingsChange }) {
   const [countdown, setCountdown] = useState(5);
 
   const handleSettingChange = (setting) => (event) => {
+    const newValue = event.target.checked !== undefined ? event.target.checked : event.target.value;
+    
+    // Handle dark mode specially
+    if (setting === 'darkMode') {
+      toggleDarkMode();
+      setSettings(prev => ({ ...prev, darkMode: !prev.darkMode }));
+      return;
+    }
+    
     const newSettings = {
       ...settings,
-      [setting]: event.target.checked !== undefined ? event.target.checked : event.target.value
+      [setting]: newValue
     };
     
     setSettings(newSettings);
@@ -78,20 +87,31 @@ function SettingsDialog({ open, onClose, onSettingsChange }) {
   };
 
   const handleSave = () => {
-    // TODO: Save settings to backend or local storage
-    localStorage.setItem('resumeOptimizerSettings', JSON.stringify(settings));
+    // Save settings to localStorage using the same key that MainApp reads
+    localStorage.setItem('userSettings', JSON.stringify(settings));
     Logger.log('Settings saved:', settings);
+    
+    // Notify parent component of settings change
+    if (onSettingsChange) {
+      onSettingsChange(settings);
+    }
+    
     onClose();
   };
 
   const handleReset = () => {
-    setSettings({
+    const defaultSettings = {
       emailNotifications: true,
       autoSave: true,
-      darkMode: false,
-      defaultOutputFormat: 'docx',
-      optimizationLevel: 'balanced'
-    });
+      darkMode: false
+    };
+    
+    setSettings(defaultSettings);
+    
+    // Reset dark mode if it's currently enabled
+    if (darkMode) {
+      toggleDarkMode();
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -258,56 +278,11 @@ function SettingsDialog({ open, onClose, onSettingsChange }) {
                 checked={settings.darkMode}
                 onChange={handleSettingChange('darkMode')}
                 color="primary"
-                disabled
               />
             </ListItemSecondaryAction>
           </ListItem>
 
           <Divider />
-
-          <ListItem>
-            <Box sx={{ width: '100%' }}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Default Output Format</InputLabel>
-                <Select
-                  value={settings.defaultOutputFormat}
-                  onChange={handleSettingChange('defaultOutputFormat')}
-                  label="Default Output Format"
-                >
-                  <MenuItem value="docx">Word Document (.docx)</MenuItem>
-                  <MenuItem value="pdf">PDF Document (.pdf)</MenuItem>
-                  <MenuItem value="txt">Plain Text (.txt)</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <Typography variant="body2" color="text.secondary">
-                Choose the default format for downloaded optimized resumes
-              </Typography>
-            </Box>
-          </ListItem>
-
-          <Divider />
-
-          <ListItem>
-            <Box sx={{ width: '100%' }}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Optimization Level</InputLabel>
-                <Select
-                  value={settings.optimizationLevel}
-                  onChange={handleSettingChange('optimizationLevel')}
-                  label="Optimization Level"
-                >
-                  <MenuItem value="conservative">Conservative - Minimal changes</MenuItem>
-                  <MenuItem value="balanced">Balanced - Moderate optimization</MenuItem>
-                  <MenuItem value="aggressive">Aggressive - Maximum optimization</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <Typography variant="body2" color="text.secondary">
-                Control how extensively the AI modifies your resume content
-              </Typography>
-            </Box>
-          </ListItem>
         </List>
 
         {/* Privacy & Account Section */}

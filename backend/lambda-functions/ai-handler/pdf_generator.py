@@ -245,3 +245,90 @@ def create_basic_pdf_resume(resume_json):
     except Exception as e:
         print(f"Error in basic PDF: {str(e)}")
         raise e
+
+def create_pdf_from_text(text_content, title="Document"):
+    """
+    Create a PDF document from plain text content (for cover letters).
+    
+    Args:
+        text_content (str): The text content to convert to PDF
+        title (str): The document title
+    
+    Returns:
+        io.BytesIO: PDF document buffer
+    """
+    try:
+        # Create buffer
+        buffer = io.BytesIO()
+        
+        # Create document
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=letter,
+            rightMargin=0.75*inch,
+            leftMargin=0.75*inch,
+            topMargin=0.75*inch,
+            bottomMargin=0.75*inch
+        )
+        
+        # Use default styles
+        styles = getSampleStyleSheet()
+        normal_style = styles['Normal']
+        
+        story = []
+        
+        # Split text into paragraphs
+        paragraphs = text_content.split('\n')
+        
+        for para in paragraphs:
+            para = para.strip()
+            if para:  # Skip empty paragraphs
+                # Escape HTML special characters
+                para = para.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                story.append(Paragraph(f'<font size="11">{para}</font>', normal_style))
+                story.append(Spacer(1, 6))
+            else:
+                # Add spacing for empty paragraphs
+                story.append(Spacer(1, 12))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+        
+    except Exception as e:
+        print(f"Error creating PDF from text: {str(e)}")
+        # Create a basic fallback PDF
+        return create_basic_text_pdf(text_content, title)
+
+def create_basic_text_pdf(text_content, title="Document"):
+    """Create a very basic PDF from text content as fallback."""
+    try:
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
+        normal = styles['Normal']
+        story = []
+        
+        # Add title if provided
+        if title and title != "Document":
+            story.append(Paragraph(f'<font size="14"><b>{title}</b></font>', normal))
+            story.append(Spacer(1, 12))
+        
+        # Split content into paragraphs and add them
+        paragraphs = text_content.split('\n')
+        for para in paragraphs:
+            para = para.strip()
+            if para:
+                # Escape HTML special characters
+                para = para.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                story.append(Paragraph(para, normal))
+                story.append(Spacer(1, 6))
+        
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+        
+    except Exception as e:
+        print(f"Error in basic text PDF: {str(e)}")
+        raise e

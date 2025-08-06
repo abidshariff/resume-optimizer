@@ -13,6 +13,157 @@ from minimal_word_generator import create_minimal_word_resume
 from prompt_template import get_resume_optimization_prompt
 from skills_manager import SkillsManager
 
+def create_cover_letter_word_document(cover_letter_text):
+    """
+    Create a Word document from cover letter text using minimal approach.
+    
+    Args:
+        cover_letter_text (str): The cover letter content
+    
+    Returns:
+        io.BytesIO: Word document buffer
+    """
+    import io
+    import zipfile
+    import xml.etree.ElementTree as ET
+    from datetime import datetime
+    
+    def escape_xml(text):
+        """Escape XML special characters."""
+        if not text:
+            return ""
+        return (text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace('"', "&quot;")
+                   .replace("'", "&apos;"))
+    
+    def create_cover_letter_document_xml(text):
+        """Create document.xml for cover letter."""
+        # Split text into paragraphs
+        paragraphs = text.split('\n')
+        
+        # Build paragraphs XML
+        paragraphs_xml = ""
+        for para in paragraphs:
+            para = para.strip()
+            if para:  # Skip empty paragraphs
+                paragraphs_xml += f'''
+        <w:p>
+            <w:pPr>
+                <w:spacing w:after="120"/>
+            </w:pPr>
+            <w:r>
+                <w:rPr>
+                    <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+                    <w:sz w:val="22"/>
+                </w:rPr>
+                <w:t>{escape_xml(para)}</w:t>
+            </w:r>
+        </w:p>'''
+            else:
+                # Add empty paragraph for spacing
+                paragraphs_xml += '''
+        <w:p>
+            <w:pPr>
+                <w:spacing w:after="120"/>
+            </w:pPr>
+        </w:p>'''
+        
+        return f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+    <w:body>
+        {paragraphs_xml}
+        <w:sectPr>
+            <w:pgSz w:w="12240" w:h="15840"/>
+            <w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/>
+        </w:sectPr>
+    </w:body>
+</w:document>'''
+    
+    def get_content_types_xml():
+        return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+    <Default Extension="xml" ContentType="application/xml"/>
+    <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+    <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+    <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+    <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+</Types>'''
+    
+    def get_rels_xml():
+        return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+    <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>'''
+    
+    def get_document_rels_xml():
+        return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>'''
+    
+    def get_styles_xml():
+        return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+    <w:docDefaults>
+        <w:rPrDefault>
+            <w:rPr>
+                <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+                <w:sz w:val="22"/>
+            </w:rPr>
+        </w:rPrDefault>
+    </w:docDefaults>
+</w:styles>'''
+    
+    def get_app_xml():
+        return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
+    <Application>JobTailorAI</Application>
+    <DocSecurity>0</DocSecurity>
+    <ScaleCrop>false</ScaleCrop>
+    <SharedDoc>false</SharedDoc>
+    <HyperlinksChanged>false</HyperlinksChanged>
+    <AppVersion>1.0</AppVersion>
+</Properties>'''
+    
+    def get_core_xml():
+        now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        return f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <dc:title>Cover Letter</dc:title>
+    <dc:creator>JobTailorAI</dc:creator>
+    <dcterms:created xsi:type="dcterms:W3CDTF">{now}</dcterms:created>
+    <dcterms:modified xsi:type="dcterms:W3CDTF">{now}</dcterms:modified>
+</cp:coreProperties>'''
+    
+    try:
+        # Create the document XML content
+        document_xml = create_cover_letter_document_xml(cover_letter_text)
+        
+        # Create the .docx file structure
+        docx_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(docx_buffer, 'w', zipfile.ZIP_DEFLATED) as docx:
+            # Add required files for a valid .docx
+            docx.writestr('[Content_Types].xml', get_content_types_xml())
+            docx.writestr('_rels/.rels', get_rels_xml())
+            docx.writestr('word/_rels/document.xml.rels', get_document_rels_xml())
+            docx.writestr('word/document.xml', document_xml)
+            docx.writestr('word/styles.xml', get_styles_xml())
+            docx.writestr('docProps/app.xml', get_app_xml())
+            docx.writestr('docProps/core.xml', get_core_xml())
+        
+        docx_buffer.seek(0)
+        return docx_buffer
+        
+    except Exception as e:
+        print(f"Error creating cover letter Word document: {str(e)}")
+        raise e
+
 # AI Model Configuration - Models are tried in order of cost (most expensive to least expensive)
 # This hierarchy balances performance with cost optimization
 AI_MODELS = [
@@ -612,8 +763,14 @@ def lambda_handler(event, context):
         job_desc_key = event.get('jobDescriptionKey')
         job_title_key = event.get('jobTitleKey')  # Add job title key
         company_name_key = event.get('companyNameKey')  # Add company name key (optional)
+        generate_cv = event.get('generateCV', False)  # Generate CV flag
         status_key = event.get('statusKey')
-        output_format = event.get('outputFormat', 'docx')  # 'text', 'word', 'docx', or 'pdf' - default to docx
+        output_format = event.get('outputFormat', 'docx')  # Resume format - default to docx
+        cover_letter_format = event.get('coverLetterFormat', 'docx')  # Cover letter format - default to docx
+        
+        print(f"AI Handler received resume format: {output_format}")
+        print(f"AI Handler received cover letter format: {cover_letter_format}")
+        print(f"Generate CV flag: {generate_cv}")
         
         # Map frontend format names to backend format names
         format_mapping = {
@@ -622,6 +779,10 @@ def lambda_handler(event, context):
             'pdf': 'pdf'
         }
         output_format = format_mapping.get(output_format, output_format)
+        cover_letter_format = format_mapping.get(cover_letter_format, cover_letter_format)
+        
+        print(f"Mapped resume format: {output_format}")
+        print(f"Mapped cover letter format: {cover_letter_format}")
         
         # Validate inputs
         if not job_id or not resume_key or not job_desc_key or not job_title_key or not status_key:
@@ -720,13 +881,21 @@ def lambda_handler(event, context):
                 # Initialize skills manager
                 skills_manager = SkillsManager(skills_table_name)
                 
-                # Extract skills from job description
-                extracted_skills = skills_manager.extract_skills_from_text(job_description)
-                print(f"Extracted {len(extracted_skills)} skills from job description")
+                # Extract skills from job description (if provided)
+                extracted_skills = []
+                if job_description and job_description.strip():
+                    extracted_skills = skills_manager.extract_skills_from_text(job_description)
+                    print(f"Extracted {len(extracted_skills)} skills from job description")
+                else:
+                    print("No job description provided - skipping skills extraction")
                 
                 # Process the extracted skills (add new ones, update frequencies)
-                skills_processing_result = skills_manager.process_extracted_skills(extracted_skills)
-                print(f"Skills processing result: {skills_processing_result}")
+                skills_processing_result = None
+                if extracted_skills:
+                    skills_processing_result = skills_manager.process_extracted_skills(extracted_skills)
+                    print(f"Skills processing result: {skills_processing_result}")
+                else:
+                    print("No skills to process")
                 
                 # Get updated skills for optimization
                 organized_skills = skills_manager.get_skills_for_optimization()
@@ -1352,6 +1521,174 @@ def lambda_handler(event, context):
         # Also generate a direct download URL for the frontend to use
         download_filename = f"optimized_resume_{job_id[:8]}.{output_extension}"
         
+        # Generate cover letter if CV toggle is enabled
+        cover_letter_text = None
+        if generate_cv:
+            try:
+                print(f"CV toggle enabled: {generate_cv}")
+                print(f"Company name key: {company_name_key}")
+                print("Generating cover letter...")
+                
+                # Get company name from S3 if key is provided, otherwise use a default
+                company_name = ""
+                if company_name_key:
+                    try:
+                        company_name_obj = s3.get_object(Bucket=bucket_name, Key=company_name_key)
+                        company_name = company_name_obj['Body'].read().decode('utf-8').strip()
+                    except Exception as e:
+                        print(f"Error retrieving company name from S3: {str(e)}")
+                        company_name = "the company"  # Fallback
+                else:
+                    print("No company name key provided, using fallback")
+                    company_name = "the company"  # Fallback when no company name is provided
+                
+                # Create cover letter prompt with your specified format
+                job_desc_text = job_description if job_description and job_description.strip() else "No specific job description provided - focus on general qualifications for the role"
+                
+                # Get current date
+                current_date = datetime.now().strftime("%B %d, %Y")
+                
+                cover_letter_prompt = f"""
+                Create a professional cover letter using the provided information. You must research the company and provide actual, real information - NO PLACEHOLDERS allowed.
+
+                IMPORTANT REQUIREMENTS:
+                1. Use the ACTUAL current date: {current_date}
+                2. Research {company_name} and find their real headquarters/main office address
+                3. Extract the candidate's actual name, email, phone, and location from the resume
+                4. Write specific content about how the candidate aligns with {company_name}'s mission, values, and goals
+                5. NO placeholders like [Current Date], [Company Address], [X years], [Candidate Name], etc.
+                6. Make it highly personalized to {company_name} and the {job_title} role
+
+                Job Title: {job_title}
+                Company: {company_name}
+                Job Description: {job_desc_text}
+                
+                Resume Content: {resume_text[:2000]}...
+
+                Format the cover letter EXACTLY like this structure, but with REAL information:
+
+                [CANDIDATE NAME FROM RESUME]
+                [CANDIDATE EMAIL] | [CANDIDATE PHONE] | [CANDIDATE LOCATION] | LinkedIn
+
+                {current_date}
+
+
+                Hiring Manager
+                {company_name}
+                [RESEARCH AND PROVIDE ACTUAL COMPANY ADDRESS]
+                [CITY, STATE ZIP CODE]
+
+                Dear Hiring Manager,
+
+                I am excited to apply for the {job_title} position at {company_name}. With [EXTRACT ACTUAL YEARS OF EXPERIENCE] years of experience as a [EXTRACT ACTUAL PROFESSIONAL TITLE FROM RESUME], I am confident that I have the skills and expertise to make a significant contribution to your team.
+
+                [Write a compelling paragraph highlighting the candidate's most relevant experience and achievements from their resume that directly match the job requirements. Use specific examples and quantifiable results.]
+
+                [Write a second paragraph demonstrating specific skills and accomplishments that align with the job description. Include how the candidate's experience relates to {company_name}'s industry, products, or services. Research {company_name}'s mission and explain how the candidate's values and experience align with the company's goals.]
+
+                Your posting for the {job_title} role aligns perfectly with my background and passion for [EXTRACT RELEVANT FIELD FROM RESUME]. I am particularly drawn to {company_name}'s [RESEARCH AND MENTION SPECIFIC COMPANY VALUES, MISSION, OR RECENT INITIATIVES]. I am excited about the opportunity to leverage my skills in [EXTRACT RELEVANT SKILLS FROM RESUME THAT MATCH JOB DESCRIPTION] to drive impactful solutions at {company_name}.
+
+                Thank you for considering my application. I welcome the opportunity to discuss my qualifications further and learn more about this exciting position. I look forward to hearing from you.
+
+                Regards,
+                [CANDIDATE NAME FROM RESUME]
+
+                CRITICAL INSTRUCTIONS:
+                1. Replace ALL bracketed placeholders with actual information
+                2. Research {company_name} to get real company address and information about their mission/values
+                3. Extract candidate's actual details from the resume provided
+                4. Write specific, personalized content - no generic statements
+                5. Make the cover letter highly relevant to both the role and the company
+                6. Ensure professional formatting and tone throughout
+                """
+                
+                # Generate cover letter using the same AI model
+                cover_letter_response, _ = call_bedrock_with_fallback(cover_letter_prompt)
+                cover_letter_text = cover_letter_response.strip()
+                
+                print(f"Cover letter generated successfully (length: {len(cover_letter_text)})")
+                
+                # Generate cover letter file and upload to S3
+                cover_letter_url = None
+                cover_letter_filename = None
+                try:
+                    print("Starting cover letter file creation...")
+                    
+                    # Create cover letter document
+                    cover_letter_key = f"cover-letters/{job_id}_cover_letter.{output_extension}"
+                    cover_letter_filename = f"cover_letter_{job_id[:8]}.{output_extension}"
+                    
+                    print(f"Cover letter key: {cover_letter_key}")
+                    print(f"Cover letter filename: {cover_letter_filename}")
+                    print(f"Resume format: {output_format}, Cover letter format: {cover_letter_format}")
+                    
+                    # Create cover letter content based on cover letter format
+                    if cover_letter_format == 'word':
+                        print("Creating Word document for cover letter...")
+                        # Create cover letter Word document
+                        cover_letter_buffer = create_cover_letter_word_document(cover_letter_text)
+                        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        cover_letter_extension = 'docx'
+                        print(f"Word document created, buffer size: {len(cover_letter_buffer.getvalue())} bytes")
+                    elif cover_letter_format == 'pdf':
+                        print("Creating PDF document for cover letter...")
+                        # For PDF, we'll use the same approach as the resume
+                        from pdf_generator import create_pdf_from_text
+                        cover_letter_buffer = create_pdf_from_text(cover_letter_text, f"Cover Letter - {job_title}")
+                        content_type = 'application/pdf'
+                        cover_letter_extension = 'pdf'
+                        print(f"PDF document created, buffer size: {len(cover_letter_buffer.getvalue())} bytes")
+                    else:  # text format
+                        print("Creating text file for cover letter...")
+                        import io
+                        cover_letter_buffer = io.BytesIO(cover_letter_text.encode('utf-8'))
+                        content_type = 'text/plain'
+                        cover_letter_extension = 'txt'
+                        print(f"Text file created, buffer size: {len(cover_letter_buffer.getvalue())} bytes")
+                    
+                    # Update cover letter filename with correct extension
+                    cover_letter_filename = f"cover_letter_{job_id}.{cover_letter_extension}"
+                    cover_letter_key = f"users/{user_id}/results/{job_id}/{cover_letter_filename}"
+                    
+                    print("Uploading cover letter to S3...")
+                    # Upload cover letter to S3
+                    s3.put_object(
+                        Bucket=bucket_name,
+                        Key=cover_letter_key,
+                        Body=cover_letter_buffer.getvalue(),
+                        ContentType=content_type
+                    )
+                    print("Cover letter uploaded to S3 successfully")
+                    
+                    print("Generating pre-signed URL...")
+                    # Generate pre-signed URL for cover letter download
+                    cover_letter_url = s3.generate_presigned_url(
+                        'get_object',
+                        Params={
+                            'Bucket': bucket_name,
+                            'Key': cover_letter_key,
+                            'ResponseContentDisposition': f'attachment; filename="{cover_letter_filename}"',
+                            'ResponseContentType': content_type
+                        },
+                        ExpiresIn=3600  # 1 hour
+                    )
+                    
+                    print(f"Cover letter uploaded to S3 and download URL generated: {cover_letter_url[:50]}...")
+                    
+                except Exception as e:
+                    print(f"Error creating cover letter file: {str(e)}")
+                    print(f"Error type: {type(e).__name__}")
+                    import traceback
+                    print(f"Full traceback: {traceback.format_exc()}")
+                    # Continue without cover letter file if generation fails
+                    cover_letter_url = None
+                    cover_letter_filename = None
+                
+            except Exception as e:
+                print(f"Error generating cover letter: {str(e)}")
+                # Continue without cover letter if generation fails
+                cover_letter_text = None
+        
         # Record in DynamoDB
         if table_name:
             table = dynamodb.Table(table_name)
@@ -1379,7 +1716,9 @@ def lambda_handler(event, context):
                 skills_summary = f" | Skills: +{new_skills} new, {updated_skills} updated"
         
         completion_message = f'Resume optimization complete using {model_used}{skills_summary}'
-        update_job_status(bucket_name, status_key, 'COMPLETED', completion_message, {
+        
+        # Prepare additional data for status update
+        additional_data = {
             'optimizedResumeUrl': optimized_url,
             'fileType': output_extension,
             'contentType': content_type,
@@ -1387,8 +1726,16 @@ def lambda_handler(event, context):
             'aiModel': model_used,
             'skillsProcessing': skills_processing_result,
             'previewText': preview_text if 'preview_text' in locals() else None,
-            'originalText': formatted_original_text if 'formatted_original_text' in locals() else (resume_text if 'resume_text' in locals() else None)
-        })
+            'originalText': formatted_original_text if 'formatted_original_text' in locals() else (resume_text if 'resume_text' in locals() else None),
+            'coverLetterText': cover_letter_text if 'cover_letter_text' in locals() and cover_letter_text else None,
+            'coverLetterUrl': cover_letter_url if 'cover_letter_url' in locals() and cover_letter_url else None,
+            'coverLetterFilename': cover_letter_filename if 'cover_letter_filename' in locals() and cover_letter_filename else None
+        }
+        
+        print(f"Final status update data - Cover letter URL: {additional_data['coverLetterUrl']}")
+        print(f"Final status update data - Cover letter filename: {additional_data['coverLetterFilename']}")
+        
+        update_job_status(bucket_name, status_key, 'COMPLETED', completion_message, additional_data)
         
         return {
             'optimizedResumeUrl': optimized_url,

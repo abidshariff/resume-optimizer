@@ -7,6 +7,8 @@ import config from '../config';
 import Logger from '../utils/logger';
 import ProfileDialog from './ProfileDialog';
 import SettingsDialog from './SettingsDialog';
+import FormatSelector from './FormatSelector';
+import StylishBackButton from './StylishBackButton';
 import { 
   Box, 
   Container, 
@@ -33,6 +35,9 @@ import {
   DialogContent,
   DialogActions,
   Slider,
+  FormControlLabel,
+  Switch,
+  Tooltip,
   Grid
 } from '@mui/material';
 import { 
@@ -50,6 +55,8 @@ import {
   Visibility as VisibilityIcon,
   Compare as CompareIcon,
   Close as CloseIcon,
+  Info as InfoIcon,
+  Email as EmailIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -87,47 +94,40 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onConti
   }, [file, showContinueButton]);
 
   return (
-    <Box sx={{ mt: 2, mb: 3 }}>
+    <Box sx={{ mt: 1, mb: 2, flex: 1 }}>
       <Paper
         {...getRootProps()}
         sx={{
           border: '2px dashed',
           borderColor: isDragActive ? 'primary.main' : 'grey.300',
           borderRadius: 2,
-          p: 3,
+          p: 2,
           textAlign: 'center',
           cursor: 'pointer',
           transition: 'all 0.3s ease',
           backgroundColor: isDragActive ? 'rgba(63, 81, 181, 0.04)' : 'background.paper',
-          // Mobile-specific styles
-          minHeight: { xs: '120px', sm: '150px' },
+          minHeight: '100px',
           '&:hover': {
             borderColor: 'primary.main',
             backgroundColor: 'rgba(63, 81, 181, 0.04)',
-          },
-          // Improve touch targets on mobile
-          '@media (max-width: 600px)': {
-            p: 2,
-            minHeight: '100px'
           }
         }}
       >
         <input {...getInputProps()} />
         <CloudUploadIcon sx={{ 
-          fontSize: { xs: 36, sm: 48 }, 
+          fontSize: 32, 
           color: isDragActive ? 'primary.main' : 'text.secondary', 
-          mb: 2 
+          mb: 1 
         }} />
-        <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+        <Typography variant="body1" gutterBottom>
           {isDragActive ? 'Drop the file here' : 'Drag & drop your resume here'}
         </Typography>
-        <Typography variant="body2" color="textSecondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+        <Typography variant="body2" color="textSecondary">
           or click to browse files
         </Typography>
         <Typography variant="caption" color="textSecondary" sx={{ 
           display: 'block', 
-          mt: 1,
-          fontSize: { xs: '0.75rem', sm: '0.875rem' }
+          mt: 0.5
         }}>
           Supported formats: PDF, DOC, DOCX
         </Typography>
@@ -135,8 +135,8 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onConti
       
       {file && (
         <Box sx={{ 
-          mt: 2, 
-          p: 2, 
+          mt: 1, 
+          p: 1.5, 
           bgcolor: 'success.light', 
           borderRadius: 1,
           display: 'flex', 
@@ -144,12 +144,11 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onConti
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: showContinueButton ? 2 : 0, textAlign: 'center' }}>
-            <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: showContinueButton ? 1 : 0, textAlign: 'center' }}>
+            <CheckCircleIcon sx={{ mr: 1, color: 'success.main', fontSize: 20 }} />
             <Typography variant="body2" sx={{ 
               color: 'success.main', 
-              fontWeight: 500,
-              fontSize: { xs: '0.875rem', sm: '1rem' }
+              fontWeight: 500
             }}>
               {showContinueButton 
                 ? `${file.name} uploaded successfully!`
@@ -163,14 +162,12 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onConti
             <Button
               variant="contained"
               onClick={onContinue}
-              size="large"
+              size="small"
               sx={{
                 background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
                 color: 'white',
-                px: 4,
-                py: 1.5,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                minHeight: { xs: '44px', sm: '48px' }, // Better touch targets
+                px: 3,
+                py: 1,
                 '&:hover': {
                   background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
                 }
@@ -199,6 +196,9 @@ function MainApp() {
   const [resumeName, setResumeName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [generateCV, setGenerateCV] = useState(false); // Generate CV toggle
+  const [selectedResumeFormat, setSelectedResumeFormat] = useState('docx'); // Direct format selection
+  const [selectedCoverLetterFormat, setSelectedCoverLetterFormat] = useState('docx'); // Direct format selection
   const [jobDescription, setJobDescription] = useState('');
   const [jobId, setJobId] = useState(null);
   const [jobStatus, setJobStatus] = useState(null);
@@ -215,6 +215,9 @@ function MainApp() {
   
   // Enhanced UX state for processing
   const [currentTip, setCurrentTip] = useState(0);
+
+  // Define isProcessing early to avoid hoisting issues
+  const isProcessing = isSubmitting || isPolling;
 
   // Educational tips to show during processing
   const educationalTips = [
@@ -269,6 +272,8 @@ function MainApp() {
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const [originalResumeText, setOriginalResumeText] = useState('');
   const [optimizedResumeText, setOptimizedResumeText] = useState('');
+  const [coverLetterText, setCoverLetterText] = useState(''); // Cover letter state
+  const [coverLetterDialogOpen, setCoverLetterDialogOpen] = useState(false); // Cover letter dialog state
 
   // Determine current step from URL
   const getCurrentStep = () => {
@@ -418,6 +423,25 @@ function MainApp() {
     };
   }, [isPolling, educationalTips.length]);
 
+  // Prevent page refresh/close during processing
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isProcessing || isPolling) {
+        e.preventDefault();
+        e.returnValue = 'Your resume is being crafted. Are you sure you want to leave? This will cancel the process.';
+        return 'Your resume is being crafted. Are you sure you want to leave? This will cancel the process.';
+      }
+    };
+
+    if (isProcessing || isPolling) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isProcessing, isPolling]);
+
   // Poll for job status when isPolling is true
   useEffect(() => {
     let statusInterval;
@@ -453,11 +477,24 @@ function MainApp() {
           
           if (statusData.status === 'COMPLETED') {
             setIsPolling(false);
+            
+            // Log the complete status data for debugging
+            Logger.log('=== STATUS COMPLETION DEBUG ===');
+            Logger.log('Complete status data received:', statusData);
+            Logger.log('Cover letter URL from status:', statusData.coverLetterUrl);
+            Logger.log('Generate CV flag:', generateCV);
+            Logger.log('All status data keys:', Object.keys(statusData));
+            Logger.log('Cover letter filename:', statusData.coverLetterFilename);
+            Logger.log('Cover letter text length:', statusData.coverLetterText?.length || 0);
+            
             setResult({
               optimizedResumeUrl: statusData.optimizedResumeUrl,
               fileType: statusData.fileType || 'docx',
               contentType: statusData.contentType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              downloadFilename: statusData.downloadFilename || `crafted_resume.${statusData.fileType || 'docx'}`
+              downloadFilename: statusData.downloadFilename || `crafted_resume.${statusData.fileType || 'docx'}`,
+              // Add cover letter URL if available
+              coverLetterUrl: statusData.coverLetterUrl || null,
+              coverLetterFilename: statusData.coverLetterFilename || `cover_letter.${statusData.fileType || 'docx'}`
             });
             
             // Set the preview text if available
@@ -466,6 +503,11 @@ function MainApp() {
             } else {
               // Fallback message for when preview is not available
               setOptimizedResumeText(`Preview not available for ${statusData.fileType || 'this'} format.\n\nYour optimized resume has been generated successfully!\n\nTo view your crafted resume:\n1. Click the "Download Resume" button below\n2. Open the downloaded file in Microsoft Word or a compatible application\n\nThe optimized resume includes:\n• Tailored content for the job description\n• Improved formatting and structure\n• Enhanced keywords and phrases\n• Professional presentation`);
+            }
+            
+            // Set cover letter text if available
+            if (statusData.coverLetterText) {
+              setCoverLetterText(statusData.coverLetterText);
             }
             
             // Set the original text for comparison if available
@@ -651,14 +693,20 @@ function MainApp() {
   };
 
   const handleOptimize = async () => {
-    if (!resume || !jobDescription || !jobTitle.trim()) {
+    if (!resume || !jobTitle.trim()) {
       let message = 'Please ';
       const missing = [];
       if (!resume) missing.push('upload a resume');
       if (!jobTitle.trim()) missing.push('enter the job title');
-      if (!jobDescription) missing.push('enter a job description');
       message += missing.join(', ');
       setSnackbarMessage(message);
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Generate CV validation - company name is mandatory when CV is enabled
+    if (generateCV && (!companyName || !companyName.trim())) {
+      setSnackbarMessage('Company name is required when Generate CV is enabled');
       setSnackbarOpen(true);
       return;
     }
@@ -681,19 +729,27 @@ function MainApp() {
     setStatusMessage('Submitting your resume for crafting...');
     
     try {
-      const selectedFormat = userSettings.defaultOutputFormat || 'docx';
-      Logger.log('Current user settings:', userSettings);
-      Logger.log('Selected output format:', selectedFormat);
+      Logger.log('Selected resume format:', selectedResumeFormat);
+      Logger.log('Selected cover letter format:', selectedCoverLetterFormat);
+      Logger.log('Generate CV:', generateCV);
       
       const payload = {
         resume: resume,
         jobTitle: jobTitle.trim(),
         companyName: companyName.trim(),
         jobDescription: jobDescription,
-        outputFormat: selectedFormat // Use user preference or default to docx
+        generateCV: generateCV, // Include Generate CV flag
+        outputFormat: selectedResumeFormat, // Use direct selection
+        coverLetterFormat: generateCV ? selectedCoverLetterFormat : null // Only include if generating CV
       };
       
+      Logger.log('=== API PAYLOAD DEBUG ===');
       Logger.log('API payload:', payload);
+      Logger.log('Generate CV flag:', generateCV);
+      Logger.log('Company name:', companyName);
+      Logger.log('Job title:', jobTitle);
+      Logger.log('Resume format:', selectedResumeFormat);
+      Logger.log('Cover letter format:', selectedCoverLetterFormat);
       
       // Note: Removed localhost mock response to enable production-like testing locally
       
@@ -780,6 +836,69 @@ function MainApp() {
     }
   };
 
+  const downloadCoverLetter = async () => {
+    Logger.log('=== COVER LETTER DOWNLOAD DEBUG ===');
+    Logger.log('Download cover letter called. Result object:', result);
+    Logger.log('Cover letter URL:', result?.coverLetterUrl);
+    Logger.log('Cover letter text available:', !!coverLetterText);
+    Logger.log('Generate CV flag was:', generateCV);
+    Logger.log('Company name was:', companyName);
+    Logger.log('Full result object keys:', result ? Object.keys(result) : 'No result');
+    
+    if (!result || !result.coverLetterUrl) {
+      const errorMsg = !result 
+        ? 'No result data available' 
+        : 'No cover letter download URL available. The cover letter may not have been generated.';
+      Logger.error('Cover letter download failed:', errorMsg);
+      
+      // Enhanced error message for debugging
+      let debugMsg = errorMsg;
+      if (result) {
+        debugMsg += `\n\nDEBUG INFO:\n- Generate CV was: ${generateCV ? 'ENABLED' : 'DISABLED'}\n- Company name: ${companyName || 'NOT PROVIDED'}\n- Available result keys: ${Object.keys(result).join(', ')}`;
+        
+        // If we have cover letter text but no URL, suggest checking backend logs
+        if (coverLetterText) {
+          debugMsg += `\n- Cover letter text is available (${coverLetterText.length} chars)\n- This indicates a backend file upload issue\n- Check CloudWatch logs for the AI Handler Lambda function`;
+        }
+      }
+      
+      setSnackbarMessage(debugMsg);
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      // For S3 pre-signed URLs, we don't need to add Authorization headers
+      const coverLetterResponse = await fetch(result.coverLetterUrl, {
+        method: 'GET'
+      });
+      
+      if (!coverLetterResponse.ok) {
+        throw new Error(`Failed to download cover letter: ${coverLetterResponse.status} ${coverLetterResponse.statusText}`);
+      }
+      
+      // Get the response as a blob for binary data (Word documents)
+      const blob = await coverLetterResponse.blob();
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = result.coverLetterFilename || `cover_letter.${result.fileType || 'docx'}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setSnackbarMessage('Cover letter downloaded successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      Logger.error('Error downloading cover letter:', error);
+      setSnackbarMessage(`Error downloading cover letter: ${error.message}`);
+      setSnackbarOpen(true);
+    }
+  };
+
   const resetForm = () => {
     setJobId(null);
     setJobStatus(null);
@@ -843,25 +962,32 @@ function MainApp() {
       return;
     }
 
-    // Create resume object to save
+    // Create resume object to save (including cover letter if available)
     const resumeToSave = {
       id: Date.now().toString(),
       title: resumeTitle,
       description: resumeDescription || 'Crafted resume',
-      jobTitle: jobDescription.split('\n')[0] || 'Job Application',
-      format: userSettings.defaultOutputFormat || 'docx',
+      jobTitle: jobTitle || jobDescription.split('\n')[0] || 'Job Application',
+      companyName: companyName || '',
+      format: selectedResumeFormat,
       downloadUrl: result?.optimizedResumeUrl || '',
       createdAt: new Date().toISOString(),
-      originalJobDescription: jobDescription
+      originalJobDescription: jobDescription,
+      // Include cover letter data if available
+      hasCoverLetter: !!coverLetterText,
+      coverLetterUrl: result?.coverLetterUrl || '',
+      coverLetterText: coverLetterText || '',
+      coverLetterFormat: selectedCoverLetterFormat
     };
 
     // Save to localStorage (in a real app, this would go to your backend/DynamoDB)
     existingSaved.push(resumeToSave);
     localStorage.setItem('savedResumes', JSON.stringify(existingSaved));
 
-    // Show success message with count
+    // Show success message with count and cover letter info
     const newCount = existingSaved.length;
-    setSnackbarMessage(`Resume saved to your profile successfully! 🎉 (${newCount}/50 resumes saved)`);
+    const coverLetterMsg = coverLetterText ? ' (with cover letter)' : '';
+    setSnackbarMessage(`Resume${coverLetterMsg} saved to your profile successfully! 🎉 (${newCount}/50 resumes saved)`);
     setSnackbarOpen(true);
     
     // Close dialog and reset form
@@ -1032,8 +1158,6 @@ function MainApp() {
     }
   };
 
-  const isProcessing = isSubmitting || isPolling;
-
   return (
     <>
       {/* Show loading screen during global loading */}
@@ -1081,7 +1205,7 @@ function MainApp() {
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="body2" sx={{ 
-              color: '#333333',
+              color: 'text.primary',
               display: { xs: 'none', sm: 'block' },
               fontSize: { xs: '1rem', md: '1.1rem' },
               fontWeight: 'bold'
@@ -1131,7 +1255,6 @@ function MainApp() {
               onClose={() => setProfileMenuAnchor(null)}
               PaperProps={{
                 sx: {
-                  bgcolor: '#FFFFFF',
                   border: '1px solid #0A66C2',
                   mt: 1,
                   minWidth: 200
@@ -1146,7 +1269,7 @@ function MainApp() {
                 }, 1200);
               }}>
                 <ListItemIcon>
-                  <PersonIcon sx={{ color: '#0A66C2' }} />
+                  <PersonIcon />
                 </ListItemIcon>
                 <ListItemText primary="Profile" />
               </MenuItem>
@@ -1156,7 +1279,7 @@ function MainApp() {
                 setSettingsDialogOpen(true);
               }}>
                 <ListItemIcon>
-                  <SettingsIcon sx={{ color: '#0A66C2' }} />
+                  <SettingsIcon />
                 </ListItemIcon>
                 <ListItemText primary="Settings & Privacy" />
               </MenuItem>
@@ -1166,7 +1289,7 @@ function MainApp() {
                 setFaqsDialogOpen(true);
               }}>
                 <ListItemIcon>
-                  <HelpOutlineIcon sx={{ color: '#0A66C2' }} />
+                  <HelpOutlineIcon />
                 </ListItemIcon>
                 <ListItemText primary="FAQs & Help" />
               </MenuItem>
@@ -1176,7 +1299,7 @@ function MainApp() {
                 setContactUsDialogOpen(true);
               }}>
                 <ListItemIcon>
-                  <ContactSupportIcon sx={{ color: '#0A66C2' }} />
+                  <ContactSupportIcon />
                 </ListItemIcon>
                 <ListItemText primary="Contact Us" />
               </MenuItem>
@@ -1186,7 +1309,7 @@ function MainApp() {
                 handleSignOut();
               }}>
                 <ListItemIcon>
-                  <LogoutIcon sx={{ color: '#0A66C2' }} />
+                  <LogoutIcon />
                 </ListItemIcon>
                 <ListItemText primary="Sign Out" />
               </MenuItem>
@@ -1195,21 +1318,21 @@ function MainApp() {
         </Toolbar>
       </AppBar>
       
-      {/* WIDE Main Content Container */}
-      <Container maxWidth="xl" sx={{ py: 6 }}>
+      {/* Compact Main Content Container */}
+      <Container maxWidth="xl" sx={{ py: 2, height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <Typography 
-            variant="h2" 
+            variant="h4" 
             component="h1" 
             align="center" 
             gutterBottom
             sx={{ 
               mb: 1,
-              fontWeight: 800,
+              fontWeight: 700,
               background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -1219,18 +1342,18 @@ function MainApp() {
             AI-Powered Resume Crafting
           </Typography>
           <Typography 
-            variant="h6" 
+            variant="body1" 
             component="h2" 
             align="center" 
             color="textSecondary"
             gutterBottom
-            sx={{ mb: 4, fontWeight: 400, color: '#666666' }}
+            sx={{ mb: 2, fontWeight: 400, color: '#666666' }}
           >
             Transform your resume with intelligent AI matching for maximum ATS compatibility
           </Typography>
         </motion.div>
         
-        <Box sx={{ mb: 5 }}>
+        <Box sx={{ mb: 2 }}>
           <Stepper activeStep={activeStep} alternativeLabel>
             {steps.map((label) => (
               <Step key={label}>
@@ -1244,17 +1367,19 @@ function MainApp() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
+          style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
         >
-          {/* WIDE Paper Container */}
+          {/* Compact Paper Container */}
           <Paper 
             elevation={3} 
             sx={{ 
-              p: 6,
+              p: 3,
               borderRadius: 3,
-              mb: 4,
               position: 'relative',
               overflow: 'hidden',
-              minHeight: '600px'
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             {activeStep === 0 && (
@@ -1262,11 +1387,12 @@ function MainApp() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
               >
-                <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ mb: 1 }}>
                   Upload Your Resume
                 </Typography>
-                <Typography variant="body1" color="textSecondary" paragraph sx={{ mb: 4 }}>
+                <Typography variant="body2" color="textSecondary" paragraph sx={{ mb: 2 }}>
                   Start by uploading your current resume in PDF or Word format.
                 </Typography>
                 
@@ -1288,12 +1414,13 @@ function MainApp() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
               >
-                <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ mb: 1 }}>
                   Enter Job Details
                 </Typography>
-                <Typography variant="body1" color="textSecondary" paragraph sx={{ mb: 4 }}>
-                  Enter the job title and paste the complete job description for optimal resume crafting.
+                <Typography variant="body2" color="textSecondary" paragraph sx={{ mb: 2 }}>
+                  For better AI response and more targeted resume optimization, paste the complete job description below.
                 </Typography>
                 
                 {/* Job Title Field */}
@@ -1306,71 +1433,132 @@ function MainApp() {
                   placeholder="e.g., Senior Data Engineer, Software Developer, Product Manager"
                   required
                   inputProps={{ maxLength: 100 }}
-                  sx={{ mb: 3 }}
+                  size="small"
+                  sx={{ mb: 2 }}
                   helperText={
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <span style={{ color: '#666' }}>Enter the exact job title from the posting</span>
-                      <span style={{ color: jobTitle.length > 90 ? '#d32f2f' : '#999' }}>
+                      <Box component="span" sx={{ color: 'text.secondary' }}>
+                        Enter the exact job title from the posting
+                      </Box>
+                      <Box component="span" sx={{ color: jobTitle.length > 90 ? 'error.main' : 'text.disabled' }}>
                         {jobTitle.length}/100
-                      </span>
+                      </Box>
                     </Box>
                   }
                 />
                 
                 {/* Company Name Field */}
                 <TextField
-                  label="Company Name (Optional)"
+                  label={generateCV ? "Company Name (Required)" : "Company Name (Optional)"}
                   fullWidth
                   variant="outlined"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="e.g., Google, Amazon, Microsoft, Apple"
                   inputProps={{ maxLength: 100 }}
-                  sx={{ mb: 3 }}
+                  size="small"
+                  sx={{ mb: 2 }}
+                  required={generateCV}
+                  error={generateCV && !companyName.trim()}
                   helperText={
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <span style={{ color: '#666' }}>Company name helps tailor the resume for the organization</span>
-                      <span style={{ color: companyName.length > 90 ? '#d32f2f' : '#999' }}>
+                      <Box component="span" sx={{ color: 'text.secondary' }}>
+                        {generateCV 
+                          ? "Company name is required for cover letter generation"
+                          : "Company name helps tailor the resume for the organization"
+                        }
+                      </Box>
+                      <Box component="span" sx={{ color: companyName.length > 90 ? 'error.main' : 'text.disabled' }}>
                         {companyName.length}/100
-                      </span>
+                      </Box>
                     </Box>
                   }
                 />
                 
+                {/* Generate CV Toggle */}
+                <Box sx={{ 
+                  mb: 2, 
+                  p: 1.5, 
+                  bgcolor: 'background.paper', 
+                  borderRadius: 1, 
+                  border: 1, 
+                  borderColor: 'divider' 
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={generateCV}
+                        onChange={(e) => setGenerateCV(e.target.checked)}
+                        color="primary"
+                        size="small"
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" fontWeight={500}>
+                          Generate Cover Letter
+                        </Typography>
+                        <Tooltip title="When enabled, a professional cover letter will be generated along with your optimized resume. Company name becomes required.">
+                          <InfoIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                        </Tooltip>
+                      </Box>
+                    }
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 4, display: 'block' }}>
+                    {generateCV 
+                      ? "✓ Cover letter will be generated (Company name required)"
+                      : "Generate a professional cover letter along with your resume"
+                    }
+                  </Typography>
+                </Box>
+                
                 {/* Job Description Field */}
                 <TextField
-                  label="Job Description"
+                  label="Job Description (Recommended for Better AI Results)"
                   multiline
-                  rows={10}
+                  rows={6}
                   fullWidth
                   variant="outlined"
                   value={jobDescription}
                   onChange={handleJobDescriptionChange}
-                  placeholder="Paste the complete job description including responsibilities, requirements, and qualifications"
-                  sx={{ mb: 4 }}
+                  placeholder="For better AI response, paste the complete job description including responsibilities, requirements, qualifications, and preferred skills"
+                  size="small"
+                  sx={{ mb: 2, flex: 1 }}
                 />
                 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-                  <Button 
-                    variant="outlined" 
+                {/* Output Format Selection */}
+                <FormatSelector
+                  selectedResumeFormat={selectedResumeFormat}
+                  selectedCoverLetterFormat={selectedCoverLetterFormat}
+                  showCoverLetter={generateCV}
+                  onResumeFormatChange={(format) => {
+                    setSelectedResumeFormat(format);
+                    Logger.log('Resume format changed to:', format);
+                  }}
+                  onCoverLetterFormatChange={(format) => {
+                    setSelectedCoverLetterFormat(format);
+                    Logger.log('Cover letter format changed to:', format);
+                  }}
+                />
+                
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                  <StylishBackButton 
                     onClick={() => navigate('/app/upload')}
-                    size="large"
                   >
                     Back
-                  </Button>
+                  </StylishBackButton>
                   <Button 
                     variant="contained" 
                     endIcon={<AutoAwesomeIcon />}
-                    disabled={!jobTitle.trim() || !jobDescription}
+                    disabled={!jobTitle.trim()}
                     onClick={handleOptimize}
-                    size="large"
+                    size="medium"
                     sx={{
                       backgroundColor: '#0A66C2',
                       color: '#ffffff',
                       fontWeight: 600,
-                      fontSize: '16px',
-                      borderRadius: '24px',
-                      padding: '12px 32px',
+                      borderRadius: '20px',
+                      padding: '8px 24px',
                       textTransform: 'none',
                       '&:hover': {
                         backgroundColor: '#004182',
@@ -1394,35 +1582,63 @@ function MainApp() {
                   flexDirection: 'column',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  minHeight: '600px'
+                  flex: 1
                 }}
               >
-                <Box sx={{ textAlign: 'center', mb: 4, width: '100%', maxWidth: 700 }}>
-                  <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+                <Box sx={{ textAlign: 'center', mb: 2, width: '100%', maxWidth: 600 }}>
+                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
                     🤖 Crafting Your Resume
                   </Typography>
-                  <Typography variant="h6" color="textSecondary" paragraph>
-                    Our AI is analyzing your resume and tailoring it to the job description.
+                  <Typography variant="body1" color="textSecondary" paragraph sx={{ mb: 2 }}>
+                    Our AI is analyzing your resume and intelligently tailoring it to match the job requirements.
                   </Typography>
+                  
+                  {/* Do Not Refresh Warning */}
+                  <Box sx={{ 
+                    p: 1.5, 
+                    bgcolor: 'warning.50', 
+                    border: '1px solid', 
+                    borderColor: 'warning.main',
+                    borderRadius: 1,
+                    boxShadow: '0 2px 6px rgba(255, 152, 0, 0.15)'
+                  }}>
+                    <Typography variant="body2" sx={{ 
+                      color: 'warning.dark',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                      mb: 0.5
+                    }}>
+                      ⚠️ <strong>Do Not Refresh This Page</strong>
+                    </Typography>
+                    <Typography variant="caption" sx={{ 
+                      color: 'warning.dark',
+                      textAlign: 'center'
+                    }}>
+                      Your resume is being processed. Refreshing will cancel the operation.
+                    </Typography>
+                  </Box>
                 </Box>
 
-                <Box sx={{ width: '100%', maxWidth: 400, mb: 4 }}>
+                <Box sx={{ width: '100%', maxWidth: 350, mb: 2 }}>
                   <LinearProgress 
                     variant="indeterminate"
                     sx={{ 
-                      height: 16, 
-                      borderRadius: 8,
+                      height: 12, 
+                      borderRadius: 6,
                       backgroundColor: 'grey.200',
                       '& .MuiLinearProgress-bar': {
-                        borderRadius: 8,
+                        borderRadius: 6,
                         background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
                       }
                     }}
                   />
-                  <Typography variant="body2" color="textSecondary" sx={{ 
+                  <Typography variant="caption" color="textSecondary" sx={{ 
                     textAlign: 'center',
-                    mt: 2,
-                    fontWeight: 500
+                    mt: 1,
+                    display: 'block'
                   }}>
                     ⏱️ Time to complete: 30-45 seconds
                   </Typography>
@@ -1431,16 +1647,16 @@ function MainApp() {
                 <Paper 
                   variant="outlined" 
                   sx={{ 
-                    p: 4, 
+                    p: 2, 
                     bgcolor: 'info.50', 
                     borderColor: 'info.200',
-                    minHeight: 140,
+                    minHeight: 100,
                     width: '100%',
-                    maxWidth: 700,
-                    mb: 3
+                    maxWidth: 600,
+                    mb: 2
                   }}
                 >
-                  <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+                  <Typography variant="body2" gutterBottom sx={{ textAlign: 'center', mb: 1.5, fontWeight: 600 }}>
                     💡 Resume Crafting Tips
                   </Typography>
                   <motion.div
@@ -1451,14 +1667,14 @@ function MainApp() {
                     transition={{ duration: 0.5 }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                      <Typography sx={{ fontSize: 36, mr: 3 }}>
+                      <Typography sx={{ fontSize: 24, mr: 2 }}>
                         {educationalTips[currentTip].icon}
                       </Typography>
                       <Box>
-                        <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem' }}>
+                        <Typography variant="body2" gutterBottom sx={{ fontWeight: 600 }}>
                           {educationalTips[currentTip].title}
                         </Typography>
-                        <Typography variant="body1" color="textSecondary" sx={{ fontSize: '1rem', lineHeight: 1.6 }}>
+                        <Typography variant="caption" color="textSecondary" sx={{ lineHeight: 1.4 }}>
                           {educationalTips[currentTip].text}
                         </Typography>
                       </Box>
@@ -1466,16 +1682,16 @@ function MainApp() {
                   </motion.div>
                   
                   {/* Tip indicators */}
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1.5 }}>
                     {educationalTips.map((_, index) => (
                       <Box
                         key={index}
                         sx={{
-                          width: 10,
-                          height: 10,
+                          width: 6,
+                          height: 6,
                           borderRadius: '50%',
                           backgroundColor: index === currentTip ? 'info.main' : 'grey.300',
-                          mx: 0.5,
+                          mx: 0.3,
                           transition: 'all 0.3s ease'
                         }}
                       />
@@ -1488,9 +1704,13 @@ function MainApp() {
                   onClick={cancelOptimization}
                   disabled={isSubmitting}
                   color="error"
+                  size="small"
                   sx={{
                     borderColor: '#d32f2f',
                     color: '#d32f2f',
+                    fontSize: '0.8rem',
+                    px: 2,
+                    py: 0.5,
                     '&:hover': {
                       borderColor: '#b71c1c',
                       backgroundColor: 'rgba(211, 47, 47, 0.04)'
@@ -1511,153 +1731,277 @@ function MainApp() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                  <CheckCircleIcon color="success" sx={{ mr: 2, fontSize: 32 }} />
-                  <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                    🎉 Your Crafted Resume is Ready!
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'center' }}>
+                  {/* Left bullseye */}
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    style={{ marginRight: '12px', fontSize: '20px' }}
+                  >
+                    🎯
+                  </motion.div>
+                  
+                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                    Your Crafted Resume is Ready!
                   </Typography>
                 </Box>
                 
-                <Typography variant="h6" paragraph sx={{ mb: 4 }}>
+                <Typography variant="body1" paragraph sx={{ mb: 2, textAlign: 'center' }}>
                   Your resume has been successfully crafted for the job description.
                 </Typography>
                 
-                <Paper 
-                  variant="outlined" 
-                  sx={{ 
-                    p: 4, 
-                    mb: 4,
-                    bgcolor: 'success.50',
-                    borderRadius: 2
-                  }}
-                >
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                    <DescriptionIcon sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                      Crafted Resume Ready
-                    </Typography>
-                    <Typography variant="body1" color="textSecondary" align="center" paragraph>
-                      Your resume has been crafted with relevant keywords and formatting
-                      to improve your chances with Applicant Tracking Systems (ATS).
-                    </Typography>
-                  </Box>
+                {/* Horizontal Cards Container */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 2, 
+                  mb: 2,
+                  flexDirection: { xs: 'column', md: 'row' }
+                }}>
+                  {/* Resume Card */}
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 2, 
+                      bgcolor: 'success.50',
+                      borderRadius: 2,
+                      flex: 1
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+                      <DescriptionIcon sx={{ fontSize: 32, color: 'success.main', mb: 1 }} />
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                        Crafted Resume
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" align="center" paragraph sx={{ mb: 1 }}>
+                        Your resume has been intelligently crafted with relevant keywords and formatting
+                        to improve your chances with Applicant Tracking Systems (ATS).
+                      </Typography>
+                    </Box>
 
-                  {/* Primary Action Buttons */}
+                    {/* Resume Action Buttons */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 1, 
+                      justifyContent: 'center',
+                      flexWrap: 'wrap',
+                      flexDirection: 'column',
+                      alignItems: 'stretch'
+                    }}>
+                      <Button 
+                        variant="contained" 
+                        color="success"
+                        size="small"
+                        startIcon={<DownloadIcon />}
+                        onClick={downloadOptimizedResume}
+                        sx={{ 
+                          px: 2, 
+                          py: 0.8, 
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        Download Resume
+                      </Button>
+                      
+                      <Button 
+                        variant="outlined" 
+                        color="primary"
+                        size="small"
+                        startIcon={<VisibilityIcon />}
+                        onClick={() => setPreviewDialogOpen(true)}
+                        sx={{ 
+                          px: 2, 
+                          py: 0.8, 
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        Preview Resume
+                      </Button>
+                      
+                      <Button 
+                        variant="outlined" 
+                        color="secondary"
+                        size="small"
+                        startIcon={<CompareIcon />}
+                        onClick={() => setCompareDialogOpen(true)}
+                        sx={{ 
+                          px: 2, 
+                          py: 0.8, 
+                          fontSize: '0.8rem',
+                          position: 'relative'
+                        }}
+                      >
+                        Compare Original vs Crafted
+                        <Box
+                          component="span"
+                          sx={{
+                            position: 'absolute',
+                            top: -6,
+                            right: -6,
+                            backgroundColor: '#ff9800',
+                            color: 'white',
+                            fontSize: '8px',
+                            fontWeight: 'bold',
+                            padding: '1px 4px',
+                            borderRadius: '6px',
+                            lineHeight: 1,
+                            textTransform: 'uppercase',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                          }}
+                        >
+                          Beta
+                        </Box>
+                      </Button>
+                    </Box>
+                  </Paper>
+
+                  {/* Cover Letter Card - Only show if cover letter was generated */}
+                  {(coverLetterText || result?.coverLetterUrl) && (
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 2, 
+                        bgcolor: 'info.50',
+                        borderRadius: 2,
+                        border: '2px solid',
+                        borderColor: 'info.main',
+                        flex: 1
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+                        <EmailIcon sx={{ fontSize: 32, color: 'info.main', mb: 1 }} />
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                          Cover Letter
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" align="center" paragraph sx={{ mb: 1 }}>
+                          A professional cover letter has been generated specifically for this position,
+                          highlighting your relevant experience and alignment with the company.
+                        </Typography>
+                      </Box>
+
+                      {/* Cover Letter Action Buttons */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        gap: 1, 
+                        justifyContent: 'center',
+                        flexWrap: 'wrap',
+                        flexDirection: 'column',
+                        alignItems: 'stretch'
+                      }}>
+                        <Button 
+                          variant="contained" 
+                          color="info"
+                          size="small"
+                          startIcon={<DownloadIcon />}
+                          onClick={downloadCoverLetter}
+                          sx={{ 
+                            px: 2, 
+                            py: 0.8, 
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          Download Cover Letter
+                        </Button>
+                        
+                        {/* Only show preview if we have text content */}
+                        {coverLetterText && (
+                          <Button 
+                            variant="outlined" 
+                            color="info"
+                            size="small"
+                            startIcon={<VisibilityIcon />}
+                            onClick={() => setCoverLetterDialogOpen(true)}
+                            sx={{ 
+                              px: 2, 
+                              py: 0.8, 
+                              fontSize: '0.8rem'
+                            }}
+                          >
+                            Preview Cover Letter
+                          </Button>
+                        )}
+                      </Box>
+                    </Paper>
+                  )}
+                </Box>
+
+                {/* Next Actions - Moved up and removed from card */}
+                <Box sx={{ 
+                  textAlign: 'center',
+                  mb: 2,
+                  mt: 1
+                }}>
+                  <Typography variant="body2" sx={{ 
+                    mb: 2, 
+                    color: '#666',
+                    fontWeight: 500
+                  }}>
+                    What would you like to do next?
+                  </Typography>
+                  
                   <Box sx={{ 
                     display: 'flex', 
-                    gap: { xs: 1.5, md: 2 }, 
                     justifyContent: 'center',
+                    gap: 2,
                     flexWrap: 'wrap',
-                    mb: 3,
-                    flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile
-                    alignItems: { xs: 'stretch', sm: 'center' }
+                    alignItems: 'center'
                   }}>
                     <Button 
                       variant="contained" 
-                      color="success"
-                      size="large"
-                      startIcon={<DownloadIcon />}
-                      onClick={downloadOptimizedResume}
-                      sx={{ 
-                        px: { xs: 3, md: 4 }, 
-                        py: { xs: 1.2, md: 1.5 }, 
-                        fontSize: { xs: '14px', md: '16px' },
-                        minWidth: { xs: 'auto', sm: '160px' }
-                      }}
-                    >
-                      Download Resume
-                    </Button>
-                    
-                    <Button 
-                      variant="outlined" 
-                      color="primary"
-                      size="large"
-                      startIcon={<VisibilityIcon />}
-                      onClick={() => setPreviewDialogOpen(true)}
-                      sx={{ 
-                        px: { xs: 3, md: 4 }, 
-                        py: { xs: 1.2, md: 1.5 }, 
-                        fontSize: { xs: '14px', md: '16px' },
-                        minWidth: { xs: 'auto', sm: '160px' }
-                      }}
-                    >
-                      Preview Resume
-                    </Button>
-                    
-                    <Button 
-                      variant="outlined" 
-                      color="secondary"
-                      size="large"
-                      startIcon={<CompareIcon />}
-                      onClick={() => setCompareDialogOpen(true)}
-                      sx={{ 
-                        px: { xs: 3, md: 4 }, 
-                        py: { xs: 1.2, md: 1.5 }, 
-                        fontSize: { xs: '14px', md: '16px' },
-                        minWidth: { xs: 'auto', sm: '160px' },
-                        position: 'relative'
-                      }}
-                    >
-                      Compare Versions
-                      <Box
-                        component="span"
-                        sx={{
-                          position: 'absolute',
-                          top: -8,
-                          right: -8,
-                          backgroundColor: '#ff9800',
-                          color: 'white',
-                          fontSize: '10px',
-                          fontWeight: 'bold',
-                          padding: '2px 6px',
-                          borderRadius: '8px',
-                          lineHeight: 1,
-                          textTransform: 'uppercase',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                      >
-                        Beta
-                      </Box>
-                    </Button>
-                  </Box>
-
-                  {/* Secondary Actions */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    pt: 2,
-                    borderTop: '1px solid #e0e0e0',
-                    gap: 1,
-                    flexWrap: 'wrap'
-                  }}>
-                    <Button 
-                      variant="outlined" 
                       onClick={resetForm}
                       size="medium"
                       sx={{
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                        minWidth: { xs: '120px', sm: 'auto' },
-                        flex: { xs: '1 1 45%', sm: 'none' }
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        minWidth: '180px',
+                        py: 1.2,
+                        px: 3,
+                        backgroundColor: '#0A66C2',
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        boxShadow: '0 3px 8px rgba(10, 102, 194, 0.3)',
+                        '&:hover': {
+                          backgroundColor: '#004182',
+                          boxShadow: '0 4px 12px rgba(10, 102, 194, 0.4)',
+                          transform: 'translateY(-1px)'
+                        },
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       Craft Another Resume
                     </Button>
+                    
                     <Button 
                       variant="outlined" 
                       color="primary"
                       onClick={handleSaveToProfile}
                       size="medium"
                       sx={{
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                        minWidth: { xs: '120px', sm: 'auto' },
-                        flex: { xs: '1 1 45%', sm: 'none' }
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        minWidth: '180px',
+                        py: 1.2,
+                        px: 3,
+                        borderColor: '#0A66C2',
+                        color: '#0A66C2',
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        borderWidth: '2px',
+                        '&:hover': {
+                          borderColor: '#004182',
+                          backgroundColor: 'rgba(10, 102, 194, 0.04)',
+                          borderWidth: '2px',
+                          transform: 'translateY(-1px)'
+                        },
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       Save to Profile
                     </Button>
                   </Box>
-                </Paper>
+                </Box>
               </motion.div>
             )}
           </Paper>
@@ -1734,7 +2078,7 @@ function MainApp() {
                 Q: How does JobTailorAI work?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
-                A: Upload your resume, paste the job description you're applying for, and our AI will craft your resume to better match the job requirements. The AI analyzes keywords, skills, and requirements to enhance your resume's relevance.
+                A: Upload your resume, paste the complete job description for better AI response, and our AI will craft your resume to perfectly match the job requirements. The more detailed the job description, the more targeted and effective your optimized resume will be.
               </Typography>
             </Box>
 
@@ -1757,7 +2101,7 @@ function MainApp() {
                 Q: How do I get my resume in PDF format?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
-                A: Go to Settings & Privacy from your profile menu and change the "Default Output Format" to PDF. All future crafting will be generated in PDF format. You can also change this setting before each crafting session.
+                A: You can select your preferred output format directly on the job description page before crafting your resume. Choose from PDF, Word, or Text formats based on your needs.
               </Typography>
             </Box>
 
@@ -1821,7 +2165,7 @@ function MainApp() {
                 Q: How do I change my default output format?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
-                A: Go to your profile menu → Settings & Privacy → Default Output Format. Choose between DOCX, PDF, or TXT. This will be used for all future resume crafting.
+                A: On the job description page, you'll see format selection cards where you can choose between DOCX, PDF, or TXT for both your resume and cover letter (if enabled).
               </Typography>
             </Box>
 
@@ -2287,7 +2631,7 @@ function MainApp() {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <CompareIcon sx={{ mr: 1, fontSize: { xs: '1.2rem', md: '1.5rem' } }} />
             <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-              Resume Comparison: Original vs Crafted
+              Compare: Original vs Crafted Resume
               <Box
                 component="span"
                 sx={{
@@ -2444,6 +2788,53 @@ function MainApp() {
             }}
           >
             Download Crafted Resume
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Cover Letter Preview Dialog */}
+      <Dialog 
+        open={coverLetterDialogOpen} 
+        onClose={() => setCoverLetterDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { 
+            borderRadius: 3,
+            maxHeight: '90vh'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          bgcolor: '#4CAF50', 
+          color: 'white', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1 
+        }}>
+          <DescriptionIcon />
+          Cover Letter Preview
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <Box sx={{ 
+            p: 4, 
+            fontFamily: 'Times New Roman, serif',
+            fontSize: '12pt',
+            lineHeight: 1.6,
+            whiteSpace: 'pre-line',
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            minHeight: '400px'
+          }}>
+            {coverLetterText || 'No cover letter available'}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button 
+            onClick={() => setCoverLetterDialogOpen(false)}
+            variant="outlined"
+          >
+            Close
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,20 +1,19 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material';
 import { LoadingProvider } from './contexts/LoadingContext';
+import { CustomThemeProvider } from './contexts/ThemeContext';
 import SimpleAuth from './SimpleAuth';
 import MainApp from './components/MainApp';
 import Profile from './components/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthGuard from './components/AuthGuard';
 import NotFoundHandler from './components/NotFoundHandler';
-import { theme } from './theme';
 import { LandingPage } from './components/LandingPage';
 
 function App() {
   return (
     <LoadingProvider>
-      <ThemeProvider theme={theme}>
+      <CustomThemeProvider>
         <Router>
           <Routes>
             {/* Landing Page */}
@@ -47,7 +46,7 @@ function App() {
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </Router>
-    </ThemeProvider>
+    </CustomThemeProvider>
     </LoadingProvider>
   );
 }
