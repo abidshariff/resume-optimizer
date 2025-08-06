@@ -1292,20 +1292,20 @@ export function LandingPage() {
       </Container>
 
       {/* Detailed Features Showcase */}
-      <Box sx={{ bgcolor: '#F8F9FA', py: { xs: 8, md: 12 } }}>
+      <Box sx={{ bgcolor: 'background.paper', py: { xs: 8, md: 12 } }}>
         <Container maxWidth="lg">
           <Typography variant="h2" align="center" sx={{ 
             fontSize: { xs: '1.8rem', md: '2.5rem' },
             mb: { xs: 2, md: 3 },
             fontWeight: 700,
-            color: '#0A66C2'
+            color: 'primary.main'
           }}>
             Powerful Features for Job Success
           </Typography>
           <Typography variant="h6" align="center" sx={{ 
             fontSize: { xs: '1rem', md: '1.25rem' },
             mb: { xs: 6, md: 8 },
-            color: '#666666',
+            color: 'text.secondary',
             maxWidth: '800px',
             mx: 'auto',
             px: { xs: 2, md: 0 }
@@ -1326,7 +1326,7 @@ export function LandingPage() {
                 <Box sx={{
                   width: { xs: 50, md: 60 },
                   height: { xs: 50, md: 60 },
-                  bgcolor: '#E3F2FD',
+                  bgcolor: 'action.hover',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -1341,13 +1341,13 @@ export function LandingPage() {
                     fontSize: { xs: '1.2rem', md: '1.5rem' },
                     fontWeight: 600, 
                     mb: { xs: 1.5, md: 2 }, 
-                    color: '#0A66C2' 
+                    color: 'primary.main' 
                   }}>
                     Real-Time Preview
                   </Typography>
                   <Typography variant="body1" sx={{ 
                     fontSize: { xs: '0.9rem', md: '1rem' },
-                    color: '#666666', 
+                    color: 'text.secondary', 
                     lineHeight: 1.6, 
                     mb: { xs: 1.5, md: 2 } 
                   }}>
@@ -1355,7 +1355,7 @@ export function LandingPage() {
                     layout, and content changes in real-time before downloading.
                   </Typography>
                   <Typography variant="body2" sx={{ 
-                    color: '#0A66C2', 
+                    color: 'primary.main', 
                     fontWeight: 600,
                     fontSize: { xs: '0.8rem', md: '0.9rem' }
                   }}>
@@ -1377,7 +1377,7 @@ export function LandingPage() {
                 <Box sx={{
                   width: { xs: 50, md: 60 },
                   height: { xs: 50, md: 60 },
-                  bgcolor: '#E8F5E8',
+                  bgcolor: 'action.hover',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -1392,13 +1392,13 @@ export function LandingPage() {
                     fontSize: { xs: '1.2rem', md: '1.5rem' },
                     fontWeight: 600, 
                     mb: { xs: 1.5, md: 2 }, 
-                    color: '#0A66C2' 
+                    color: 'primary.main' 
                   }}>
                     Side-by-Side Compare
                   </Typography>
                   <Typography variant="body1" sx={{ 
                     fontSize: { xs: '0.9rem', md: '1rem' },
-                    color: '#666666', 
+                    color: 'text.secondary', 
                     lineHeight: 1.6, 
                     mb: { xs: 1.5, md: 2 } 
                   }}>
@@ -1406,7 +1406,7 @@ export function LandingPage() {
                     See exactly what improvements were made and why.
                   </Typography>
                   <Typography variant="body2" sx={{ 
-                    color: '#0A66C2', 
+                    color: 'primary.main', 
                     fontWeight: 600,
                     fontSize: { xs: '0.8rem', md: '0.9rem' }
                   }}>
@@ -1428,7 +1428,7 @@ export function LandingPage() {
                 <Box sx={{
                   width: { xs: 50, md: 60 },
                   height: { xs: 50, md: 60 },
-                  bgcolor: '#FFF3E0',
+                  bgcolor: 'action.hover',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -1443,13 +1443,13 @@ export function LandingPage() {
                     fontSize: { xs: '1.2rem', md: '1.5rem' },
                     fontWeight: 600, 
                     mb: { xs: 1.5, md: 2 }, 
-                    color: '#0A66C2' 
+                    color: 'primary.main' 
                   }}>
                     Multiple Download Formats
                   </Typography>
                   <Typography variant="body1" sx={{ 
                     fontSize: { xs: '0.9rem', md: '1rem' },
-                    color: '#666666', 
+                    color: 'text.secondary', 
                     lineHeight: 1.6, 
                     mb: { xs: 1.5, md: 2 } 
                   }}>
@@ -1457,7 +1457,7 @@ export function LandingPage() {
                     Perfect formatting preserved for any application system.
                   </Typography>
                   <Typography variant="body2" sx={{ 
-                    color: '#0A66C2', 
+                    color: 'primary.main', 
                     fontWeight: 600,
                     fontSize: { xs: '0.8rem', md: '0.9rem' }
                   }}>
@@ -1479,7 +1479,7 @@ export function LandingPage() {
                 <Box sx={{
                   width: { xs: 50, md: 60 },
                   height: { xs: 50, md: 60 },
-                  bgcolor: '#F3E5F5',
+                  bgcolor: 'action.hover',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -1494,13 +1494,13 @@ export function LandingPage() {
                     fontSize: { xs: '1.2rem', md: '1.5rem' },
                     fontWeight: 600, 
                     mb: { xs: 1.5, md: 2 }, 
-                    color: '#0A66C2' 
+                    color: 'primary.main' 
                   }}>
                     Job-Specific Tailoring
                   </Typography>
                   <Typography variant="body1" sx={{ 
                     fontSize: { xs: '0.9rem', md: '1rem' },
-                    color: '#666666', 
+                    color: 'text.secondary', 
                     lineHeight: 1.6, 
                     mb: { xs: 1.5, md: 2 } 
                   }}>
@@ -1508,7 +1508,7 @@ export function LandingPage() {
                     No generic templates - every word is optimized for that role.
                   </Typography>
                   <Typography variant="body2" sx={{ 
-                    color: '#0A66C2', 
+                    color: 'primary.main', 
                     fontWeight: 600,
                     fontSize: { xs: '0.8rem', md: '0.9rem' }
                   }}>
