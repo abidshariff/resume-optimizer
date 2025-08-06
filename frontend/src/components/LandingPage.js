@@ -312,7 +312,7 @@ export function LandingPage() {
                         </Button>
                         {!isSmallMobile && (
                           <Typography variant="body2" sx={{ 
-                            color: '#333333',
+                            color: 'text.primary',
                             display: { xs: 'none', sm: 'block' },
                             fontSize: { xs: '1rem', md: '1.1rem' },
                             fontWeight: 'bold'
@@ -327,15 +327,16 @@ export function LandingPage() {
                           }}
                           sx={{ 
                             p: 0,
-                            border: '2px solid #0A66C2',
+                            border: '2px solid',
+                            borderColor: 'primary.main',
                             '&:hover': {
-                              border: '2px solid #666666',
+                              borderColor: 'text.secondary',
                             }
                           }}
                         >
                           <Avatar 
                             sx={{ 
-                              bgcolor: '#0A66C2', 
+                              bgcolor: 'primary.main', 
                               width: { xs: 32, md: 40 }, 
                               height: { xs: 32, md: 40 },
                               fontSize: { xs: '0.9rem', md: '1rem' },
@@ -356,8 +357,9 @@ export function LandingPage() {
                       }}
                       PaperProps={{
                         sx: {
-                          bgcolor: '#FFFFFF',
-                          border: '1px solid #0A66C2',
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
                           mt: 1,
                           minWidth: 200
                         }
@@ -371,7 +373,7 @@ export function LandingPage() {
                         }, 1200);
                       }}>
                         <ListItemIcon>
-                          <PersonIcon sx={{ color: '#0A66C2' }} />
+                          <PersonIcon sx={{ color: 'primary.main' }} />
                         </ListItemIcon>
                         <ListItemText primary="Profile" />
                       </MenuItem>
@@ -381,7 +383,7 @@ export function LandingPage() {
                         setSettingsDialogOpen(true);
                       }}>
                         <ListItemIcon>
-                          <SettingsIcon sx={{ color: '#0A66C2' }} />
+                          <SettingsIcon sx={{ color: 'primary.main' }} />
                         </ListItemIcon>
                         <ListItemText primary="Settings & Privacy" />
                       </MenuItem>
@@ -391,7 +393,7 @@ export function LandingPage() {
                         setFaqsDialogOpen(true);
                       }}>
                         <ListItemIcon>
-                          <HelpOutlineIcon sx={{ color: '#0A66C2' }} />
+                          <HelpOutlineIcon sx={{ color: 'primary.main' }} />
                         </ListItemIcon>
                         <ListItemText primary="FAQs & Help" />
                       </MenuItem>
@@ -401,7 +403,7 @@ export function LandingPage() {
                         setContactUsDialogOpen(true);
                       }}>
                         <ListItemIcon>
-                          <ContactSupportIcon sx={{ color: '#0A66C2' }} />
+                          <ContactSupportIcon sx={{ color: 'primary.main' }} />
                         </ListItemIcon>
                         <ListItemText primary="Contact Us" />
                       </MenuItem>
@@ -416,9 +418,9 @@ export function LandingPage() {
                       >
                         <ListItemIcon>
                           {isSigningOut ? (
-                            <CircularProgress size={20} sx={{ color: '#0A66C2' }} />
+                            <CircularProgress size={20} sx={{ color: 'primary.main' }} />
                           ) : (
-                            <LogoutIcon sx={{ color: '#0A66C2' }} />
+                            <LogoutIcon sx={{ color: 'primary.main' }} />
                           )}
                         </ListItemIcon>
                         <ListItemText primary={isSigningOut ? "Signing out..." : "Sign Out"} />
