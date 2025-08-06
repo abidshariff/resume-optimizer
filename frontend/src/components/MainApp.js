@@ -2002,6 +2002,47 @@ function MainApp() {
                     </Button>
                   </Box>
                 </Box>
+
+                {/* AI Caution Message - Subtle styling */}
+                <Box sx={{ 
+                  mt: 4,
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="caption" sx={{ 
+                    color: 'rgba(0,0,0,0.5)',
+                    fontSize: '0.75rem',
+                    lineHeight: 1.4,
+                    fontStyle: 'italic'
+                  }}>
+                    AI-generated content • If you're not satisfied with the output, please{' '}
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => {
+                        setContactUsDialogOpen(true);
+                        setContactTitle('Resume Output Feedback');
+                        setContactDescription('I am not satisfied with the AI-generated resume output. Here are the issues I found:\n\n');
+                      }}
+                      sx={{
+                        color: 'rgba(10, 102, 194, 0.7)',
+                        textDecoration: 'underline',
+                        fontSize: '0.75rem',
+                        textTransform: 'none',
+                        p: 0,
+                        minWidth: 'auto',
+                        fontStyle: 'italic',
+                        '&:hover': {
+                          backgroundColor: 'transparent',
+                          color: '#0A66C2',
+                          textDecoration: 'underline'
+                        }
+                      }}
+                    >
+                      let us know
+                    </Button>
+                    {' '}and we'll improve our prompts accordingly.
+                  </Typography>
+                </Box>
               </motion.div>
             )}
           </Paper>

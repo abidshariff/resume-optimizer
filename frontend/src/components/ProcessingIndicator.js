@@ -83,9 +83,9 @@ function ProcessingIndicator({ status = 'PROCESSING' }) {
   return (
     <Box sx={{
       p: 3,
-      bgcolor: '#f8f9fa',
+      bgcolor: 'white', // Clean white background instead of card-like gray
       borderRadius: 2,
-      border: '1px solid #e9ecef',
+      // Removed border to eliminate card appearance
       my: 3,
       // Add global styles for animations
       '& @keyframes pulse': {
@@ -216,7 +216,7 @@ function ProcessingIndicator({ status = 'PROCESSING' }) {
         p: 2, 
         bgcolor: 'rgba(33, 150, 243, 0.05)',
         borderRadius: 1,
-        border: '1px solid rgba(33, 150, 243, 0.1)'
+        // Removed border to eliminate card appearance
       }}>
         <Typography variant="body2" sx={{ 
           color: '#1976d2',

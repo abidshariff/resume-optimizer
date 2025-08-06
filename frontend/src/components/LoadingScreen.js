@@ -50,13 +50,24 @@ function LoadingScreen({
   }, [progress, loadingSteps.length]);
   return (
     <Box sx={{ 
-      minHeight: fullHeight ? '100vh' : '400px',
-      bgcolor: '#f3f2ef', // Light gray background like LinkedIn
+      position: 'fixed', // Fixed positioning to overlay everything
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100vw',
+      height: '100vh',
+      bgcolor: 'white', // Clean white background for the entire screen
+      background: 'white', // Ensure solid white background
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      position: 'relative',
+      zIndex: 9999, // High z-index to ensure it's on top
+      // Explicitly remove any borders or shadows
+      border: 'none',
+      boxShadow: 'none',
+      outline: 'none',
       // Add global styles for animations
       '& @keyframes fadeInScale': {
         '0%': {
@@ -111,50 +122,56 @@ function LoadingScreen({
         }
       }
     }}>
-      {/* Main Logo and Brand */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        alignItems: 'center',
-        mb: 4
+      {/* Logo Icon - Clean and sleek, no containers */}
+      <AutoAwesomeIcon sx={{ 
+        color: '#0A66C2',
+        fontSize: 64,
+        mb: 3,
+        animation: 'fadeInScale 0.8s ease-out, pulse 2s ease-in-out infinite',
+        // Explicitly remove any background or border
+        backgroundColor: 'transparent !important',
+        background: 'transparent !important',
+        border: 'none !important',
+        boxShadow: 'none !important',
+        // Ensure no padding or margin creates visual borders
+        p: '0 !important',
+        m: '0 !important',
+        mb: '24px !important', // Keep bottom margin for spacing
+        // Remove any default Material-UI styling
+        '&::before, &::after': {
+          display: 'none !important'
+        },
+        // Override any theme or global styles
+        '&.MuiSvgIcon-root': {
+          backgroundColor: 'transparent !important',
+          background: 'transparent !important'
+        }
+      }} />
+
+      {/* Brand Name */}
+      <Typography variant="h3" sx={{ 
+        fontWeight: 700,
+        fontSize: '2.5rem',
+        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+        mb: 2,
+        animation: 'fadeInUp 0.8s ease-out 0.2s both'
       }}>
-        {/* Logo Icon */}
-        <Box sx={{ 
-          mb: 3,
-          animation: 'fadeInScale 0.8s ease-out'
-        }}>
-          <AutoAwesomeIcon sx={{ 
-            fontSize: 64, 
-            color: '#0A66C2',
-            filter: 'drop-shadow(0 2px 8px rgba(10, 102, 194, 0.2))',
-            animation: 'pulse 2s ease-in-out infinite'
-          }} />
-        </Box>
+        JobTailorAI
+      </Typography>
 
-        {/* Brand Name */}
-        <Typography variant="h3" sx={{ 
-          fontWeight: 700,
-          background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          textAlign: 'center',
-          mb: 1,
-          animation: 'fadeInUp 0.8s ease-out 0.2s both'
-        }}>
-          JobTailorAI
-        </Typography>
-
-        {/* Tagline */}
-        <Typography variant="h6" sx={{ 
-          color: 'rgba(0,0,0,0.6)',
-          fontWeight: 400,
-          textAlign: 'center',
-          animation: 'fadeInUp 0.8s ease-out 0.4s both'
-        }}>
-          {subtitle}
-        </Typography>
-      </Box>
+      {/* Tagline */}
+      <Typography variant="h6" sx={{ 
+        color: 'rgba(0,0,0,0.6)',
+        fontWeight: 400,
+        textAlign: 'center',
+        mb: 6,
+        animation: 'fadeInUp 0.8s ease-out 0.4s both'
+      }}>
+        {subtitle}
+      </Typography>
 
       {/* Loading Progress Bar */}
       {showProgress && (
@@ -170,8 +187,8 @@ function LoadingScreen({
             borderRadius: 4,
             overflow: 'hidden',
             position: 'relative',
-            border: '1px solid rgba(10, 102, 194, 0.2)',
-            mb: 2
+            mb: 2,
+            // Removed border to eliminate card appearance
           }}>
             {/* Animated Progress Fill */}
             <Box sx={{
