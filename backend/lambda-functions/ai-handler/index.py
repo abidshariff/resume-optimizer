@@ -229,32 +229,41 @@ def create_cover_letter_word_document(cover_letter_text):
         print(f"Error creating cover letter Word document: {str(e)}")
         raise e
 
-# AI Model Configuration - Models are tried in order of cost (most expensive to least expensive)
-# This hierarchy balances performance with cost optimization
+# AI Model Configuration - Models are tried in order of preference
+# Claude 3.5 Sonnet is now the primary model for optimal resume optimization quality
 AI_MODELS = [
+    {
+        'id': 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+        'name': 'Claude 3.5 Sonnet',
+        'max_tokens': 4000,
+        'cost_tier': 1,
+        'cost_per_1m_input': 3.00,
+        'cost_per_1m_output': 15.00,
+        'description': 'Primary model - latest Claude with excellent intelligence and performance for resume optimization'
+    },
     {
         'id': 'amazon.nova-pro-v1:0',
         'name': 'Amazon Nova Pro',
         'max_tokens': 4000,
-        'cost_tier': 1,
+        'cost_tier': 2,
         'cost_per_1m_input': 2.00,
         'cost_per_1m_output': 8.00,
-        'description': 'Premium multimodal model - highest performance, highest cost'
+        'description': 'Premium multimodal model - high performance fallback'
     },
     {
         'id': 'anthropic.claude-3-haiku-20240307-v1:0',
         'name': 'Claude 3 Haiku',
         'max_tokens': 4000,
-        'cost_tier': 2,
+        'cost_tier': 3,
         'cost_per_1m_input': 0.25,
         'cost_per_1m_output': 1.25,
-        'description': 'Fast, efficient Claude model with image support - excellent value'
+        'description': 'Fast, efficient Claude model - excellent value fallback'
     },
     {
         'id': 'amazon.nova-lite-v1:0',
         'name': 'Amazon Nova Lite',
         'max_tokens': 4000,
-        'cost_tier': 3,
+        'cost_tier': 4,
         'cost_per_1m_input': 0.60,
         'cost_per_1m_output': 2.40,
         'description': 'Balanced multimodal model - good performance, moderate cost'
@@ -263,7 +272,7 @@ AI_MODELS = [
         'id': 'meta.llama3-2-3b-instruct-v1:0',
         'name': 'Llama 3.2 3B Instruct',
         'max_tokens': 4000,
-        'cost_tier': 4,
+        'cost_tier': 5,
         'cost_per_1m_input': 0.60,
         'cost_per_1m_output': 0.60,
         'description': 'Cost-effective text model - good balance of performance and cost'
@@ -272,16 +281,16 @@ AI_MODELS = [
         'id': 'amazon.titan-text-lite-v1',
         'name': 'Amazon Titan Text Lite',
         'max_tokens': 4000,
-        'cost_tier': 5,
+        'cost_tier': 6,
         'cost_per_1m_input': 0.30,
         'cost_per_1m_output': 0.40,
-        'description': 'Primary cost-effective model - reliable and economical'
+        'description': 'Cost-effective model - reliable and economical'
     },
     {
         'id': 'amazon.nova-micro-v1:0',
         'name': 'Amazon Nova Micro',
         'max_tokens': 4000,
-        'cost_tier': 6,
+        'cost_tier': 7,
         'cost_per_1m_input': 0.35,
         'cost_per_1m_output': 1.40,
         'description': 'Ultra-economical text model - fastest and cheapest'
@@ -290,7 +299,7 @@ AI_MODELS = [
         'id': 'mistral.mistral-7b-instruct-v0:2',
         'name': 'Mistral 7B Instruct',
         'max_tokens': 4000,
-        'cost_tier': 7,
+        'cost_tier': 8,
         'cost_per_1m_input': 0.15,
         'cost_per_1m_output': 0.20,
         'description': 'Backup model - excellent value for basic tasks'

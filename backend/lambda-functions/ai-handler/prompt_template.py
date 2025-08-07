@@ -6,10 +6,167 @@ Based on the proven methodology from the GitHub repository.
 Edit this file to modify the AI's behavior and instructions.
 """
 
+import re
+
+def calculate_total_experience_years(resume_text):
+    """Calculate total years of work experience from the resume."""
+    import re
+    from datetime import datetime
+    
+    lines = resume_text.split('\n')
+    date_patterns = []
+    
+    # Look for date patterns in the resume
+    for line in lines:
+        # Common date patterns: "2020-2023", "Jan 2020 - Dec 2023", "2020 - Present", etc.
+        date_matches = re.findall(r'(\d{4})\s*[-–—]\s*(\d{4}|present|current)', line.lower())
+        if date_matches:
+            for match in date_matches:
+                start_year = int(match[0])
+                end_year = datetime.now().year if match[1] in ['present', 'current'] else int(match[1])
+                date_patterns.append((start_year, end_year))
+    
+    if not date_patterns:
+        # Fallback: look for individual years
+        years = re.findall(r'\b(20\d{2})\b', resume_text)
+        if years:
+            years = [int(y) for y in years]
+            min_year = min(years)
+            max_year = max(years)
+            total_years = max_year - min_year + 1
+            return {
+                'total_years': total_years,
+                'analysis': f"Estimated {total_years} years based on year range {min_year}-{max_year}",
+                'confidence': 'low'
+            }
+        return {
+            'total_years': 3,
+            'analysis': "Could not parse dates, defaulting to 3 years",
+            'confidence': 'very_low'
+        }
+    
+    # Calculate total experience (may have overlaps, so we'll take the span)
+    all_start_years = [start for start, end in date_patterns]
+    all_end_years = [end for start, end in date_patterns]
+    
+    earliest_start = min(all_start_years)
+    latest_end = max(all_end_years)
+    total_years = latest_end - earliest_start
+    
+    return {
+        'total_years': total_years,
+        'analysis': f"Calculated {total_years} years from {earliest_start} to {latest_end}",
+        'confidence': 'high',
+        'date_ranges': date_patterns
+    }
+
+
+def analyze_work_history_structure(resume_text):
+    """Analyze the work history structure to count jobs and companies."""
+    lines = resume_text.split('\n')
+    
+    # Common indicators of job entries
+    job_indicators = [
+        'experience', 'work history', 'employment', 'professional background',
+        'career history', 'work experience', 'professional experience'
+    ]
+    
+    # Look for company names and job titles
+    potential_jobs = []
+    in_experience_section = False
+    current_job = {}
+    
+    for i, line in enumerate(lines):
+        line_stripped = line.strip()
+        line_lower = line.lower()
+        
+        # Check if we're entering an experience section
+        if any(indicator in line_lower for indicator in job_indicators):
+            in_experience_section = True
+            continue
+            
+        # Check if we're leaving experience section (entering education, skills, etc.)
+        if in_experience_section and any(section in line_lower for section in ['education', 'skills', 'certifications', 'projects']):
+            in_experience_section = False
+            continue
+            
+        if in_experience_section and line_stripped:
+            # Look for patterns that suggest job titles or company names
+            # Job titles often contain these keywords
+            if any(title_word in line_lower for title_word in [
+                'engineer', 'manager', 'analyst', 'developer', 'designer', 
+                'specialist', 'coordinator', 'director', 'lead', 'senior', 
+                'junior', 'associate', 'consultant', 'administrator', 'officer'
+            ]):
+                if current_job:
+                    potential_jobs.append(current_job)
+                current_job = {'title': line_stripped, 'line_number': i}
+            
+            # Look for date patterns (likely employment dates)
+            elif any(char.isdigit() for char in line_stripped) and any(month in line_lower for month in [
+                'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+                'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+                'present', 'current', '2020', '2021', '2022', '2023', '2024', '2025'
+            ]):
+                if current_job:
+                    current_job['dates'] = line_stripped
+            
+            # Look for company names (lines that don't start with bullets and aren't dates)
+            elif not line_stripped.startswith(('•', '-', '*')) and not any(char.isdigit() for char in line_stripped[:10]):
+                if current_job and 'company' not in current_job:
+                    current_job['company'] = line_stripped
+    
+    # Add the last job if it exists
+    if current_job:
+        potential_jobs.append(current_job)
+    
+    # Count distinct jobs (remove duplicates based on title or company)
+    unique_jobs = []
+    seen_combinations = set()
+    
+    for job in potential_jobs:
+        job_key = (job.get('title', ''), job.get('company', ''))
+        if job_key not in seen_combinations and job_key != ('', ''):
+            seen_combinations.add(job_key)
+            unique_jobs.append(job)
+    
+    return {
+        'total_jobs_found': len(unique_jobs),
+        'job_details': unique_jobs,
+        'analysis_summary': f"Found {len(unique_jobs)} distinct job entries in work history"
+    }
+
+
 def analyze_resume_structure(resume_text):
     """Analyze the original resume to understand its structure and content density."""
     lines = resume_text.split('\n')
-    bullet_points = [line for line in lines if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*')]
+    
+    # Enhanced bullet point detection - look for various formats
+    bullet_indicators = ['•', '-', '*', '◦', '▪', '▫', '‣', '⁃']
+    bullet_points = []
+    
+    print("=== BULLET POINT ANALYSIS DEBUG ===")
+    print(f"Total lines in resume: {len(lines)}")
+    
+    for i, line in enumerate(lines):
+        line_stripped = line.strip()
+        if line_stripped:
+            # Check for various bullet point formats
+            starts_with_bullet = any(line_stripped.startswith(indicator) for indicator in bullet_indicators)
+            # Also check for numbered lists (1., 2., etc.)
+            starts_with_number = bool(re.match(r'^\d+\.', line_stripped))
+            # Check for indented lines that might be bullet points without symbols
+            is_indented_item = line.startswith('  ') or line.startswith('\t')
+            
+            if starts_with_bullet or starts_with_number:
+                bullet_points.append(line_stripped)
+                print(f"Line {i+1}: BULLET FOUND -> '{line_stripped[:50]}...'")
+            elif is_indented_item and len(line_stripped) > 10:  # Likely a bullet point without symbol
+                bullet_points.append(line_stripped)
+                print(f"Line {i+1}: INDENTED BULLET -> '{line_stripped[:50]}...'")
+    
+    print(f"TOTAL BULLET POINTS DETECTED: {len(bullet_points)}")
+    print("=== END BULLET POINT ANALYSIS ===")
     
     # Estimate number of experience sections
     experience_indicators = ['experience', 'work history', 'employment', 'professional background']
@@ -41,7 +198,7 @@ def analyze_resume_structure(resume_text):
                 bullets_per_section.append(current_section_bullets)
             current_section_bullets = 0
             in_experience_section = False
-        elif line_stripped.startswith('•') or line_stripped.startswith('-') or line_stripped.startswith('*'):
+        elif any(line_stripped.startswith(indicator) for indicator in bullet_indicators) or bool(re.match(r'^\d+\.', line_stripped)):
             if in_experience_section:
                 current_section_bullets += 1
     
@@ -49,14 +206,18 @@ def analyze_resume_structure(resume_text):
     if current_section_bullets > 0:
         bullets_per_section.append(current_section_bullets)
     
-    return {
+    result = {
         'total_lines': len(lines),
         'bullet_points': len(bullet_points),
         'estimated_experience_sections': max(1, experience_sections),
         'avg_bullets_per_section': len(bullet_points) // max(1, experience_sections) if experience_sections > 0 else len(bullet_points),
         'bullets_per_section': bullets_per_section,
-        'detailed_bullet_analysis': f"Total bullets: {len(bullet_points)}, Sections with bullets: {len(bullets_per_section)}, Bullets per section: {bullets_per_section}"
+        'detailed_bullet_analysis': f"Total bullets: {len(bullet_points)}, Sections with bullets: {len(bullets_per_section)}, Bullets per section: {bullets_per_section}",
+        'all_detected_bullets': bullet_points[:10]  # First 10 for debugging
     }
+    
+    print(f"FINAL BULLET COUNT RESULT: {result['bullet_points']}")
+    return result
 
 
 def extract_job_keywords(job_desc):
@@ -114,7 +275,7 @@ def estimate_page_count(text):
 
 def get_resume_optimization_prompt(resume_text, job_description, job_title, company_name, keywords_text, length_guidance):
     """
-    Generate the complete prompt for resume optimization using the proven GitHub methodology.
+    Simplified prompt optimized for Claude 3 Haiku with career transition detection
     
     Args:
         resume_text (str): The original resume content
@@ -130,7 +291,26 @@ def get_resume_optimization_prompt(resume_text, job_description, job_title, comp
     
     # Analyze resume structure
     original_structure = analyze_resume_structure(resume_text)
+    work_history_analysis = analyze_work_history_structure(resume_text)
+    experience_years = calculate_total_experience_years(resume_text)
+    
+    print("=== PROMPT GENERATION DEBUG ===")
     print(f"Original resume structure: {original_structure}")
+    print(f"Work history analysis: {work_history_analysis}")
+    print(f"Experience years calculation: {experience_years}")
+    print(f"CRITICAL: Bullet points detected = {original_structure['bullet_points']}")
+    print(f"CRITICAL: Jobs detected = {work_history_analysis['total_jobs_found']}")
+    print("=== END PROMPT DEBUG ===")
+    
+    # Extract current role from most recent experience
+    lines = resume_text.split('\n')
+    current_role = "Unknown"
+    for line in lines:
+        line_stripped = line.strip()
+        # Look for job titles (usually after company names or in experience sections)
+        if any(indicator in line.lower() for indicator in ['engineer', 'manager', 'analyst', 'developer', 'designer', 'specialist', 'coordinator', 'director', 'lead', 'senior', 'junior']):
+            current_role = line_stripped
+            break
     
     # Extract job keywords using comprehensive method (only if job description provided)
     job_keywords = []
@@ -140,12 +320,248 @@ def get_resume_optimization_prompt(resume_text, job_description, job_title, comp
     else:
         print("No job description provided - optimizing for general job title")
     
-    # Estimate page count
-    original_page_count = estimate_page_count(resume_text)
-    print(f"Estimated original resume page count: {original_page_count}")
-    
-    # Determine content preservation guidance - STRICT preservation rule
-    length_guidance = f"MANDATORY: You must output EXACTLY {original_structure['bullet_points']} bullet points total. Each job must have the same number of bullets as the original. NO EXCEPTIONS. NO REDUCTIONS. NO COMBINATIONS."
+    prompt = f"""
+🚨🚨🚨 CRITICAL PRESERVATION RULES - READ FIRST 🚨🚨🚨
+
+❌ ABSOLUTELY FORBIDDEN:
+- Removing ANY company from work history
+- Omitting ANY job experience from the original resume
+- Skipping ANY employment entry
+- Combining multiple jobs into one entry
+- Deleting ANY work experience regardless of relevance
+
+✅ MANDATORY REQUIREMENTS:
+- Include EVERY SINGLE company mentioned in the original resume
+- Preserve EVERY job entry structure (company, title, dates) from the original
+- Maintain the COMPLETE work history timeline
+- Keep ALL employment dates exactly as written
+- TRANSFORM and OPTIMIZE all bullet point content for the target role
+- NEVER remove entire job entries
+
+🚨 CRITICAL RULE #1: PRESERVE EXACT BULLET COUNT 🚨
+
+Original resume has {original_structure['bullet_points']} bullet points total.
+Your output MUST have EXACTLY {original_structure['bullet_points']} bullet points total.
+Each job must have the same number of bullets as the original job.
+
+🚨 CRITICAL RULE #2: PRESERVE ALL WORK HISTORY 🚨
+
+WORK HISTORY ANALYSIS: {work_history_analysis['analysis_summary']}
+You MUST include EXACTLY {work_history_analysis['total_jobs_found']} job entries in your output.
+NO EXCEPTIONS. NO OMISSIONS. NO COMBINATIONS.
+
+DETECTED JOBS IN ORIGINAL RESUME:
+{chr(10).join([f"- {job.get('title', 'Unknown Title')} at {job.get('company', 'Unknown Company')}" for job in work_history_analysis['job_details']])}
+
+COUNT VERIFICATION: Original has {work_history_analysis['total_jobs_found']} jobs → Output must have {work_history_analysis['total_jobs_found']} jobs
+
+ORIGINAL RESUME:
+{resume_text}
+
+CURRENT ROLE (from resume): {current_role}
+TARGET JOB: {job_title}
+{f"COMPANY: {company_name}" if company_name else ""}
+
+CANDIDATE EXPERIENCE ANALYSIS:
+Total Work Experience: {experience_years['total_years']} years ({experience_years['analysis']})
+Use this information to align professional summary with job requirements.
+
+🔍 WORK HISTORY PRESERVATION CHECK:
+Before proceeding, count how many different companies/jobs are in the original resume.
+Your output MUST have the exact same number of experience entries.
+
+CAREER TRANSITION ASSESSMENT:
+Analyze if this is a major career transition:
+- Current: {current_role}  
+- Target: {job_title}
+
+Examples of MAJOR CAREER TRANSITIONS:
+❌ Design Engineer → Software Engineer (different domains)
+❌ Marketing Manager → Data Scientist (different fields)  
+❌ Mechanical Engineer → Product Manager (different functions)
+❌ Teacher → Software Developer (different industries)
+
+Examples of SAME/SIMILAR ROLES:
+✅ Software Engineer → Senior Software Engineer (progression)
+✅ Data Analyst → Data Engineer (related field)
+✅ Frontend Developer → Full Stack Developer (expansion)
+
+🏢 COMPANY-SPECIFIC JOB TITLE RESEARCH 🏢
+
+CRITICAL: Before modifying any job titles, you MUST research the actual job titles used at each company.
+
+COMPANY TITLE RESEARCH REQUIREMENTS:
+1. **For well-known companies** (Amazon, Google, Microsoft, Meta, Apple, etc.):
+   - Use your knowledge of their specific job title conventions
+   - Examples:
+     * Amazon: "Senior Software Development Engineer", "Principal Engineer", "Senior Data Engineer"
+     * Google: "Senior Software Engineer", "Staff Software Engineer", "Senior Data Scientist"  
+     * Microsoft: "Senior Software Engineer", "Principal Software Engineer", "Senior Data & Applied Scientist"
+     * Meta: "Senior Software Engineer", "Staff Software Engineer", "Senior Data Scientist"
+
+2. **For specific companies mentioned in the resume**:
+   - Research their actual job title hierarchy and naming conventions
+   - Use realistic titles that exist at that company
+   - Avoid creating fictional titles like "Senior Data Engineering Lead" 
+
+3. **Job Title Modification Rules**:
+   - ONLY use job titles that actually exist at the specific company
+   - If unsure about a company's titles, use industry-standard generic titles
+   - Maintain logical career progression within each company's hierarchy
+   - Never invent titles that don't exist at the company
+
+EXAMPLES OF CORRECT COMPANY-SPECIFIC TITLES:
+✅ Amazon: "Senior Software Development Engineer" (not "Senior Software Engineering Lead")
+✅ Google: "Senior Software Engineer" (not "Senior Software Development Lead")  
+✅ Microsoft: "Senior Software Engineer" (not "Senior Software Engineering Manager")
+✅ Meta: "Senior Software Engineer" (not "Senior Software Development Specialist")
+
+EXAMPLES OF INCORRECT FICTIONAL TITLES:
+❌ "Senior Data Engineering Lead" (doesn't exist at most companies)
+❌ "Principal Software Development Manager" (mixing levels incorrectly)
+❌ "Staff Data Science Engineer" (mixing disciplines incorrectly)
+
+BULLET POINT MODIFICATION STRATEGY:
+
+IF MAJOR CAREER TRANSITION:
+{f'''   - Job description provided: Completely rewrite each bullet using job technologies: {', '.join(job_keywords) if job_keywords else 'N/A'}
+   - Transform the story to show transferable skills for {job_title}
+   - Example: "Designed mechanical systems for automotive" → "Developed systematic solutions using Python and SQL for data processing applications"
+   - Keep achievements/metrics but change the domain completely''' if job_description and job_description.strip() else f'''   - No job description: Research {job_title} industry standards and completely rewrite bullets
+   - Transform each story to demonstrate {job_title} capabilities  
+   - Example: "Designed mechanical systems" → "Developed software applications using modern frameworks"
+   - Keep achievements/metrics but change domain to {job_title}'''}
+
+IF SAME/SIMILAR ROLE:
+{f'''   - Job description provided: Keep original story/context, update technologies: {', '.join(job_keywords) if job_keywords else 'N/A'}
+   - Example: "Built data pipeline using MySQL" → "Built data pipeline using PostgreSQL"
+   - Preserve the work context, enhance with job-relevant tools''' if job_description and job_description.strip() else f'''   - No job description: Keep story/context, modernize with {job_title} technologies
+   - Example: "Built web application" → "Built web application using React.js and Node.js"
+   - Enhance existing work with current industry standards'''}
+
+🚨 TRANSFORMATION RULES - CRITICAL 🚨:
+- PRESERVE: ALL companies, ALL job entry structures, ALL employment dates, company names
+- RESEARCH: Each company's actual job title conventions before modifying titles
+- MODIFY: Job titles (using ONLY real titles that exist at each specific company), bullet point content, technologies, tools, methodologies
+- OPTIMIZE: All bullet points for the target role while maintaining achievements and metrics
+- CONCEAL: Previous career field in professional summary if major career transition
+- MAINTAIN: Complete work history, professional progression, responsibility level
+- NEVER CHANGE: Company names, employment dates, education details
+- NEVER REMOVE: Any job experience, any company, any work history entry
+- NEVER INVENT: Fictional job titles that don't exist at the specific company
+- NEVER REVEAL: Previous career field in summary for major transitions
+
+SKILLS SECTION:
+- Replace with technologies relevant to {job_title}
+- Prioritize job description keywords if provided
+
+🎯 PROFESSIONAL SUMMARY RULES 🎯:
+
+CRITICAL: The professional summary must NEVER reveal the candidate's previous career field if this is a major career transition.
+
+YEARS OF EXPERIENCE CALCULATION:
+1. **Calculate total work experience** from the resume (all employment periods combined)
+2. **Check job description requirements** for required years of experience
+3. **Align the summary** to match or slightly exceed job requirements when possible
+4. **Use realistic numbers** based on actual work history timeline
+
+PROFESSIONAL SUMMARY STRATEGY:
+
+IF MAJOR CAREER TRANSITION:
+- NEVER mention the previous career field or role (e.g., don't say "data engineering background" when targeting Design Engineer)
+- Focus ONLY on transferable skills relevant to the target role
+- Position candidate as someone suited for the target role
+- Use target role terminology and industry language
+- **Include years of experience** that align with job requirements
+- Example: Data Engineer → Design Engineer: "Innovative Design Engineer with 5+ years of experience in systematic problem-solving and technical solution development. Experienced in CAD software, prototyping, and engineering design principles with a focus on creating efficient and scalable solutions."
+
+IF SAME/SIMILAR ROLE:
+- Can mention current field since it's relevant
+- Focus on progression and enhanced capabilities
+- **Include accurate years of experience** in the field
+- Example: Software Engineer → Senior Software Engineer: "Experienced Software Engineer with 7+ years of expertise in full-stack development and system architecture..."
+
+YEARS OF EXPERIENCE GUIDELINES:
+- **Job requires 3+ years**: Use "3+ years" or "5+ years" if candidate has more
+- **Job requires 5+ years**: Use "5+ years" or "7+ years" if candidate has more  
+- **Job requires 10+ years**: Use "10+ years" or actual years if candidate has more
+- **Entry level**: Use "2+ years" or omit years if very junior
+- **Senior roles**: Use specific years like "8+ years" or "10+ years"
+
+FORBIDDEN EXAMPLES FOR CAREER TRANSITIONS:
+❌ "Data Engineer transitioning to Design Engineer" (reveals previous field)
+❌ "Background in data engineering, now focusing on design" (reveals previous field)  
+❌ "Leveraging data engineering experience for design roles" (reveals previous field)
+❌ "Strong background in [previous field] and analytics" (reveals previous field)
+❌ "Design Engineer with 2 years of experience" (when job requires 5+ years and candidate has 8 total years)
+
+CORRECT EXAMPLES FOR CAREER TRANSITIONS:
+✅ "Innovative Design Engineer with 5+ years of experience in systematic problem-solving and technical solution development"
+✅ "Results-driven Design Engineer with 7+ years specializing in CAD design and product development"
+✅ "Creative Design Engineer with 8+ years of experience and strong analytical skills in engineering design principles"
+
+OUTPUT FORMAT (JSON):
+{{
+  "full_name": "Name from resume",
+  "contact_info": "Email | Phone | Location", 
+  "professional_summary": "Brief summary with X+ years of experience positioning candidate ONLY for {job_title} - align years with job requirements, NEVER mention previous career field if major transition",
+  "skills": ["Technologies relevant to {job_title}"],
+  "experience": [
+    {{
+      "title": "RESEARCH-BASED title that actually exists at this specific company for {job_title} progression",
+      "company": "EXACT company name - NEVER CHANGE THIS",
+      "dates": "EXACT dates - NEVER CHANGE THIS",
+      "achievements": [
+        "Bullet 1 - COMPLETELY REWRITTEN and optimized for {job_title} role",
+        "Bullet 2 - TRANSFORMED content using career transition strategy", 
+        "Bullet 3 - ENHANCED with relevant technologies and impact metrics",
+        "MUST have EXACT same number of bullets as original job but FULLY OPTIMIZED content"
+      ]
+    }},
+    {{
+      "title": "COMPANY-SPECIFIC title based on actual titles used at this company",
+      "company": "NEVER OMIT ANY COMPANY - PRESERVE EXACT NAME",
+      "dates": "PRESERVE ALL DATES EXACTLY",
+      "achievements": [
+        "Transform and optimize ALL bullet points for target role relevance"
+      ]
+    }}
+  ],
+  "education": [
+    {{
+      "degree": "EXACT from original - DO NOT CHANGE",
+      "institution": "EXACT from original - DO NOT CHANGE", 
+      "dates": "EXACT from original - DO NOT CHANGE"
+    }}
+  ]
+}}
+
+🚨 FINAL VALIDATION CHECKLIST 🚨:
+1. Count bullets: Original = {original_structure['bullet_points']}, Output = ___
+2. Count jobs: Original = {work_history_analysis['total_jobs_found']}, Output = ___ (MUST BE EQUAL)
+3. Career transition strategy applied correctly
+4. ALL company names preserved exactly
+5. ALL employment dates preserved exactly
+6. NO job entries omitted or removed
+7. Complete work history maintained
+8. ALL job titles use REAL titles that exist at each specific company (no fictional titles)
+9. Professional summary does NOT reveal previous career field if major transition
+10. Professional summary includes years of experience aligned with job requirements
+
+❌ FAILURE CONDITIONS (DO NOT SUBMIT IF ANY ARE TRUE):
+- Output has fewer than {work_history_analysis['total_jobs_found']} job entries
+- Any company name is missing from output
+- Any employment period is omitted
+- Work history timeline has gaps
+- Any job experience is completely removed
+- Any job title is fictional or doesn't exist at the specific company
+- Professional summary mentions previous career field for major career transitions
+- Professional summary lacks years of experience or misaligns with job requirements
+
+Return ONLY the JSON.
+"""
+
+    return prompt
     
     # Build job description section
     job_desc_section = ""
