@@ -2111,7 +2111,7 @@ function App() {
   const [activeStep, setActiveStep] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [outputFormat, setOutputFormat] = useState('word'); // Default to Word format
+  const [outputFormat, setOutputFormat] = useState('pdf'); // Default to PDF format
   
   // Enhanced UX state for processing
   const [processingStep, setProcessingStep] = useState(0);

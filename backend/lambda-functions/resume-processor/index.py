@@ -270,14 +270,19 @@ def handle_job_submission(event, cors_headers):
         
         # Extract data from the request
         resume_content_base64 = body.get('resume')
-        job_description = body.get('jobDescription')
-        job_title = body.get('jobTitle')
-        company_name = body.get('companyName', '')  # Optional field
+        job_description = body.get('jobDescription', '')  # May be empty if using URL extraction
+        job_title = body.get('jobTitle', '')  # May be empty if using URL extraction
+        company_name = body.get('companyName', '')  # May be empty if using URL extraction
+        job_url = body.get('jobUrl', '')  # New field for job URL
         generate_cv = body.get('generateCV', False)  # Generate CV flag
         output_format = body.get('outputFormat', 'docx')  # Default to docx format to match frontend
         
         print(f"Resume processor received output format: {output_format}")
         print(f"Full body outputFormat value: {body.get('outputFormat')}")
+        print(f"Job URL provided: {bool(job_url)}")
+        print(f"Job description provided: {bool(job_description)}")
+        print(f"Job title provided: {bool(job_title)}")
+        print(f"Company name provided: {bool(company_name)}")
         
         # Get user ID from Cognito authorizer if available
         user_id = "anonymous"
@@ -295,22 +300,23 @@ def handle_job_submission(event, cors_headers):
                 })
             }
         
-        if not job_title or not job_title.strip():
+        # New validation logic: Job URL OR Job Title is required
+        if not job_url and not job_title:
             return {
                 'statusCode': 400,
                 'headers': cors_headers,
                 'body': json.dumps({
-                    'message': 'Job title is required'
+                    'message': 'Either Job URL or Job Title is required'
                 })
             }
         
-        # Validate Generate CV requirements
-        if generate_cv and (not company_name or not company_name.strip()):
+        # If cover letter is enabled, job URL is required (for company extraction)
+        if generate_cv and not job_url:
             return {
                 'statusCode': 400,
                 'headers': cors_headers,
                 'body': json.dumps({
-                    'message': 'Company name is required when Generate CV is enabled'
+                    'message': 'Job URL is required for cover letter generation (needs company information)'
                 })
             }
         
@@ -419,9 +425,10 @@ def handle_job_submission(event, cors_headers):
             'userId': user_id,
             'jobId': job_id,
             'resumeKey': resume_key,
-            'jobDescriptionKey': job_desc_key,
-            'jobTitleKey': job_title_key,
+            'jobDescriptionKey': job_desc_key if job_description else None,
+            'jobTitleKey': job_title_key if job_title else None,
             'companyNameKey': company_name_key if company_name and company_name.strip() else None,
+            'jobUrl': job_url if job_url else None,  # Pass job URL for extraction
             'generateCV': generate_cv,  # Include Generate CV flag
             'statusKey': status_key,
             'outputFormat': output_format

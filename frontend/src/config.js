@@ -30,8 +30,8 @@ const config = {
     description: 'AI-powered resume optimization tool',
     supportedFileTypes: ['.pdf', '.doc', '.docx', '.txt'],
     maxFileSize: 10 * 1024 * 1024, // 10MB
-    outputFormats: ['word', 'text'],
-    defaultOutputFormat: 'word'
+    outputFormats: ['pdf', 'word', 'text'],
+    defaultOutputFormat: 'pdf'
   }
 };
 

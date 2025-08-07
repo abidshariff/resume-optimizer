@@ -123,6 +123,32 @@ aws lambda update-function-code \
 rm function.zip
 cd ../../..
 
+# Update Job URL Extractor
+print_status "Updating Job URL Extractor Lambda..."
+cd backend/lambda-functions/job-url-extractor
+
+# Install dependencies if requirements.txt exists
+if [ -f "requirements.txt" ]; then
+    print_status "Installing dependencies for Job URL Extractor..."
+    pip install -r requirements.txt -t . --quiet
+fi
+
+zip -r function.zip *.py 2>/dev/null || true
+# Include installed packages in the zip
+if [ -d "requests" ] || [ -d "bs4" ] || [ -d "urllib3" ] || [ -d "certifi" ] || [ -d "charset_normalizer" ] || [ -d "idna" ] || [ -d "soupsieve" ] || [ -d "lxml" ]; then
+    zip -r function.zip requests* bs4* urllib3* certifi* charset_normalizer* idna* soupsieve* lxml* 2>/dev/null || true
+fi
+
+aws lambda update-function-code \
+    --function-name "ResumeOptimizerJobUrlExtractor-$ENVIRONMENT" \
+    --zip-file fileb://function.zip > /dev/null
+rm function.zip
+
+# Clean up installed packages
+rm -rf requests* bs4* urllib3* certifi* charset_normalizer* idna* soupsieve* lxml* *.dist-info 2>/dev/null || true
+
+cd ../../..
+
 print_success "✅ All Lambda functions updated successfully"
 
 # Get stack outputs

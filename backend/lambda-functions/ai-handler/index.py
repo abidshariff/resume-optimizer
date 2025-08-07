@@ -13,6 +13,71 @@ from minimal_word_generator import create_minimal_word_resume
 from prompt_template import get_resume_optimization_prompt
 from skills_manager import SkillsManager
 
+def extract_job_data_from_url(job_url):
+    """
+    Extract job data from URL using the job-url-extractor Lambda function.
+    
+    Args:
+        job_url (str): The job posting URL
+    
+    Returns:
+        dict: Extracted job data or None if extraction fails
+    """
+    try:
+        print(f"Extracting job data from URL: {job_url}")
+        
+        # Get the job URL extractor function name from environment
+        job_extractor_function = os.environ.get('JOB_URL_EXTRACTOR_FUNCTION')
+        if not job_extractor_function:
+            print("Error: JOB_URL_EXTRACTOR_FUNCTION environment variable not set")
+            return None
+        
+        print(f"Using job extractor function: {job_extractor_function}")
+        
+        # Prepare payload for job URL extractor
+        extractor_payload = {
+            'jobUrl': job_url
+        }
+        
+        print(f"Calling job extractor with payload: {extractor_payload}")
+        
+        # Invoke job URL extractor Lambda function
+        lambda_client = boto3.client('lambda')
+        response = lambda_client.invoke(
+            FunctionName=job_extractor_function,
+            InvocationType='RequestResponse',  # Synchronous call
+            Payload=json.dumps(extractor_payload)
+        )
+        
+        print(f"Lambda invoke response status: {response.get('StatusCode')}")
+        
+        # Read the response payload
+        response_payload_raw = response['Payload'].read()
+        print(f"Raw response payload (first 500 chars): {response_payload_raw[:500]}")
+        
+        # Try to parse as JSON
+        try:
+            response_payload = json.loads(response_payload_raw)
+            print(f"Parsed job extractor response: {response_payload}")
+        except json.JSONDecodeError as json_error:
+            print(f"Failed to parse response as JSON: {json_error}")
+            print(f"Response appears to be HTML or other format")
+            return None
+        
+        if response_payload.get('success') and response_payload.get('data'):
+            job_data = response_payload['data']
+            print(f"Successfully extracted job data: {job_data.keys()}")
+            return job_data
+        else:
+            error_msg = response_payload.get('error', 'Unknown error')
+            print(f"Job extraction failed: {error_msg}")
+            return None
+            
+    except Exception as e:
+        print(f"Error calling job URL extractor: {str(e)}")
+        print(f"Exception type: {type(e).__name__}")
+        return None
+
 def create_cover_letter_word_document(cover_letter_text):
     """
     Create a Word document from cover letter text using minimal approach.
@@ -761,16 +826,18 @@ def lambda_handler(event, context):
         job_id = event.get('jobId')
         resume_key = event.get('resumeKey')
         job_desc_key = event.get('jobDescriptionKey')
-        job_title_key = event.get('jobTitleKey')  # Add job title key
-        company_name_key = event.get('companyNameKey')  # Add company name key (optional)
+        job_title_key = event.get('jobTitleKey')
+        company_name_key = event.get('companyNameKey')
+        job_url = event.get('jobUrl')  # New field for job URL extraction
         generate_cv = event.get('generateCV', False)  # Generate CV flag
         status_key = event.get('statusKey')
-        output_format = event.get('outputFormat', 'docx')  # Resume format - default to docx
-        cover_letter_format = event.get('coverLetterFormat', 'docx')  # Cover letter format - default to docx
+        output_format = event.get('outputFormat', 'pdf')  # Resume format - default to pdf
+        cover_letter_format = event.get('coverLetterFormat', 'pdf')  # Cover letter format - default to pdf
         
         print(f"AI Handler received resume format: {output_format}")
         print(f"AI Handler received cover letter format: {cover_letter_format}")
         print(f"Generate CV flag: {generate_cv}")
+        print(f"Job URL provided: {bool(job_url)}")
         
         # Map frontend format names to backend format names
         format_mapping = {
@@ -784,11 +851,20 @@ def lambda_handler(event, context):
         print(f"Mapped resume format: {output_format}")
         print(f"Mapped cover letter format: {cover_letter_format}")
         
-        # Validate inputs
-        if not job_id or not resume_key or not job_desc_key or not job_title_key or not status_key:
-            error_msg = 'Missing required parameters'
+        # Validate inputs - now more flexible with job URL extraction
+        if not job_id or not resume_key or not status_key:
+            error_msg = 'Missing required parameters (jobId, resumeKey, statusKey)'
             if status_key:
                 update_job_status(bucket_name, status_key, 'FAILED', error_msg)
+            return {
+                'error': error_msg,
+                'headers': get_cors_headers()
+            }
+        
+        # Either job URL or job title/description must be provided
+        if not job_url and not job_title_key:
+            error_msg = 'Either job URL or job title must be provided'
+            update_job_status(bucket_name, status_key, 'FAILED', error_msg)
             return {
                 'error': error_msg,
                 'headers': get_cors_headers()
@@ -845,23 +921,72 @@ def lambda_handler(event, context):
                     'headers': get_cors_headers()
                 }
             
-            # Get job description
-            job_desc_obj = s3.get_object(Bucket=bucket_name, Key=job_desc_key)
-            job_description = job_desc_obj['Body'].read().decode('utf-8')
-            
-            # Get job title
-            job_title_obj = s3.get_object(Bucket=bucket_name, Key=job_title_key)
-            job_title = job_title_obj['Body'].read().decode('utf-8').strip()
-            
-            # Get company name (optional)
+            # Initialize job data variables
+            job_description = ""
+            job_title = ""
             company_name = ""
-            if company_name_key:
+            
+            # Extract job data from URL if provided
+            if job_url:
+                update_job_status(bucket_name, status_key, 'PROCESSING', 'Extracting job information from URL...')
+                
+                extracted_data = extract_job_data_from_url(job_url)
+                if extracted_data:
+                    job_description = extracted_data.get('description', '')
+                    extracted_job_title = extracted_data.get('job_title', '')
+                    company_name = extracted_data.get('company', '')
+                    
+                    print(f"Extracted job title: {extracted_job_title}")
+                    print(f"Extracted company: {company_name}")
+                    print(f"Job description length: {len(job_description)}")
+                    
+                    # Use extracted job title if not provided manually
+                    if extracted_job_title:
+                        job_title = extracted_job_title
+                else:
+                    print("Job URL extraction failed, checking for manual data...")
+            
+            # Get manual job data from S3 if available (fallback or supplement)
+            if job_title_key and not job_title:
+                try:
+                    job_title_obj = s3.get_object(Bucket=bucket_name, Key=job_title_key)
+                    job_title = job_title_obj['Body'].read().decode('utf-8').strip()
+                    print(f"Using manual job title: {job_title}")
+                except Exception as e:
+                    print(f"No manual job title found: {str(e)}")
+            
+            if job_desc_key and not job_description:
+                try:
+                    job_desc_obj = s3.get_object(Bucket=bucket_name, Key=job_desc_key)
+                    job_description = job_desc_obj['Body'].read().decode('utf-8')
+                    print(f"Using manual job description, length: {len(job_description)}")
+                except Exception as e:
+                    print(f"No manual job description found: {str(e)}")
+            
+            if company_name_key and not company_name:
                 try:
                     company_name_obj = s3.get_object(Bucket=bucket_name, Key=company_name_key)
                     company_name = company_name_obj['Body'].read().decode('utf-8').strip()
+                    print(f"Using manual company name: {company_name}")
                 except Exception as e:
-                    print(f"Company name not found or error retrieving: {str(e)}")
-                    company_name = ""
+                    print(f"No manual company name found: {str(e)}")
+            
+            # Final validation
+            if not job_title:
+                error_msg = "Job title is required. Please provide a job title or a valid job URL."
+                update_job_status(bucket_name, status_key, 'FAILED', error_msg)
+                return {
+                    'error': error_msg,
+                    'headers': get_cors_headers()
+                }
+            
+            if generate_cv and not company_name:
+                error_msg = "Company information is required for cover letter generation. Please provide a valid job URL with company information."
+                update_job_status(bucket_name, status_key, 'FAILED', error_msg)
+                return {
+                    'error': error_msg,
+                    'headers': get_cors_headers()
+                }
         except Exception as e:
             error_msg = f'Error retrieving or processing files: {str(e)}'
             print(f"Error retrieving or processing files from S3: {str(e)}")
@@ -1563,7 +1688,7 @@ def lambda_handler(event, context):
                 Company: {company_name}
                 Job Description: {job_desc_text}
                 
-                Resume Content: {resume_text[:2000]}...
+                Resume Content: {create_text_resume(resume_json)[:2000] if 'resume_json' in locals() and resume_json else resume_text[:2000]}...
 
                 Format the cover letter EXACTLY like this structure, but with REAL information:
 
@@ -1614,20 +1739,12 @@ def lambda_handler(event, context):
                 try:
                     print("Starting cover letter file creation...")
                     
-                    # Create cover letter document
-                    cover_letter_key = f"cover-letters/{job_id}_cover_letter.{output_extension}"
-                    cover_letter_filename = f"cover_letter_{job_id[:8]}.{output_extension}"
-                    
-                    print(f"Cover letter key: {cover_letter_key}")
-                    print(f"Cover letter filename: {cover_letter_filename}")
-                    print(f"Resume format: {output_format}, Cover letter format: {cover_letter_format}")
-                    
-                    # Create cover letter content based on cover letter format
+                    # Create cover letter content based on cover letter format FIRST
                     if cover_letter_format == 'word':
                         print("Creating Word document for cover letter...")
                         # Create cover letter Word document
                         cover_letter_buffer = create_cover_letter_word_document(cover_letter_text)
-                        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        cover_letter_content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                         cover_letter_extension = 'docx'
                         print(f"Word document created, buffer size: {len(cover_letter_buffer.getvalue())} bytes")
                     elif cover_letter_format == 'pdf':
@@ -1635,23 +1752,35 @@ def lambda_handler(event, context):
                         # For PDF, we'll use the same approach as the resume
                         from pdf_generator import create_pdf_from_text
                         cover_letter_buffer = create_pdf_from_text(cover_letter_text, f"Cover Letter - {job_title}")
-                        content_type = 'application/pdf'
+                        cover_letter_content_type = 'application/pdf'
                         cover_letter_extension = 'pdf'
                         print(f"PDF document created, buffer size: {len(cover_letter_buffer.getvalue())} bytes")
                     else:  # text format
                         print("Creating text file for cover letter...")
                         import io
                         cover_letter_buffer = io.BytesIO(cover_letter_text.encode('utf-8'))
-                        content_type = 'text/plain'
+                        cover_letter_content_type = 'text/plain'
                         cover_letter_extension = 'txt'
                         print(f"Text file created, buffer size: {len(cover_letter_buffer.getvalue())} bytes")
                     
-                    # Update cover letter filename with correct extension
+                    # Now create filenames using the CORRECT cover letter extension
                     cover_letter_filename = f"cover_letter_{job_id}.{cover_letter_extension}"
                     cover_letter_key = f"users/{user_id}/results/{job_id}/{cover_letter_filename}"
                     
+                    print(f"Cover letter key: {cover_letter_key}")
+                    print(f"Cover letter filename: {cover_letter_filename}")
+                    print(f"Resume format: {output_format}, Cover letter format: {cover_letter_format}")
+                    print(f"Cover letter extension: {cover_letter_extension}")
+                    print(f"Cover letter content type: {cover_letter_content_type}")
+                    
                     print("Uploading cover letter to S3...")
                     # Upload cover letter to S3
+                    s3.put_object(
+                        Bucket=bucket_name,
+                        Key=cover_letter_key,
+                        Body=cover_letter_buffer.getvalue(),
+                        ContentType=cover_letter_content_type
+                    )
                     s3.put_object(
                         Bucket=bucket_name,
                         Key=cover_letter_key,
@@ -1668,7 +1797,7 @@ def lambda_handler(event, context):
                             'Bucket': bucket_name,
                             'Key': cover_letter_key,
                             'ResponseContentDisposition': f'attachment; filename="{cover_letter_filename}"',
-                            'ResponseContentType': content_type
+                            'ResponseContentType': cover_letter_content_type
                         },
                         ExpiresIn=3600  # 1 hour
                     )

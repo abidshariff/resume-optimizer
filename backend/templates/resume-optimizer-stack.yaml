@@ -264,6 +264,10 @@ Resources:
                 Action:
                   - 'bedrock:InvokeModel'
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'lambda:InvokeFunction'
+                Resource: !GetAtt JobUrlExtractorLambda.Arn
 
   ResumeProcessorRole:
     Type: AWS::IAM::Role
@@ -310,6 +314,7 @@ Resources:
           STORAGE_BUCKET: !Ref ResumeStorageBucket
           USER_HISTORY_TABLE: !Ref UserHistoryTable
           SKILLS_TABLE: !Ref SkillsTable
+          JOB_URL_EXTRACTOR_FUNCTION: !Ref JobUrlExtractorLambda
       Code:
         ZipFile: |
           # Placeholder - will be replaced with actual code
@@ -465,6 +470,45 @@ Resources:
                 Action:
                   - 'ses:SendEmail'
                   - 'ses:SendRawEmail'
+                Resource: '*'
+
+  # Job URL Extractor Lambda Function
+  JobUrlExtractorLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ResumeOptimizerJobUrlExtractor-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt JobUrlExtractorRole.Arn
+      Timeout: 60
+      MemorySize: 256
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+
+  # Job URL Extractor Lambda Role
+  JobUrlExtractorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: JobUrlExtractorPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
                 Resource: '*'
 
   # Status Checker Lambda Function
@@ -690,6 +734,59 @@ Resources:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Credentials: true
 
+  # Job URL Extractor endpoint resource
+  ApiGatewayJobUrlExtractorResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: extract-job-url
+
+  # Job URL Extractor endpoint POST method
+  ApiGatewayJobUrlExtractorMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiGatewayJobUrlExtractorResource
+      HttpMethod: POST
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${JobUrlExtractorLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # Job URL Extractor endpoint OPTIONS method for CORS
+  ApiGatewayJobUrlExtractorOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiGatewayJobUrlExtractorResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn: 
@@ -699,6 +796,8 @@ Resources:
       - ApiGatewayStatusOptionsMethod
       - ApiGatewayContactMethod
       - ApiGatewayContactOptionsMethod
+      - ApiGatewayJobUrlExtractorMethod
+      - ApiGatewayJobUrlExtractorOptionsMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment
@@ -772,10 +871,19 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/POST/contact'
 
+  # Permission for API Gateway to invoke Job URL Extractor Lambda
+  JobUrlExtractorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref JobUrlExtractorLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/POST/extract-job-url'
+
 Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
-    Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/optimize'
+    Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
   
   UserPoolId:
     Description: Cognito User Pool ID

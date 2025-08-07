@@ -34,11 +34,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Slider,
   FormControlLabel,
   Switch,
   Tooltip,
-  Grid
+  Grid,
+  Divider,
+  InputAdornment
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon,
@@ -57,10 +58,10 @@ import {
   Close as CloseIcon,
   Info as InfoIcon,
   Email as EmailIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-import emailjs from '@emailjs/browser';
 
 // File upload component
 function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onContinue }) {
@@ -173,7 +174,7 @@ function FileUploadZone({ onFileAccepted, acceptedFileTypes, resumeFile, onConti
                 }
               }}
             >
-              Continue to Job Description →
+              Continue to Job Details →
             </Button>
           )}
         </Box>
@@ -195,11 +196,11 @@ function MainApp() {
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeName, setResumeName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
-  const [companyName, setCompanyName] = useState('');
   const [generateCV, setGenerateCV] = useState(false); // Generate CV toggle
-  const [selectedResumeFormat, setSelectedResumeFormat] = useState('docx'); // Direct format selection
-  const [selectedCoverLetterFormat, setSelectedCoverLetterFormat] = useState('docx'); // Direct format selection
-  const [jobDescription, setJobDescription] = useState('');
+  const [selectedResumeFormat, setSelectedResumeFormat] = useState('pdf'); // Direct format selection
+  const [selectedCoverLetterFormat, setSelectedCoverLetterFormat] = useState('pdf'); // Direct format selection
+  const [jobUrl, setJobUrl] = useState(''); // Job URL for extraction
+  // Note: Job data will be extracted during form submission, not stored in state
   const [jobId, setJobId] = useState(null);
   const [jobStatus, setJobStatus] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
@@ -264,7 +265,7 @@ function MainApp() {
   const [resumeTitle, setResumeTitle] = useState('');
   const [resumeDescription, setResumeDescription] = useState('');
   const [userSettings, setUserSettings] = useState({
-    defaultOutputFormat: 'docx' // Default fallback
+    defaultOutputFormat: 'pdf' // Default fallback
   });
 
   // Preview and comparison state
@@ -285,7 +286,7 @@ function MainApp() {
   };
 
   const activeStep = getCurrentStep();
-  const steps = ['Upload Resume', 'Enter Job Description', 'Get Crafted Resume'];
+  const steps = ['Upload Resume', 'Enter Job Details', 'Get Crafted Resume'];
 
   // Load user settings from localStorage
   const loadUserSettings = () => {
@@ -348,7 +349,8 @@ function MainApp() {
       // On upload page - clear everything except user settings
       setResumeFile(null);
       setResumeName('');
-      setJobDescription('');
+      setJobTitle('');
+      setJobUrl('');
       setResult(null);
       setError(null);
       setIsSubmitting(false);
@@ -363,7 +365,8 @@ function MainApp() {
       localStorage.removeItem('currentResumeFile');
     } else if (path === '/app/job-description') {
       // On job description page - keep resume file but clear job-related state
-      setJobDescription('');
+      setJobTitle('');
+      setJobUrl('');
       setResult(null);
       setError(null);
       setIsSubmitting(false);
@@ -688,37 +691,112 @@ function MainApp() {
     }
   };
 
-  const handleJobDescriptionChange = (e) => {
-    setJobDescription(e.target.value);
+  // Handle job URL extraction (called during form submission)
+  const handleJobUrlExtraction = async (url) => {
+    if (!url || !url.trim()) {
+      return null;
+    }
+
+    try {
+      Logger.log('Extracting job data from URL:', url);
+      
+      // Check if user is authenticated and get token
+      let authToken = '';
+      try {
+        const user = await getCurrentUser();
+        Logger.log('User authenticated:', user.username);
+        
+        const session = await fetchAuthSession();
+        authToken = session.tokens?.idToken?.toString() || '';
+        Logger.log('Auth token exists:', !!authToken);
+        Logger.log('Auth token length:', authToken.length);
+        
+        if (!authToken) {
+          throw new Error('No authentication token available');
+        }
+      } catch (authError) {
+        Logger.error('Authentication error:', authError);
+        throw new Error('Please log in to extract job data from URLs');
+      }
+      
+      // Use direct fetch with proper authentication
+      const apiEndpoint = config.API.REST.resumeOptimizer.endpoint;
+      Logger.log('Making request to:', `${apiEndpoint}/extract-job-url`);
+      
+      const response = await fetch(`${apiEndpoint}/extract-job-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authToken
+        },
+        body: JSON.stringify({
+          jobUrl: url.trim()
+        })
+      });
+
+      Logger.log('Response status:', response.status);
+      Logger.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        Logger.error('Non-JSON response received:', textResponse);
+        throw new Error(`Server returned non-JSON response (${response.status}). Response: ${textResponse.substring(0, 200)}`);
+      }
+
+      const data = await response.json();
+      Logger.log('Response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}: ${data.message || 'Failed to extract job data'}`);
+      }
+
+      if (data.success && data.data) {
+        Logger.log('Job data extracted successfully:', data.data);
+        return data.data;
+      } else {
+        throw new Error('No job data found in the response');
+      }
+
+    } catch (error) {
+      Logger.error('Error extracting job data:', error);
+      throw error;
+    }
   };
 
   const handleOptimize = async () => {
-    if (!resume || !jobTitle.trim()) {
-      let message = 'Please ';
-      const missing = [];
-      if (!resume) missing.push('upload a resume');
-      if (!jobTitle.trim()) missing.push('enter the job title');
-      message += missing.join(', ');
-      setSnackbarMessage(message);
+    // Validation logic based on requirements:
+    // 1. Job URL OR Job Title is mandatory
+    // 2. If cover letter toggle is ON, Job URL is mandatory (needs company info)
+    // 3. Job Title only = generic resume development
+    // 4. Job URL = job-specific development
+    
+    if (!resume) {
+      setSnackbarMessage('Please upload a resume');
       setSnackbarOpen(true);
       return;
     }
 
-    // Generate CV validation - company name is mandatory when CV is enabled
-    if (generateCV && (!companyName || !companyName.trim())) {
-      setSnackbarMessage('Company name is required when Generate CV is enabled');
-      setSnackbarOpen(true);
-      return;
+    // Cover letter enabled - Job URL is mandatory (needs company info)
+    if (generateCV) {
+      if (!jobUrl.trim()) {
+        setSnackbarMessage('Job URL is required when cover letter generation is enabled (needs company information)');
+        setSnackbarOpen(true);
+        return;
+      }
+    } else {
+      // Cover letter disabled - Job URL OR Job Title is mandatory
+      if (!jobUrl.trim() && !jobTitle.trim()) {
+        setSnackbarMessage('Please enter either a Job URL (for job-specific optimization) or Job Title (for generic optimization)');
+        setSnackbarOpen(true);
+        return;
+      }
     }
 
+    // Validate job title length
     if (jobTitle.length > 100) {
       setSnackbarMessage('Job title must be 100 characters or less');
-      setSnackbarOpen(true);
-      return;
-    }
-
-    if (companyName.length > 100) {
-      setSnackbarMessage('Company name must be 100 characters or less');
       setSnackbarOpen(true);
       return;
     }
@@ -733,25 +811,64 @@ function MainApp() {
       Logger.log('Selected cover letter format:', selectedCoverLetterFormat);
       Logger.log('Generate CV:', generateCV);
       
+      let companyName = '';
+      let jobDescription = '';
+      let finalJobTitle = jobTitle.trim();
+      
+      // Extract job data if URL is provided
+      if (jobUrl.trim()) {
+        setStatusMessage('Extracting job information from URL...');
+        
+        try {
+          const extractedData = await handleJobUrlExtraction(jobUrl);
+          if (extractedData) {
+            companyName = extractedData.company || '';
+            jobDescription = extractedData.description || '';
+            
+            // Use extracted job title if user hasn't provided one
+            if (!finalJobTitle && extractedData.job_title) {
+              finalJobTitle = extractedData.job_title;
+            }
+            
+            Logger.log('Job data extracted for processing:', extractedData);
+          }
+        } catch (extractError) {
+          // If extraction fails but we have a job title, continue with generic optimization
+          if (!finalJobTitle) {
+            throw new Error(`Failed to extract job data: ${extractError.message}. Please provide a job title for generic optimization.`);
+          }
+          Logger.warn('Job extraction failed, continuing with generic optimization:', extractError.message);
+        }
+      }
+      
+      // Final validation after extraction
+      if (!finalJobTitle) {
+        throw new Error('Job title is required. Please provide a job title or a valid job URL.');
+      }
+      
+      if (generateCV && !companyName) {
+        throw new Error('Company information is required for cover letter generation. Please provide a valid job URL.');
+      }
+      
+      setStatusMessage('Processing your resume with AI...');
+      
       const payload = {
         resume: resume,
-        jobTitle: jobTitle.trim(),
-        companyName: companyName.trim(),
+        jobTitle: finalJobTitle,
+        companyName: companyName,
         jobDescription: jobDescription,
-        generateCV: generateCV, // Include Generate CV flag
-        outputFormat: selectedResumeFormat, // Use direct selection
-        coverLetterFormat: generateCV ? selectedCoverLetterFormat : null // Only include if generating CV
+        generateCV: generateCV,
+        outputFormat: selectedResumeFormat,
+        coverLetterFormat: generateCV ? selectedCoverLetterFormat : null
       };
       
       Logger.log('=== API PAYLOAD DEBUG ===');
       Logger.log('API payload:', payload);
       Logger.log('Generate CV flag:', generateCV);
       Logger.log('Company name:', companyName);
-      Logger.log('Job title:', jobTitle);
+      Logger.log('Job title:', finalJobTitle);
       Logger.log('Resume format:', selectedResumeFormat);
       Logger.log('Cover letter format:', selectedCoverLetterFormat);
-      
-      // Note: Removed localhost mock response to enable production-like testing locally
       
       const { tokens } = await fetchAuthSession();
       const idToken = tokens.idToken.toString();
@@ -842,7 +959,7 @@ function MainApp() {
     Logger.log('Cover letter URL:', result?.coverLetterUrl);
     Logger.log('Cover letter text available:', !!coverLetterText);
     Logger.log('Generate CV flag was:', generateCV);
-    Logger.log('Company name was:', companyName);
+    Logger.log('Job URL provided:', !!jobUrl);
     Logger.log('Full result object keys:', result ? Object.keys(result) : 'No result');
     
     if (!result || !result.coverLetterUrl) {
@@ -854,7 +971,7 @@ function MainApp() {
       // Enhanced error message for debugging
       let debugMsg = errorMsg;
       if (result) {
-        debugMsg += `\n\nDEBUG INFO:\n- Generate CV was: ${generateCV ? 'ENABLED' : 'DISABLED'}\n- Company name: ${companyName || 'NOT PROVIDED'}\n- Available result keys: ${Object.keys(result).join(', ')}`;
+        debugMsg += `\n\nDEBUG INFO:\n- Generate CV was: ${generateCV ? 'ENABLED' : 'DISABLED'}\n- Job URL provided: ${jobUrl ? 'YES' : 'NO'}\n- Available result keys: ${Object.keys(result).join(', ')}`;
         
         // If we have cover letter text but no URL, suggest checking backend logs
         if (coverLetterText) {
@@ -909,7 +1026,8 @@ function MainApp() {
     setError(null);
     setResume(null);
     setResumeName('');
-    setJobDescription('');
+    setJobTitle('');
+    setJobUrl('');
     navigate('/app/upload');
   };
 
@@ -937,7 +1055,7 @@ function MainApp() {
     setSnackbarMessage('Crafting canceled successfully');
     setSnackbarOpen(true);
     
-    // Navigate back to job description
+    // Navigate back to job details
     navigate('/app/job-description');
   };
 
@@ -967,12 +1085,12 @@ function MainApp() {
       id: Date.now().toString(),
       title: resumeTitle,
       description: resumeDescription || 'Crafted resume',
-      jobTitle: jobTitle || jobDescription.split('\n')[0] || 'Job Application',
-      companyName: companyName || '',
+      jobTitle: jobTitle || 'Job Application',
+      companyName: '', // Will be filled during processing if URL provided
       format: selectedResumeFormat,
       downloadUrl: result?.optimizedResumeUrl || '',
       createdAt: new Date().toISOString(),
-      originalJobDescription: jobDescription,
+      originalJobDescription: '', // Will be filled during processing if URL provided
       // Include cover letter data if available
       hasCoverLetter: !!coverLetterText,
       coverLetterUrl: result?.coverLetterUrl || '',
@@ -1004,7 +1122,8 @@ function MainApp() {
       setResumeFile(null);
       setResume(null);
       setResumeName('');
-      setJobDescription('');
+      setJobTitle('');
+      setJobUrl('');
       setResult(null);
       setError(null);
       setIsSubmitting(false);
@@ -1022,7 +1141,8 @@ function MainApp() {
       setSnackbarOpen(true);
     } else if (path === '/app/job-description') {
       // Clear job description state but keep resume file
-      setJobDescription('');
+      setJobTitle('');
+      setJobUrl('');
       setResult(null);
       setError(null);
       setIsSubmitting(false);
@@ -1033,7 +1153,7 @@ function MainApp() {
       setSnackbarOpen(false);
       setSnackbarMessage('');
       
-      setSnackbarMessage('Job description cleared - ready for new job description');
+      setSnackbarMessage('Job details cleared - ready for new job details');
       setSnackbarOpen(true);
     } else if (path === '/app/results') {
       // Navigate back to upload for fresh start
@@ -1108,7 +1228,8 @@ function MainApp() {
           setContactSuccessDialogOpen(false);
           // Reset form states to start fresh
           setResumeFile(null);
-          setJobDescription('');
+          setJobTitle('');
+          setJobUrl('');
           setResult(null);
           setJobId(null);
         }, 5000);
@@ -1136,7 +1257,8 @@ function MainApp() {
             setContactSuccessDialogOpen(false);
             // Reset form states to start fresh
             setResumeFile(null);
-            setJobDescription('');
+            setJobTitle('');
+            setJobUrl('');
             setResult(null);
             setJobId(null);
           }, 5000);
@@ -1420,56 +1542,144 @@ function MainApp() {
                   Enter Job Details
                 </Typography>
                 <Typography variant="body2" color="textSecondary" paragraph sx={{ mb: 2 }}>
-                  For better AI response and more targeted resume optimization, paste the complete job description below.
+                  Choose your optimization approach: Enter a <strong>Job URL</strong> for automatic extraction of job details and company-specific optimization, or just a <strong>Job Title</strong> for generic optimization.
                 </Typography>
+                
+
+                
+                {/* Job URL Field */}
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    label={generateCV ? "Job URL (Required for Cover Letter)" : "Job URL (Recommended for Job-Specific Optimization)"}
+                    fullWidth
+                    variant="outlined"
+                    value={jobUrl}
+                    onChange={(e) => {
+                      setJobUrl(e.target.value);
+                      // Clear job title when job URL is entered (mutual exclusivity)
+                      if (e.target.value.trim() && jobTitle.trim()) {
+                        setJobTitle('');
+                      }
+                    }}
+                    placeholder="e.g., https://careers.mastercard.com/us/en/job/..."
+                    size="small"
+                    required={generateCV}
+                    error={generateCV && !jobUrl.trim()}
+                    disabled={!generateCV && jobTitle.trim() && !jobUrl.trim()} // Disable if job title is filled (except when cover letter is required)
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: (!generateCV && jobTitle.trim() && !jobUrl.trim()) ? 'action.disabledBackground' : 'background.paper',
+                        '&.Mui-disabled': {
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'action.disabled',
+                          }
+                        }
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: jobUrl.trim() && (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="clear job URL"
+                            onClick={() => setJobUrl('')}
+                            edge="end"
+                            size="small"
+                            sx={{ color: 'text.secondary' }}
+                            title="Clear job URL to use job title instead"
+                          >
+                            <ClearIcon fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                    helperText={
+                      <Box sx={{ color: 'text.secondary' }}>
+                        {!generateCV && jobTitle.trim() && !jobUrl.trim() 
+                          ? "Job title is already provided. Clear it to use job URL instead."
+                          : generateCV 
+                            ? "Job URL is required for cover letter generation (needs company information)"
+                            : "Paste the job posting URL - job details will be extracted when you craft your resume"
+                        }
+                      </Box>
+                    }
+                  />
+                </Box>
+
+                {/* OR Divider */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Divider sx={{ flex: 1 }} />
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      px: 2, 
+                      color: generateCV ? 'text.disabled' : 'text.secondary', 
+                      fontWeight: 500,
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {generateCV ? "OR (Job URL Required)" : "OR"}
+                  </Typography>
+                  <Divider sx={{ flex: 1 }} />
+                </Box>
                 
                 {/* Job Title Field */}
                 <TextField
-                  label="Job Title"
+                  label={generateCV ? "Job Title (Auto-filled from URL)" : "Job Title (For Generic Optimization)"}
                   fullWidth
                   variant="outlined"
                   value={jobTitle}
-                  onChange={(e) => setJobTitle(e.target.value)}
+                  onChange={(e) => {
+                    setJobTitle(e.target.value);
+                    // Clear job URL when job title is entered (mutual exclusivity)
+                    if (e.target.value.trim() && jobUrl.trim()) {
+                      setJobUrl('');
+                    }
+                  }}
                   placeholder="e.g., Senior Data Engineer, Software Developer, Product Manager"
-                  required
                   inputProps={{ maxLength: 100 }}
                   size="small"
-                  sx={{ mb: 2 }}
-                  helperText={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <Box component="span" sx={{ color: 'text.secondary' }}>
-                        Enter the exact job title from the posting
-                      </Box>
-                      <Box component="span" sx={{ color: jobTitle.length > 90 ? 'error.main' : 'text.disabled' }}>
-                        {jobTitle.length}/100
-                      </Box>
-                    </Box>
-                  }
-                />
-                
-                {/* Company Name Field */}
-                <TextField
-                  label={generateCV ? "Company Name (Required)" : "Company Name (Optional)"}
-                  fullWidth
-                  variant="outlined"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="e.g., Google, Amazon, Microsoft, Apple"
-                  inputProps={{ maxLength: 100 }}
-                  size="small"
-                  sx={{ mb: 2 }}
-                  required={generateCV}
-                  error={generateCV && !companyName.trim()}
+                  sx={{ 
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: (generateCV || (jobUrl.trim() && !jobTitle.trim())) ? 'action.disabledBackground' : 'background.paper',
+                      '&.Mui-disabled': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'action.disabled',
+                        }
+                      }
+                    }
+                  }}
+                  disabled={generateCV || (jobUrl.trim() && !jobTitle.trim())} // Disable if cover letter enabled OR job URL is filled
+                  InputProps={{
+                    endAdornment: jobTitle.trim() && !generateCV && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="clear job title"
+                          onClick={() => setJobTitle('')}
+                          edge="end"
+                          size="small"
+                          sx={{ color: 'text.secondary' }}
+                          title="Clear job title to use job URL instead"
+                        >
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
                   helperText={
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                       <Box component="span" sx={{ color: 'text.secondary' }}>
                         {generateCV 
-                          ? "Company name is required for cover letter generation"
-                          : "Company name helps tailor the resume for the organization"
+                          ? "Job title will be auto-filled from job URL"
+                          : jobUrl.trim() && !jobTitle.trim()
+                            ? "Job URL is already provided. Clear it to use job title instead."
+                            : jobUrl.trim() 
+                              ? "Auto-filled from job URL (you can edit)" 
+                              : "Enter job title for generic optimization"
                         }
                       </Box>
-                      <Box component="span" sx={{ color: companyName.length > 90 ? 'error.main' : 'text.disabled' }}>
-                        {companyName.length}/100
+                      <Box component="span" sx={{ color: jobTitle.length > 90 ? 'error.main' : 'text.disabled' }}>
+                        {jobTitle.length}/100
                       </Box>
                     </Box>
                   }
@@ -1512,20 +1722,6 @@ function MainApp() {
                   </Typography>
                 </Box>
                 
-                {/* Job Description Field */}
-                <TextField
-                  label="Job Description (Recommended for Better AI Results)"
-                  multiline
-                  rows={6}
-                  fullWidth
-                  variant="outlined"
-                  value={jobDescription}
-                  onChange={handleJobDescriptionChange}
-                  placeholder="For better AI response, paste the complete job description including responsibilities, requirements, qualifications, and preferred skills"
-                  size="small"
-                  sx={{ mb: 2, flex: 1 }}
-                />
-                
                 {/* Output Format Selection */}
                 <FormatSelector
                   selectedResumeFormat={selectedResumeFormat}
@@ -1550,7 +1746,12 @@ function MainApp() {
                   <Button 
                     variant="contained" 
                     endIcon={<AutoAwesomeIcon />}
-                    disabled={!jobTitle.trim()}
+                    disabled={
+                      // Cover letter enabled: Job URL is required
+                      generateCV ? !jobUrl.trim() : 
+                      // Cover letter disabled: Job URL OR Job Title is required
+                      (!jobUrl.trim() && !jobTitle.trim())
+                    }
                     onClick={handleOptimize}
                     size="medium"
                     sx={{
@@ -2119,7 +2320,7 @@ function MainApp() {
                 Q: How does JobTailorAI work?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
-                A: Upload your resume, paste the complete job description for better AI response, and our AI will craft your resume to perfectly match the job requirements. The more detailed the job description, the more targeted and effective your optimized resume will be.
+                A: Upload your resume, enter a job URL for automatic extraction or job title for generic optimization, and our AI will craft your resume to perfectly match the job requirements. Job URLs provide the most targeted optimization with company-specific intelligence.
               </Typography>
             </Box>
 
@@ -2142,7 +2343,7 @@ function MainApp() {
                 Q: How do I get my resume in PDF format?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
-                A: You can select your preferred output format directly on the job description page before crafting your resume. Choose from PDF, Word, or Text formats based on your needs.
+                A: You can select your preferred output format directly on the job details page before crafting your resume. Choose from PDF, Word, or Text formats based on your needs.
               </Typography>
             </Box>
 
@@ -2206,7 +2407,7 @@ function MainApp() {
                 Q: How do I change my default output format?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
-                A: On the job description page, you'll see format selection cards where you can choose between DOCX, PDF, or TXT for both your resume and cover letter (if enabled).
+                A: On the job details page, you'll see format selection cards where you can choose between DOCX, PDF, or TXT for both your resume and cover letter (if enabled).
               </Typography>
             </Box>
 
@@ -2238,7 +2439,7 @@ function MainApp() {
                 Q: How do I refresh the current page?
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pl: 2 }}>
-                A: Use the refresh button (🔄) in the top navigation bar. This will clear the current page state and prepare it for new input while preserving your uploaded resume on the job description page.
+                A: Use the refresh button (🔄) in the top navigation bar. This will clear the current page state and prepare it for new input while preserving your uploaded resume on the job details page.
               </Typography>
             </Box>
 

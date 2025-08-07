@@ -21,11 +21,41 @@ def analyze_resume_structure(resume_text):
         if any(indicator in line_lower for indicator in experience_indicators):
             experience_sections += 1
     
+    # Count bullet points per section (rough estimate)
+    bullets_per_section = []
+    current_section_bullets = 0
+    in_experience_section = False
+    
+    for line in lines:
+        line_stripped = line.strip()
+        line_lower = line.lower()
+        
+        # Check if we're entering an experience section
+        if any(indicator in line_lower for indicator in experience_indicators):
+            if current_section_bullets > 0:
+                bullets_per_section.append(current_section_bullets)
+            current_section_bullets = 0
+            in_experience_section = True
+        elif any(indicator in line_lower for indicator in education_indicators):
+            if current_section_bullets > 0:
+                bullets_per_section.append(current_section_bullets)
+            current_section_bullets = 0
+            in_experience_section = False
+        elif line_stripped.startswith('•') or line_stripped.startswith('-') or line_stripped.startswith('*'):
+            if in_experience_section:
+                current_section_bullets += 1
+    
+    # Add the last section if it had bullets
+    if current_section_bullets > 0:
+        bullets_per_section.append(current_section_bullets)
+    
     return {
         'total_lines': len(lines),
         'bullet_points': len(bullet_points),
         'estimated_experience_sections': max(1, experience_sections),
-        'avg_bullets_per_section': len(bullet_points) // max(1, experience_sections) if experience_sections > 0 else len(bullet_points)
+        'avg_bullets_per_section': len(bullet_points) // max(1, experience_sections) if experience_sections > 0 else len(bullet_points),
+        'bullets_per_section': bullets_per_section,
+        'detailed_bullet_analysis': f"Total bullets: {len(bullet_points)}, Sections with bullets: {len(bullets_per_section)}, Bullets per section: {bullets_per_section}"
     }
 
 
@@ -114,8 +144,8 @@ def get_resume_optimization_prompt(resume_text, job_description, job_title, comp
     original_page_count = estimate_page_count(resume_text)
     print(f"Estimated original resume page count: {original_page_count}")
     
-    # Determine content preservation guidance - same rule for all resume lengths
-    length_guidance = "Preserve all original content while optimizing for keywords. Maintain the same number of experience entries and bullet points as the original resume."
+    # Determine content preservation guidance - STRICT preservation rule
+    length_guidance = f"MANDATORY: You must output EXACTLY {original_structure['bullet_points']} bullet points total. Each job must have the same number of bullets as the original. NO EXCEPTIONS. NO REDUCTIONS. NO COMBINATIONS."
     
     # Build job description section
     job_desc_section = ""
@@ -143,6 +173,28 @@ TARGET JOB TITLE: {job_title}
 
 ORIGINAL RESUME LENGTH: Approximately {original_page_count} page(s)
 ORIGINAL RESUME STRUCTURE: {original_structure['total_lines']} lines, {original_structure['bullet_points']} bullet points, estimated {original_structure['estimated_experience_sections']} experience sections
+DETAILED BULLET ANALYSIS: {original_structure['detailed_bullet_analysis']}
+
+🚨🚨🚨 **MANDATORY BULLET POINT PRESERVATION - READ THIS FIRST** 🚨🚨🚨:
+
+**CRITICAL INSTRUCTION**: The original resume contains {original_structure['bullet_points']} bullet points total. Your output MUST contain EXACTLY {original_structure['bullet_points']} bullet points total. NO EXCEPTIONS.
+
+**BULLET POINT COUNTING RULES**:
+1. Count every bullet point (•, -, *) in the original resume
+2. Your output must have the EXACT SAME NUMBER of bullet points
+3. If original Job A has 4 bullets → output Job A must have 4 bullets
+4. If original Job B has 6 bullets → output Job B must have 6 bullets
+5. If original Job C has 3 bullets → output Job C must have 3 bullets
+6. NEVER reduce, combine, or eliminate bullet points
+7. NEVER create fewer bullets than the original
+8. Each original bullet point must become exactly one output bullet point
+
+**VALIDATION CHECK**: Before submitting your response, count the bullet points in your output:
+- Original total: {original_structure['bullet_points']} bullets
+- Your output total: [COUNT YOUR BULLETS] bullets
+- These numbers MUST be identical
+
+**IF BULLET COUNTS DON'T MATCH**: You have failed the task. Revise your response to match the exact bullet count.
 
 🚨 **CRITICAL WORK HISTORY PRESERVATION RULES** 🚨:
 **NEVER CHANGE COMPANY NAMES**: All company names from the original resume MUST remain exactly as they appear. Do not modify, replace, or substitute any company names.
@@ -349,13 +401,23 @@ CRITICAL OPTIMIZATION REQUIREMENTS:
    - Mention key technologies and methodologies from job description
    - Highlight leadership/collaboration aspects if mentioned in job posting
 
-9. **CONTENT PRESERVATION AND PRIORITIZATION**:
+9. **MANDATORY CONTENT PRESERVATION AND BULLET POINT RULES**:
    - {length_guidance}
    - **PRESERVE ALL EXPERIENCE ENTRIES** from the original resume
-   - **PRESERVE THE NUMBER OF BULLET POINTS** for each job - do not reduce the number
+   - 🚨 **CRITICAL**: **PRESERVE THE EXACT NUMBER OF BULLET POINTS** for each job - NEVER reduce the number
+   - **BULLET POINT RULE**: If original Job A has 5 bullets, output Job A MUST have exactly 5 bullets
+   - **NO COMBINING**: Never combine multiple original bullets into one output bullet
+   - **NO ELIMINATION**: Never eliminate or skip any original bullet points
+   - **ONE-TO-ONE MAPPING**: Each original bullet point must become exactly one enhanced bullet point
    - **MAINTAIN THE SAME LEVEL OF DETAIL** as the original resume
    - Only reorder experiences if it significantly improves relevance to the job
    - Transform and enhance existing content rather than removing it
+   
+   **BULLET POINT PRESERVATION EXAMPLES**:
+   ✅ CORRECT: Original has 4 bullets → Output has 4 enhanced bullets
+   ❌ WRONG: Original has 4 bullets → Output has 3 bullets (even if "better")
+   ❌ WRONG: Original has 4 bullets → Output has 2 bullets (combining bullets)
+   ❌ WRONG: Original has 4 bullets → Output has 5 bullets (adding new bullets)
 
 10. **AVOID REDUNDANCY AND REPETITION**:
    - Use DIFFERENT action verbs for each bullet point (avoid repeating "Developed", "Built", "Implemented")
@@ -397,6 +459,25 @@ TRANSFORMATION EXAMPLES (PRESERVE ALL ORIGINAL POINTS):
 **CRITICAL RULE**: Every bullet point must be based on an original bullet from the candidate's resume - never create entirely new accomplishments.
 - **IMPORTANT**: If original has 6 bullet points, output must have 6 bullet points (enhanced, not removed)
 
+🚨🚨🚨 **FINAL BULLET POINT VALIDATION BEFORE SUBMITTING** 🚨🚨🚨:
+
+**MANDATORY PRE-SUBMISSION CHECK**:
+1. **COUNT ORIGINAL BULLETS**: The original resume has {original_structure['bullet_points']} total bullet points
+2. **COUNT YOUR OUTPUT BULLETS**: Count every bullet point in your JSON response
+3. **VERIFY EXACT MATCH**: Your output must have EXACTLY {original_structure['bullet_points']} bullet points
+4. **CHECK EACH JOB**: Verify each job has the same number of bullets as the original
+5. **NO SHORTCUTS**: Do not combine, eliminate, or reduce bullet points for any reason
+
+**IF COUNTS DON'T MATCH**: 
+- STOP and revise your response
+- Add missing bullet points by enhancing original content
+- Never submit a response with fewer bullets than the original
+
+**BULLET POINT ACCOUNTABILITY**:
+- Original total: {original_structure['bullet_points']} bullets
+- Your output total: _____ bullets (YOU MUST COUNT THIS)
+- Match required: YES ✅ / NO ❌
+
 OUTPUT FORMAT:
 Provide your response in the following JSON structure:
 
@@ -420,9 +501,11 @@ Provide your response in the following JSON structure:
         "COMPLETELY rewritten bullet focusing on job-relevant impact with specific technologies/methodologies",
         "Quantified achievement using job description terminology and relevant metrics",
         "Another transformed bullet that showcases skills mentioned in job posting",
-        "PRESERVE ALL ORIGINAL BULLET POINTS - if original has 6 bullets, output must have 6 bullets",
+        "🚨 CRITICAL: PRESERVE ALL ORIGINAL BULLET POINTS - if original has 6 bullets, output must have EXACTLY 6 bullets",
         "Each bullet should be 1-2 lines, highly targeted to job requirements",
-        "Transform existing content rather than removing it"
+        "Transform existing content rather than removing it - NEVER reduce bullet count",
+        "⚠️ REMINDER: Count your bullets - this job must have same number as original job",
+        "Every original bullet point must become exactly one enhanced bullet point"
       ]
     }}
   ],
@@ -437,7 +520,7 @@ Provide your response in the following JSON structure:
 }}
 
 **CRITICAL SUCCESS CRITERIA**:
-- **PRESERVE ALL ORIGINAL CONTENT**: Same number of jobs, same number of bullet points per job
+- 🚨 **BULLET POINT PRESERVATION**: Same number of jobs, EXACT SAME NUMBER of bullet points per job (original: {original_structure['bullet_points']} total bullets → output: {original_structure['bullet_points']} total bullets)
 - **NEVER CHANGE COMPANY NAMES**: All company names must remain exactly as they appear in the original resume
 - **NEVER CHANGE EMPLOYMENT DATES**: All employment dates must remain exactly as they appear in the original resume
 - Every bullet point should feel like it was written specifically for this job
@@ -447,6 +530,7 @@ Provide your response in the following JSON structure:
 - Final resume should be significantly different from original while staying factual and complete
 - **EDUCATION SECTION MUST REMAIN COMPLETELY UNCHANGED FROM ORIGINAL**
 - **NO CONTENT SHOULD BE LOST** - only enhanced and optimized
+- 🚨 **FINAL CHECK**: Count your output bullets - must equal {original_structure['bullet_points']} exactly
 
 **REMEMBER**: This is not just editing - this is a complete strategic transformation to make this candidate irresistible for this specific role. However, you must NEVER change company names, employment dates, or education details. The candidate's work history integrity is sacred and must be preserved exactly as provided.
 
