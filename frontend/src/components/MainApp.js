@@ -60,6 +60,7 @@ import {
   Info as InfoIcon,
   Email as EmailIcon,
   Clear as ClearIcon,
+  OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -494,6 +495,7 @@ function MainApp() {
             Logger.log('All status data keys:', Object.keys(statusData));
             Logger.log('Cover letter filename:', statusData.coverLetterFilename);
             Logger.log('Cover letter text length:', statusData.coverLetterText?.length || 0);
+            Logger.log('ATS Score from backend:', statusData.atsScore);
             
             setResult({
               optimizedResumeUrl: statusData.optimizedResumeUrl,
@@ -502,8 +504,12 @@ function MainApp() {
               downloadFilename: statusData.downloadFilename || `crafted_resume.${statusData.fileType || 'docx'}`,
               // Add cover letter URL if available
               coverLetterUrl: statusData.coverLetterUrl || null,
-              coverLetterFilename: statusData.coverLetterFilename || `cover_letter.${statusData.fileType || 'docx'}`
+              coverLetterFilename: statusData.coverLetterFilename || `cover_letter.${statusData.fileType || 'docx'}`,
+              // Add ATS score if available
+              atsScore: statusData.atsScore || null
             });
+            
+            Logger.log('Result object set with ATS score:', statusData.atsScore);
             
             // Set the preview text if available
             if (statusData.previewText) {
@@ -1592,63 +1598,42 @@ function MainApp() {
                       <InfoIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
                     </Tooltip>
                   </Box>
-                  {jobUrl.trim() ? (
-                    <Box sx={{ 
-                      border: '1px solid #ccc', 
-                      borderRadius: 1, 
-                      p: 1.5, 
-                      minHeight: '56px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      backgroundColor: 'background.paper'
-                    }}>
-                      <Link 
-                        href={jobUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        sx={{ 
-                          color: 'primary.main',
-                          textDecoration: 'underline',
-                          '&:hover': { textDecoration: 'none' },
-                          wordBreak: 'break-all',
-                          flex: 1
-                        }}
-                      >
-                        {jobUrl}
-                      </Link>
-                      <IconButton
-                        onClick={() => setJobUrl('')}
-                        size="small"
-                        sx={{ ml: 1, color: 'text.secondary' }}
-                        title="Clear URL"
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  ) : (
-                    <TextField
-                      label="(Optional) Provide job URL to extract job title, company name and job description"
-                      fullWidth
-                      variant="outlined"
-                      value={jobUrl}
-                      onChange={(e) => {
-                        setJobUrl(e.target.value);
-                        // Reset extraction failed state when URL changes
-                        if (e.target.value.trim()) {
-                          setUrlExtractionFailed(false);
-                        }
-                      }}
-                      placeholder="e.g., https://careers.mastercard.com/us/en/job/..."
-                      size="small"
-                      required={false}
-                      error={false}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'background.paper'
-                        }
-                      }}
-                    />
-                  )}
+                  <TextField
+                    label="(Optional) Provide job URL to extract job title, company name and job description"
+                    fullWidth
+                    variant="outlined"
+                    value={jobUrl}
+                    onChange={(e) => {
+                      setJobUrl(e.target.value);
+                      // Reset extraction failed state when URL changes
+                      if (e.target.value.trim()) {
+                        setUrlExtractionFailed(false);
+                      }
+                    }}
+                    placeholder="e.g., https://careers.mastercard.com/us/en/job/..."
+                    size="small"
+                    required={false}
+                    error={false}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'background.paper'
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: jobUrl.trim() && (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => window.open(jobUrl, '_blank')}
+                            size="small"
+                            sx={{ color: 'primary.main' }}
+                            title="Open URL in new tab"
+                          >
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 
                 {/* Extract Button Section */}
                 {jobUrl.trim() && (
@@ -2150,7 +2135,7 @@ function MainApp() {
                 <Typography variant="body1" paragraph sx={{ mb: 2, textAlign: 'center' }}>
                   Your resume has been successfully crafted for the job description.
                 </Typography>
-                
+
                 {/* Horizontal Cards Container */}
                 <Box sx={{ 
                   display: 'flex', 
@@ -2321,6 +2306,104 @@ function MainApp() {
                           </Button>
                         )}
                       </Box>
+                    </Paper>
+                  )}
+
+                  {/* ATS Score Card */}
+                  {result?.atsScore && typeof result.atsScore === 'object' && (
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 2, 
+                        bgcolor: '#f8f9fa',
+                        borderRadius: 2,
+                        border: '2px solid #28a745',
+                        flex: 1
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#28a745' }}>
+                          ATS Score: {result.atsScore.rating}
+                        </Typography>
+                        <Box sx={{ 
+                          position: 'relative',
+                          width: 70, 
+                          height: 70
+                        }}>
+                          <svg width="70" height="70" style={{ transform: 'rotate(-90deg)' }}>
+                            {/* Background circle */}
+                            <circle
+                              cx="35"
+                              cy="35"
+                              r="30"
+                              stroke="#e0e0e0"
+                              strokeWidth="5"
+                              fill="transparent"
+                            />
+                            {/* Animated progress circle */}
+                            <circle
+                              cx="35"
+                              cy="35"
+                              r="30"
+                              stroke="#28a745"
+                              strokeWidth="5"
+                              fill="transparent"
+                              strokeDasharray={`${2 * Math.PI * 30}`}
+                              strokeDashoffset={`${2 * Math.PI * 30 * (1 - result.atsScore.overall / 100)}`}
+                              strokeLinecap="round"
+                              style={{
+                                transition: 'stroke-dashoffset 2s ease-out',
+                                filter: 'drop-shadow(0 0 4px rgba(40, 167, 69, 0.3))'
+                              }}
+                            />
+                          </svg>
+                          <Box sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)'
+                          }}>
+                            <Typography variant="h5" sx={{ color: '#28a745', fontWeight: 700 }}>
+                              {result.atsScore.overall}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                      
+                      {/* Progress Bars */}
+                      {Object.entries(result.atsScore).filter(([key]) => key !== 'overall' && key !== 'rating').map(([category, score], index) => (
+                        <Box key={category} sx={{ mb: 1.5 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="body2" sx={{ textTransform: 'capitalize', fontWeight: 500 }}>
+                              {category}
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {score}%
+                            </Typography>
+                          </Box>
+                          <Box sx={{ 
+                            width: '100%', 
+                            height: 8, 
+                            bgcolor: '#e0e0e0', 
+                            borderRadius: 4,
+                            overflow: 'hidden'
+                          }}>
+                            <Box sx={{ 
+                              width: `${score}%`, 
+                              height: '100%', 
+                              bgcolor: score >= 80 ? '#28a745' : score >= 60 ? '#ffc107' : '#dc3545',
+                              borderRadius: 4,
+                              transition: 'width 1.5s ease-out',
+                              animationDelay: `${index * 300}ms`,
+                              animation: 'slideIn 1.5s ease-out forwards',
+                              '@keyframes slideIn': {
+                                '0%': { width: '0%' },
+                                '100%': { width: `${score}%` }
+                              }
+                            }} />
+                          </Box>
+                        </Box>
+                      ))}
                     </Paper>
                   )}
                 </Box>

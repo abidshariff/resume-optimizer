@@ -825,7 +825,83 @@ def create_text_resume(resume_json):
         print(f"Error creating text resume: {str(e)}")
         return None
 
-def lambda_handler(event, context):
+def calculate_ats_score(optimized_resume, job_description, job_title):
+    """Calculate ATS compatibility score using AI analysis"""
+    try:
+        ats_prompt = f"""
+Analyze the following resume against the job requirements and provide ATS (Applicant Tracking System) compatibility scores.
+
+JOB TITLE: {job_title}
+
+JOB REQUIREMENTS:
+{job_description}
+
+RESUME TO ANALYZE:
+{optimized_resume}
+
+Provide scores (0-100) for each category and respond in this EXACT JSON format:
+{{
+  "overall": 85,
+  "keywords": 90,
+  "skills": 80,
+  "experience": 85,
+  "format": 95
+}}
+
+Evaluate:
+- overall: Overall ATS compatibility
+- keywords: Keyword matching with job description
+- skills: Skills alignment with requirements
+- experience: Experience relevance to role
+- format: Resume format and structure compatibility
+"""
+
+        models = [
+            {'id': 'anthropic.claude-3-sonnet-20240229-v1:0', 'max_tokens': 4096},
+            {'id': 'anthropic.claude-3-haiku-20240307-v1:0', 'max_tokens': 4096}
+        ]
+        
+        for model in models:
+            try:
+                request_body = {
+                    "max_tokens": 200,
+                    "temperature": 0.1,
+                    "system": "You are an ATS scoring expert. Respond only with valid JSON containing numeric scores 0-100.",
+                    "messages": [{"role": "user", "content": ats_prompt}]
+                }
+                
+                response = bedrock_runtime.invoke_model(
+                    body=json.dumps(request_body),
+                    modelId=model['id'],
+                    accept='application/json',
+                    contentType='application/json'
+                )
+                
+                response_body = json.loads(response.get('body').read())
+                score_text = response_body['content'][0]['text'].strip()
+                
+                # Try to parse JSON response
+                import re
+                json_match = re.search(r'\{[^}]+\}', score_text)
+                if json_match:
+                    scores = json.loads(json_match.group())
+                    # Validate all scores are numbers between 0-100
+                    for key, value in scores.items():
+                        if not isinstance(value, (int, float)) or value < 0 or value > 100:
+                            scores[key] = 0
+                    return scores
+                    
+            except Exception as e:
+                print(f"Error with model {model['id']}: {str(e)}")
+                continue
+                
+        return None
+        
+    except Exception as e:
+        print(f"Error in ATS score calculation: {str(e)}")
+        return None
+
+
     status_key = None
     try:
         print("Received event:", json.dumps(event))
@@ -1827,6 +1903,16 @@ def lambda_handler(event, context):
                 # Continue without cover letter if generation fails
                 cover_letter_text = None
         
+        # Calculate ATS score for the optimized resume
+        ats_score = None
+        try:
+            if job_description and job_description.strip():
+                ats_score = calculate_ats_score(optimized_resume, job_description, job_title)
+                print(f"ATS Score calculated: {ats_score}")
+        except Exception as e:
+            print(f"Error calculating ATS score: {str(e)}")
+            ats_score = None
+
         # Record in DynamoDB
         if table_name:
             table = dynamodb.Table(table_name)
@@ -1867,7 +1953,8 @@ def lambda_handler(event, context):
             'originalText': formatted_original_text if 'formatted_original_text' in locals() else (resume_text if 'resume_text' in locals() else None),
             'coverLetterText': cover_letter_text if 'cover_letter_text' in locals() and cover_letter_text else None,
             'coverLetterUrl': cover_letter_url if 'cover_letter_url' in locals() and cover_letter_url else None,
-            'coverLetterFilename': cover_letter_filename if 'cover_letter_filename' in locals() and cover_letter_filename else None
+            'coverLetterFilename': cover_letter_filename if 'cover_letter_filename' in locals() and cover_letter_filename else None,
+            'atsScore': ats_score
         }
         
         print(f"Final status update data - Cover letter URL: {additional_data['coverLetterUrl']}")
