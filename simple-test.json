@@ -1,0 +1,4 @@
+{
+  "body": "{\"resume_text\":\"John Doe\\nSoftware Engineer\\nExperience:\\n- Developed web applications\\n- Built REST APIs\\nEducation:\\nBS Computer Science, 2020\",\"job_title\":\"Senior Software Engineer\",\"company_name\":\"Tech Corp\"}",
+  "httpMethod": "POST"
+}

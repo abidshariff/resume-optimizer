@@ -1,0 +1,69 @@
+ABID SHAIK
+==========
+
+abidshariﬀ009@gmail.com | (716) 970-9249 | Dallas, Texas, 76210, United States
+
+PROFESSIONAL SUMMARY
+====================
+Seasoned Business Intelligence Developer with 10+ years of experience in delivering critical analytics solutions and building centralized data platforms. Proven track record in developing real-time analytics, optimizing data models, and implementing scalable BI solutions that drive business decision-making and operational efficiency.
+
+CORE COMPETENCIES
+=================
+SQL • Tableau • R • Scala
+Go • AWS RDS • Data Modeling • ETL
+Python • Business Analytics • Data Warehousing • Performance Optimization
+
+PROFESSIONAL EXPERIENCE
+=========================
+
+Senior Business Intelligence Engineer | Amazon
+Dec '20 — Present
+
+• Architected and implemented a centralized metrics library containing over 200 core KPIs, improving data integrity and executive reporting accuracy by 40%
+• Developed real-time BI dashboards using Tableau and AWS QuickSight, optimizing workload management for 1M+ hourly associates and reducing operational costs by 25%
+• Led migration of critical reporting systems to a microservices architecture, enhancing scalability and reducing data processing time by 60%
+• Designed and deployed an AI-powered self-service analytics platform, increasing data discovery efficiency by 70% and user adoption by 50%
+• Implemented automated data quality checks and governance protocols, reducing data discrepancies by 80% and ensuring compliance with organizational standards
+• Optimized ETL processes using AWS Glue and Redshift, reducing pipeline execution time by 40% and improving data freshness for critical business reports
+• Developed a custom BI tool maintenance utility, reducing system costs by 50% and improving overall platform stability and performance
+• Created an automation framework for rapid BI report deployment, decreasing time-to-market for new analytics solutions by 70%
+• Spearheaded the implementation of advanced data visualization techniques, resulting in a 35% increase in user engagement with BI tools across the organization
+
+------------------------------------------------------------
+
+Business Intelligence Developer | CGI
+Jun '15 — Dec '20
+
+• Designed and implemented scalable BI solutions using AWS services, improving system reliability by 40% and reducing security risks for business-critical applications
+• Developed and optimized ETL processes using Informatica and SQL, resulting in a 30% improvement in data refresh rates and report generation speed
+• Led the migration of on-premises BI infrastructure to AWS cloud, achieving a 25% reduction in operational costs and enhancing system scalability
+• Created centralized data repositories and automated reporting workflows, reducing manual data handling by 50% and accelerating business insights delivery
+
+------------------------------------------------------------
+
+ETL Analyst | Tech Mahindra
+Feb '13 — Jul '14
+
+• Developed a BI-driven decision support model for insurance policies, resulting in a 35% reduction in claims processing costs
+• Designed and implemented interactive dashboards using Tableau Server, increasing stakeholder engagement with data insights by 45%
+• Optimized data quality processes using Informatica, automating the de-duplication of over 50 million records and improving data accuracy by 60%
+• Engineered a comprehensive data warehouse solution using Oracle and Informatica PowerCenter, enabling the redesign of 70+ analytic dashboards for a major investment bank
+
+------------------------------------------------------------
+
+Business Intelligence Analyst | Infosys
+Oct '10 — Oct '12
+
+• Developed and maintained BI solutions for financial transaction analysis, improving data accessibility and reporting efficiency by 40%
+• Created interactive OBIEE dashboards with advanced features, increasing user adoption of BI tools by 55% across the organization
+• Optimized ETL processes using Unix shell scripts and Informatica, reducing job execution time by 70% and enhancing data pipeline efficiency
+• Designed and implemented an automated BI report generation tool, decreasing manual effort in production support by 65% and improving team productivity
+
+EDUCATION
+=========
+
+Masters in Information Systems | University at Buffalo
+GPA: 3.89
+
+Bachelors in Computer Science | Vellore Institute of Technology
+GPA: 3.7

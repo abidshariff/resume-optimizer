@@ -1,0 +1,8 @@
+{
+  "body": "{\"resume_text\":\"John Doe\\nSoftware Engineer\\nExperience:\\n• Developed web applications using Python and JavaScript\\n• Built REST APIs with Flask\\n• Worked with databases like PostgreSQL\\nEducation:\\nBS Computer Science, University of Tech, 2020\",\"job_description\":\"We are looking for a Senior Software Engineer with experience in Python, React, and AWS. Must have 5+ years of experience building scalable web applications.\",\"job_title\":\"Senior Software Engineer\",\"company_name\":\"Tech Corp\"}",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "httpMethod": "POST",
+  "path": "/optimize"
+}

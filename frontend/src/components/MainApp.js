@@ -39,7 +39,8 @@ import {
   Tooltip,
   Grid,
   Divider,
-  InputAdornment
+  InputAdornment,
+  Link
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon,
@@ -200,6 +201,10 @@ function MainApp() {
   const [selectedResumeFormat, setSelectedResumeFormat] = useState('pdf'); // Direct format selection
   const [selectedCoverLetterFormat, setSelectedCoverLetterFormat] = useState('pdf'); // Direct format selection
   const [jobUrl, setJobUrl] = useState(''); // Job URL for extraction
+  const [companyName, setCompanyName] = useState(''); // Manual company name input
+  const [manualJobDescription, setManualJobDescription] = useState(''); // Manual job description input
+  const [urlExtractionFailed, setUrlExtractionFailed] = useState(false); // Track if URL extraction failed
+  const [isExtracting, setIsExtracting] = useState(false); // Track extraction loading state
   // Note: Job data will be extracted during form submission, not stored in state
   const [jobId, setJobId] = useState(null);
   const [jobStatus, setJobStatus] = useState(null);
@@ -778,20 +783,18 @@ function MainApp() {
       return;
     }
 
-    // Cover letter enabled - Job URL is mandatory (needs company info)
-    if (generateCV) {
-      if (!jobUrl.trim()) {
-        setSnackbarMessage('Job URL is required when cover letter generation is enabled (needs company information)');
-        setSnackbarOpen(true);
-        return;
-      }
-    } else {
-      // Cover letter disabled - Job URL OR Job Title is mandatory
-      if (!jobUrl.trim() && !jobTitle.trim()) {
-        setSnackbarMessage('Please enter either a Job URL (for job-specific optimization) or Job Title (for generic optimization)');
-        setSnackbarOpen(true);
-        return;
-      }
+    // Job Title is always mandatory
+    if (!jobTitle.trim()) {
+      setSnackbarMessage('Job Title is required');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Cover letter enabled - Company Name becomes mandatory
+    if (generateCV && !companyName.trim()) {
+      setSnackbarMessage('Company Name is required for cover letter generation');
+      setSnackbarOpen(true);
+      return;
     }
 
     // Validate job title length
@@ -831,14 +834,29 @@ function MainApp() {
             }
             
             Logger.log('Job data extracted for processing:', extractedData);
+            setUrlExtractionFailed(false);
           }
         } catch (extractError) {
-          // If extraction fails but we have a job title, continue with generic optimization
-          if (!finalJobTitle) {
-            throw new Error(`Failed to extract job data: ${extractError.message}. Please provide a job title for generic optimization.`);
+          // URL extraction failed - enable manual fields for user input
+          setUrlExtractionFailed(true);
+          setSnackbarMessage(`URL extraction failed: ${extractError.message}. Please use the manual input fields below.`);
+          setSnackbarOpen(true);
+          
+          // If we don't have manual inputs, stop the process
+          if (!finalJobTitle || (generateCV && (!companyName.trim() || !manualJobDescription.trim()))) {
+            throw new Error(`Failed to extract job data from URL. Please fill in the manual fields: Job Title${generateCV ? ', Company Name, and Job Description' : ''}.`);
           }
-          Logger.warn('Job extraction failed, continuing with generic optimization:', extractError.message);
+          
+          // Use manual inputs
+          companyName = companyName.trim();
+          jobDescription = manualJobDescription.trim();
+          
+          Logger.warn('Job extraction failed, using manual inputs:', extractError.message);
         }
+      } else {
+        // No URL provided - use manual inputs
+        companyName = companyName.trim();
+        jobDescription = manualJobDescription.trim();
       }
       
       // Final validation after extraction
@@ -1028,6 +1046,9 @@ function MainApp() {
     setResumeName('');
     setJobTitle('');
     setJobUrl('');
+    setCompanyName('');
+    setManualJobDescription('');
+    setUrlExtractionFailed(false);
     navigate('/app/upload');
   };
 
@@ -1538,93 +1559,170 @@ function MainApp() {
                 transition={{ duration: 0.5 }}
                 style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
               >
-                <Typography variant="h5" gutterBottom sx={{ mb: 1 }}>
-                  Enter Job Details
-                </Typography>
-                <Typography variant="body2" color="textSecondary" paragraph sx={{ mb: 2 }}>
-                  Choose your optimization approach: Enter a <strong>Job URL</strong> for automatic extraction of job details and company-specific optimization, or just a <strong>Job Title</strong> for generic optimization.
-                </Typography>
-                
-
-                
                 {/* Job URL Field */}
-                <Box sx={{ mb: 2 }}>
-                  <TextField
-                    label={generateCV ? "Job URL (Required for Cover Letter)" : "Job URL (Recommended for Job-Specific Optimization)"}
-                    fullWidth
-                    variant="outlined"
-                    value={jobUrl}
-                    onChange={(e) => {
-                      setJobUrl(e.target.value);
-                      // Clear job title when job URL is entered (mutual exclusivity)
-                      if (e.target.value.trim() && jobTitle.trim()) {
-                        setJobTitle('');
-                      }
-                    }}
-                    placeholder="e.g., https://careers.mastercard.com/us/en/job/..."
-                    size="small"
-                    required={generateCV}
-                    error={generateCV && !jobUrl.trim()}
-                    disabled={!generateCV && jobTitle.trim() && !jobUrl.trim()} // Disable if job title is filled (except when cover letter is required)
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: (!generateCV && jobTitle.trim() && !jobUrl.trim()) ? 'action.disabledBackground' : 'background.paper',
-                        '&.Mui-disabled': {
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'action.disabled',
+                <Box sx={{ mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      Job URL
+                    </Typography>
+                    <Tooltip 
+                      title="Paste a job posting URL to automatically extract and fill the job title, company name, and job description fields below for your convenience."
+                      componentsProps={{
+                        tooltip: {
+                          sx: {
+                            bgcolor: 'white',
+                            color: 'text.primary',
+                            border: '2px solid #2196F3',
+                            borderRadius: 2,
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            maxWidth: 300,
+                            boxShadow: '0 4px 12px rgba(33, 150, 243, 0.15)',
+                            '& .MuiTooltip-arrow': {
+                              color: 'white',
+                              '&::before': {
+                                border: '2px solid #2196F3'
+                              }
+                            }
                           }
                         }
-                      }
-                    }}
-                    InputProps={{
-                      endAdornment: jobUrl.trim() && (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="clear job URL"
-                            onClick={() => setJobUrl('')}
-                            edge="end"
-                            size="small"
-                            sx={{ color: 'text.secondary' }}
-                            title="Clear job URL to use job title instead"
-                          >
-                            <ClearIcon fontSize="small" />
-                          </IconButton>
-                        </InputAdornment>
-                      )
-                    }}
-                    helperText={
-                      <Box sx={{ color: 'text.secondary' }}>
-                        {!generateCV && jobTitle.trim() && !jobUrl.trim() 
-                          ? "Job title is already provided. Clear it to use job URL instead."
-                          : generateCV 
-                            ? "Job URL is required for cover letter generation (needs company information)"
-                            : "Paste the job posting URL - job details will be extracted when you craft your resume"
+                      }}
+                      arrow
+                    >
+                      <InfoIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                    </Tooltip>
+                  </Box>
+                  {jobUrl.trim() ? (
+                    <Box sx={{ 
+                      border: '1px solid #ccc', 
+                      borderRadius: 1, 
+                      p: 1.5, 
+                      minHeight: '56px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      backgroundColor: 'background.paper'
+                    }}>
+                      <Link 
+                        href={jobUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        sx={{ 
+                          color: 'primary.main',
+                          textDecoration: 'underline',
+                          '&:hover': { textDecoration: 'none' },
+                          wordBreak: 'break-all',
+                          flex: 1
+                        }}
+                      >
+                        {jobUrl}
+                      </Link>
+                      <IconButton
+                        onClick={() => setJobUrl('')}
+                        size="small"
+                        sx={{ ml: 1, color: 'text.secondary' }}
+                        title="Clear URL"
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ) : (
+                    <TextField
+                      label="(Optional) Provide job URL to extract job title, company name and job description"
+                      fullWidth
+                      variant="outlined"
+                      value={jobUrl}
+                      onChange={(e) => {
+                        setJobUrl(e.target.value);
+                        // Reset extraction failed state when URL changes
+                        if (e.target.value.trim()) {
+                          setUrlExtractionFailed(false);
                         }
-                      </Box>
-                    }
-                  />
+                      }}
+                      placeholder="e.g., https://careers.mastercard.com/us/en/job/..."
+                      size="small"
+                      required={false}
+                      error={false}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'background.paper'
+                        }
+                      }}
+                    />
+                  )}
+                
+                {/* Extract Button Section */}
+                {jobUrl.trim() && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled={isExtracting}
+                      onClick={async () => {
+                        setIsExtracting(true);
+                        try {
+                          const extractedData = await handleJobUrlExtraction(jobUrl);
+                          if (extractedData) {
+                            // Gracefully fill the fields with smooth transitions
+                            if (extractedData.job_title) {
+                              setTimeout(() => setJobTitle(extractedData.job_title), 100);
+                            }
+                            if (extractedData.company) {
+                              setTimeout(() => setCompanyName(extractedData.company), 200);
+                            }
+                            if (extractedData.description) {
+                              setTimeout(() => setManualJobDescription(extractedData.description), 300);
+                            }
+                            setSnackbarMessage('Job details extracted successfully!');
+                            setSnackbarOpen(true);
+                          }
+                        } catch (error) {
+                          setSnackbarMessage(`Extraction failed: ${error.message}`);
+                          setSnackbarOpen(true);
+                        } finally {
+                          setIsExtracting(false);
+                        }
+                      }}
+                      sx={{ 
+                        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                        boxShadow: '0 3px 5px 2px rgba(10, 102, 194, .3)',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #084A8A 30%, #2E6BC7 90%)',
+                          transform: 'translateY(-1px)',
+                          boxShadow: '0 4px 8px 2px rgba(10, 102, 194, .4)'
+                        },
+                        '&:disabled': {
+                          background: '#ccc',
+                          boxShadow: 'none'
+                        },
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {isExtracting ? 'EXTRACTING...' : 'Extract'}
+                    </Button>
+                  </Box>
+                )}
                 </Box>
 
                 {/* OR Divider */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Divider sx={{ flex: 1 }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Divider sx={{ flex: 1, borderColor: '#0A66C2' }} />
                   <Typography 
                     variant="body2" 
                     sx={{ 
                       px: 2, 
-                      color: generateCV ? 'text.disabled' : 'text.secondary', 
-                      fontWeight: 500,
+                      color: '#0A66C2', 
+                      fontWeight: 600,
                       fontSize: '0.875rem'
                     }}
                   >
-                    {generateCV ? "OR (Job URL Required)" : "OR"}
+                    ENTER JOB DETAILS
                   </Typography>
-                  <Divider sx={{ flex: 1 }} />
+                  <Divider sx={{ flex: 1, borderColor: '#0A66C2' }} />
                 </Box>
                 
                 {/* Job Title Field */}
                 <TextField
-                  label={generateCV ? "Job Title (Auto-filled from URL)" : "Job Title (For Generic Optimization)"}
+                  label="Job Title"
                   fullWidth
                   variant="outlined"
                   value={jobTitle}
@@ -1633,15 +1731,18 @@ function MainApp() {
                     // Clear job URL when job title is entered (mutual exclusivity)
                     if (e.target.value.trim() && jobUrl.trim()) {
                       setJobUrl('');
+                      setUrlExtractionFailed(false);
                     }
                   }}
                   placeholder="e.g., Senior Data Engineer, Software Developer, Product Manager"
                   inputProps={{ maxLength: 100 }}
                   size="small"
+                  required={true}
+                  error={generateCV && !jobTitle.trim()}
                   sx={{ 
-                    mb: 2,
+                    mb: 1,
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: (generateCV || (jobUrl.trim() && !jobTitle.trim())) ? 'action.disabledBackground' : 'background.paper',
+                      backgroundColor: 'background.paper',
                       '&.Mui-disabled': {
                         '& .MuiOutlinedInput-notchedOutline': {
                           borderColor: 'action.disabled',
@@ -1649,46 +1750,119 @@ function MainApp() {
                       }
                     }
                   }}
-                  disabled={generateCV || (jobUrl.trim() && !jobTitle.trim())} // Disable if cover letter enabled OR job URL is filled
                   InputProps={{
-                    endAdornment: jobTitle.trim() && !generateCV && (
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Box component="span" sx={{ color: jobTitle.length > 90 ? 'error.main' : 'text.disabled', fontSize: '0.75rem', mr: 1 }}>
+                          {jobTitle.length}/100
+                        </Box>
+                        {jobTitle.trim() && !generateCV && (
+                          <IconButton
+                            aria-label="clear job title"
+                            onClick={() => setJobTitle('')}
+                            edge="end"
+                            size="small"
+                            sx={{ color: 'text.secondary' }}
+                            title="Clear job title to use job URL instead"
+                          >
+                            <ClearIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </InputAdornment>
+                    )
+                  }}
+                />
+                
+                {/* Company Name Field */}
+                <TextField
+                  label={generateCV ? "Company Name" : "Company Name (Optional)"}
+                  fullWidth
+                  variant="outlined"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="e.g., Amazon, Microsoft, Google"
+                  size="small"
+                  required={generateCV}
+                  error={generateCV && !companyName.trim()}
+                  inputProps={{ maxLength: 100 }}
+                  sx={{
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'background.paper',
+                      '&.Mui-disabled': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'action.disabled',
+                        }
+                      }
+                    }
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Box component="span" sx={{ color: companyName.length > 90 ? 'error.main' : 'text.disabled', fontSize: '0.75rem', mr: 1 }}>
+                          {companyName.length}/100
+                        </Box>
+                        {companyName.trim() && (
+                          <IconButton
+                            aria-label="clear company name"
+                            onClick={() => setCompanyName('')}
+                            edge="end"
+                            size="small"
+                            sx={{ color: 'text.secondary' }}
+                          >
+                            <ClearIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </InputAdornment>
+                    )
+                  }}
+                />
+
+                {/* Job Description Field */}
+                <TextField
+                  label="Job Description (Optional)"
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  rows={4}
+                  value={manualJobDescription}
+                  onChange={(e) => setManualJobDescription(e.target.value)}
+                  placeholder="Paste the job description here for better optimization..."
+                  size="small"
+                  required={false}
+                  error={false}
+                  sx={{
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'background.paper',
+                      '&.Mui-disabled': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'action.disabled',
+                        }
+                      }
+                    }
+                  }}
+                  InputProps={{
+                    endAdornment: manualJobDescription.trim() && (
                       <InputAdornment position="end">
                         <IconButton
-                          aria-label="clear job title"
-                          onClick={() => setJobTitle('')}
+                          aria-label="clear job description"
+                          onClick={() => setManualJobDescription('')}
                           edge="end"
                           size="small"
                           sx={{ color: 'text.secondary' }}
-                          title="Clear job title to use job URL instead"
                         >
                           <ClearIcon fontSize="small" />
                         </IconButton>
                       </InputAdornment>
                     )
                   }}
-                  helperText={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <Box component="span" sx={{ color: 'text.secondary' }}>
-                        {generateCV 
-                          ? "Job title will be auto-filled from job URL"
-                          : jobUrl.trim() && !jobTitle.trim()
-                            ? "Job URL is already provided. Clear it to use job title instead."
-                            : jobUrl.trim() 
-                              ? "Auto-filled from job URL (you can edit)" 
-                              : "Enter job title for generic optimization"
-                        }
-                      </Box>
-                      <Box component="span" sx={{ color: jobTitle.length > 90 ? 'error.main' : 'text.disabled' }}>
-                        {jobTitle.length}/100
-                      </Box>
-                    </Box>
-                  }
                 />
                 
                 {/* Generate CV Toggle */}
                 <Box sx={{ 
-                  mb: 2, 
-                  p: 1.5, 
+                  mb: 1, 
+                  p: 1, 
                   bgcolor: 'background.paper', 
                   borderRadius: 1, 
                   border: 1, 
@@ -1708,7 +1882,30 @@ function MainApp() {
                         <Typography variant="body2" fontWeight={500}>
                           Generate Cover Letter
                         </Typography>
-                        <Tooltip title="When enabled, a professional cover letter will be generated along with your optimized resume. Company name becomes required.">
+                        <Tooltip 
+                          title="When enabled, a professional cover letter will be generated along with your optimized resume. Company name becomes required."
+                          componentsProps={{
+                            tooltip: {
+                              sx: {
+                                bgcolor: 'white',
+                                color: 'text.primary',
+                                border: '2px solid #2196F3',
+                                borderRadius: 2,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                maxWidth: 300,
+                                boxShadow: '0 4px 12px rgba(33, 150, 243, 0.15)',
+                                '& .MuiTooltip-arrow': {
+                                  color: 'white',
+                                  '&::before': {
+                                    border: '2px solid #2196F3'
+                                  }
+                                }
+                              }
+                            }
+                          }}
+                          arrow
+                        >
                           <InfoIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
                         </Tooltip>
                       </Box>
@@ -1717,7 +1914,7 @@ function MainApp() {
                   <Typography variant="caption" color="text.secondary" sx={{ ml: 4, display: 'block' }}>
                     {generateCV 
                       ? "✓ Cover letter will be generated (Company name required)"
-                      : "Generate a professional cover letter along with your resume"
+                      : ""
                     }
                   </Typography>
                 </Box>
@@ -1747,10 +1944,10 @@ function MainApp() {
                     variant="contained" 
                     endIcon={<AutoAwesomeIcon />}
                     disabled={
-                      // Cover letter enabled: Job URL is required
-                      generateCV ? !jobUrl.trim() : 
-                      // Cover letter disabled: Job URL OR Job Title is required
-                      (!jobUrl.trim() && !jobTitle.trim())
+                      // Job Title is always required
+                      !jobTitle.trim() ||
+                      // Company Name required when Generate CV is enabled
+                      (generateCV && !companyName.trim())
                     }
                     onClick={handleOptimize}
                     size="medium"
@@ -2252,7 +2449,7 @@ function MainApp() {
       
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={6000}
+        autoHideDuration={3000}
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
