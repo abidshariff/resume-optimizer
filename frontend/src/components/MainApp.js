@@ -2148,13 +2148,15 @@ function MainApp() {
                     variant="outlined" 
                     sx={{ 
                       p: 2, 
-                      bgcolor: 'success.50',
+                      bgcolor: 'primary.50',
                       borderRadius: 2,
+                      border: '2px solid',
+                      borderColor: 'primary.main',
                       flex: 1
                     }}
                   >
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
-                      <DescriptionIcon sx={{ fontSize: 32, color: 'success.main', mb: 1 }} />
+                      <DescriptionIcon sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
                       <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                         Crafted Resume
                       </Typography>
@@ -2175,7 +2177,7 @@ function MainApp() {
                     }}>
                       <Button 
                         variant="contained" 
-                        color="success"
+                        color="primary"
                         size="small"
                         startIcon={<DownloadIcon />}
                         onClick={downloadOptimizedResume}
@@ -2205,7 +2207,7 @@ function MainApp() {
                       
                       <Button 
                         variant="outlined" 
-                        color="secondary"
+                        color="primary"
                         size="small"
                         startIcon={<CompareIcon />}
                         onClick={() => setCompareDialogOpen(true)}
@@ -2317,12 +2319,13 @@ function MainApp() {
                         p: 2, 
                         bgcolor: '#f8f9fa',
                         borderRadius: 2,
-                        border: '2px solid #28a745',
+                        border: '2px solid',
+                        borderColor: 'primary.main',
                         flex: 1
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#28a745' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
                           ATS Score: {result.atsScore.rating}
                         </Typography>
                         <Box sx={{ 
@@ -2345,7 +2348,7 @@ function MainApp() {
                               cx="35"
                               cy="35"
                               r="30"
-                              stroke="#28a745"
+                              stroke="#0A66C2"
                               strokeWidth="5"
                               fill="transparent"
                               strokeDasharray={`${2 * Math.PI * 30}`}
@@ -2353,7 +2356,7 @@ function MainApp() {
                               strokeLinecap="round"
                               style={{
                                 transition: 'stroke-dashoffset 2s ease-out',
-                                filter: 'drop-shadow(0 0 4px rgba(40, 167, 69, 0.3))'
+                                filter: 'drop-shadow(0 0 4px rgba(10, 102, 194, 0.3))'
                               }}
                             />
                           </svg>
@@ -2363,7 +2366,7 @@ function MainApp() {
                             left: '50%',
                             transform: 'translate(-50%, -50%)'
                           }}>
-                            <Typography variant="h5" sx={{ color: '#28a745', fontWeight: 700 }}>
+                            <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 700 }}>
                               {result.atsScore.overall}
                             </Typography>
                           </Box>
@@ -2391,7 +2394,7 @@ function MainApp() {
                             <Box sx={{ 
                               width: `${score}%`, 
                               height: '100%', 
-                              bgcolor: score >= 80 ? '#28a745' : score >= 60 ? '#ffc107' : '#dc3545',
+                              bgcolor: score >= 80 ? 'primary.main' : score >= 60 ? 'warning.main' : 'error.main',
                               borderRadius: 4,
                               transition: 'width 1.5s ease-out',
                               animationDelay: `${index * 300}ms`,
