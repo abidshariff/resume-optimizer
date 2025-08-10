@@ -181,6 +181,8 @@ def extract_job_data(url):
             return extract_glassdoor_job(soup, normalized_url)
         elif 'naukri.com' in domain:
             return extract_naukri_job(soup, normalized_url)
+        elif 'seek.co.nz' in domain or 'seek.com.au' in domain:
+            return extract_seek_job(soup, normalized_url)
         elif 'careers.mastercard.com' in domain:
             return extract_mastercard_job(soup, normalized_url)
         elif 'jobs.lever.co' in domain:
@@ -714,6 +716,98 @@ def extract_naukri_job(soup, url):
         
     except Exception as e:
         print(f"Naukri extraction error: {str(e)}")
+        return None
+
+def extract_seek_job(soup, url):
+    """Extract job data from Seek.co.nz and Seek.com.au job postings."""
+    
+    try:
+        job_data = {
+            'source': 'Seek',
+            'url': url
+        }
+        
+        # Job title - Seek specific selectors
+        title_selectors = [
+            'h1[data-automation="job-detail-title"]',
+            'h1.job-title',
+            'h1'
+        ]
+        
+        title_elem = None
+        for selector in title_selectors:
+            title_elem = soup.select_one(selector)
+            if title_elem:
+                break
+        
+        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        
+        # Company name - Seek specific selectors
+        company_selectors = [
+            '[data-automation="advertiser-name"]',
+            '.advertiser-name',
+            '.company-name'
+        ]
+        
+        company_elem = None
+        for selector in company_selectors:
+            company_elem = soup.select_one(selector)
+            if company_elem:
+                break
+        
+        job_data['company'] = clean_text(company_elem.get_text()) if company_elem else ''
+        
+        # Location - Seek specific selectors
+        location_selectors = [
+            '[data-automation="job-detail-location"]',
+            '.location',
+            '.job-location'
+        ]
+        
+        location_elem = None
+        for selector in location_selectors:
+            location_elem = soup.select_one(selector)
+            if location_elem:
+                break
+        
+        job_data['location'] = clean_text(location_elem.get_text()) if location_elem else ''
+        
+        # Job description - Seek specific selectors
+        desc_selectors = [
+            '[data-automation="jobAdDetails"]',
+            '.job-description',
+            '.description',
+            '.job-content'
+        ]
+        
+        desc_elem = None
+        for selector in desc_selectors:
+            desc_elem = soup.select_one(selector)
+            if desc_elem:
+                break
+        
+        job_data['description'] = clean_text(desc_elem.get_text()) if desc_elem else ''
+        
+        # Salary - Seek specific
+        salary_selectors = [
+            '[data-automation="job-detail-salary"]',
+            '.salary',
+            '.job-salary'
+        ]
+        
+        salary_elem = None
+        for selector in salary_selectors:
+            salary_elem = soup.select_one(selector)
+            if salary_elem:
+                break
+        
+        job_data['salary'] = clean_text(salary_elem.get_text()) if salary_elem else ''
+        
+        print(f"Extracted Seek job data: {job_data}")
+        return job_data
+        
+    except Exception as e:
+        print(f"Seek extraction error: {str(e)}")
         return None
 
 def extract_generic_job(soup, url):
