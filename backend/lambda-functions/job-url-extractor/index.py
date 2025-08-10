@@ -179,6 +179,8 @@ def extract_job_data(url):
             return extract_indeed_job(soup, normalized_url)
         elif 'glassdoor.com' in domain:
             return extract_glassdoor_job(soup, normalized_url)
+        elif 'naukri.com' in domain:
+            return extract_naukri_job(soup, normalized_url)
         elif 'careers.mastercard.com' in domain:
             return extract_mastercard_job(soup, normalized_url)
         elif 'jobs.lever.co' in domain:
@@ -562,6 +564,156 @@ def extract_greenhouse_job(soup, url):
         
     except Exception as e:
         print(f"Greenhouse extraction error: {str(e)}")
+        return None
+
+def extract_naukri_job(soup, url):
+    """Extract job data from Naukri.com job postings."""
+    
+    try:
+        # Check if this is a 404 page
+        if '404' in soup.get_text() or 'This page could not be found' in soup.get_text():
+            print("Naukri job page not found (404)")
+            return None
+            
+        # Check if this is a loading/splash screen
+        if 'splashscreen-container' in str(soup) or len(soup.get_text().strip()) < 100:
+            print("Naukri page appears to be loading or empty")
+            return None
+        
+        job_data = {
+            'source': 'Naukri.com',
+            'url': url
+        }
+        
+        # Try to extract job ID from URL for debugging
+        import re
+        job_id_match = re.search(r'-(\d+)(?:\?|$)', url)
+        if job_id_match:
+            job_data['job_id'] = job_id_match.group(1)
+            print(f"Extracted job ID: {job_data['job_id']}")
+        
+        # Job title - Naukri specific selectors
+        title_selectors = [
+            'h1.jd-header-title',
+            'h1[data-automation="job-title"]',
+            '.job-title h1',
+            'h1.job-title',
+            'h1'
+        ]
+        
+        title_elem = None
+        for selector in title_selectors:
+            title_elem = soup.select_one(selector)
+            if title_elem:
+                break
+        
+        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        
+        # Company name - Naukri specific selectors
+        company_selectors = [
+            '.jd-header-comp-name a',
+            '.jd-header-comp-name',
+            '[data-automation="company-name"]',
+            '.company-name',
+            '.comp-name'
+        ]
+        
+        company_elem = None
+        for selector in company_selectors:
+            company_elem = soup.select_one(selector)
+            if company_elem:
+                break
+        
+        job_data['company'] = clean_text(company_elem.get_text()) if company_elem else ''
+        
+        # Location - Naukri specific selectors
+        location_selectors = [
+            '.jd-header-comp-loc',
+            '[data-automation="job-location"]',
+            '.location',
+            '.job-location'
+        ]
+        
+        location_elem = None
+        for selector in location_selectors:
+            location_elem = soup.select_one(selector)
+            if location_elem:
+                break
+        
+        job_data['location'] = clean_text(location_elem.get_text()) if location_elem else ''
+        
+        # Experience - Naukri specific
+        exp_selectors = [
+            '.jd-header-exp',
+            '[data-automation="experience"]',
+            '.experience'
+        ]
+        
+        exp_elem = None
+        for selector in exp_selectors:
+            exp_elem = soup.select_one(selector)
+            if exp_elem:
+                break
+        
+        job_data['experience'] = clean_text(exp_elem.get_text()) if exp_elem else ''
+        
+        # Salary - Naukri specific
+        salary_selectors = [
+            '.jd-header-sal',
+            '[data-automation="salary"]',
+            '.salary'
+        ]
+        
+        salary_elem = None
+        for selector in salary_selectors:
+            salary_elem = soup.select_one(selector)
+            if salary_elem:
+                break
+        
+        job_data['salary'] = clean_text(salary_elem.get_text()) if salary_elem else ''
+        
+        # Job description - Naukri specific selectors
+        desc_selectors = [
+            '.jd-desc',
+            '.job-description',
+            '[data-automation="job-description"]',
+            '.description',
+            '.jd-content'
+        ]
+        
+        desc_elem = None
+        for selector in desc_selectors:
+            desc_elem = soup.select_one(selector)
+            if desc_elem:
+                break
+        
+        job_data['description'] = clean_text(desc_elem.get_text()) if desc_elem else ''
+        
+        # Skills - Naukri specific
+        skills_selectors = [
+            '.jd-skills',
+            '.skills',
+            '[data-automation="skills"]'
+        ]
+        
+        skills_elem = None
+        for selector in skills_selectors:
+            skills_elem = soup.select_one(selector)
+            if skills_elem:
+                break
+        
+        job_data['skills'] = clean_text(skills_elem.get_text()) if skills_elem else ''
+        
+        # If we didn't extract any meaningful data, return None
+        if not any([job_data.get('job_title'), job_data.get('company'), job_data.get('description')]):
+            print("No meaningful job data extracted from Naukri page")
+            return None
+        
+        print(f"Extracted Naukri job data: {job_data}")
+        return job_data
+        
+    except Exception as e:
+        print(f"Naukri extraction error: {str(e)}")
         return None
 
 def extract_generic_job(soup, url):
