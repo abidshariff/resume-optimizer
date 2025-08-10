@@ -1661,7 +1661,8 @@ function MainApp() {
                             setSnackbarOpen(true);
                           }
                         } catch (error) {
-                          setSnackbarMessage(`Extraction failed: ${error.message}`);
+                          setUrlExtractionFailed(true);
+                          setSnackbarMessage(`Unable to extract job details from URL. Please use the manual fields below.`);
                           setSnackbarOpen(true);
                         } finally {
                           setIsExtracting(false);
@@ -1685,6 +1686,20 @@ function MainApp() {
                       {isExtracting ? 'EXTRACTING...' : 'Extract'}
                     </Button>
                   </Box>
+                )}
+                
+                {/* URL Extraction Failed Message */}
+                {urlExtractionFailed && (
+                  <Alert 
+                    severity="info" 
+                    sx={{ mt: 1, mb: 1 }}
+                    onClose={() => setUrlExtractionFailed(false)}
+                  >
+                    <Typography variant="body2">
+                      <strong>Unable to extract job details from URL.</strong><br/>
+                      Please manually enter the job title and description in the fields below.
+                    </Typography>
+                  </Alert>
                 )}
                 </Box>
 
