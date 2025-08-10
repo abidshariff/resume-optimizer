@@ -480,23 +480,100 @@ export function LandingPage() {
       <Box sx={{ 
         background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2a2a2a 100%)',
         py: { xs: 4, md: 6 },
-        minHeight: { xs: 'calc(100vh - 64px)', md: 'calc(100vh - 80px)' }, // Subtract AppBar height
+        minHeight: { xs: 'calc(100vh - 64px)', md: 'calc(100vh - 80px)' },
         display: 'flex',
         alignItems: 'center',
         position: 'relative',
-        overflow: 'hidden',
-        // Add keyframes for animations
-        '& @keyframes pulse': {
-          '0%, 100%': {
-            opacity: 1,
-            transform: 'scale(1)'
-          },
-          '50%': {
-            opacity: 0.7,
-            transform: 'scale(1.1)'
-          }
-        }
+        overflow: 'hidden'
       }}>
+        {/* Background Elements */}
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          zIndex: 0
+        }}>
+          {/* Floating Circles */}
+          {[...Array(8)].map((_, i) => (
+            <Box
+              key={`circle-${i}`}
+              sx={{
+                position: 'absolute',
+                borderRadius: '50%',
+                background: `rgba(10, 102, 194, ${0.1 + Math.random() * 0.1})`,
+                animation: `float ${15 + i * 3}s ease-in-out infinite`,
+                animationDelay: `${i * 2}s`,
+                width: { xs: `${40 + Math.random() * 60}px`, md: `${80 + Math.random() * 120}px` },
+                height: { xs: `${40 + Math.random() * 60}px`, md: `${80 + Math.random() * 120}px` },
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                filter: 'blur(1px)'
+              }}
+            />
+          ))}
+          
+          {/* Grid Pattern */}
+          <Box sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundImage: `
+              linear-gradient(rgba(10, 102, 194, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(10, 102, 194, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px',
+            opacity: 0.3
+          }} />
+          
+          {/* Floating Lines */}
+          {[...Array(6)].map((_, i) => (
+            <Box
+              key={`line-${i}`}
+              sx={{
+                position: 'absolute',
+                width: { xs: '80px', md: '150px' },
+                height: '2px',
+                background: `linear-gradient(90deg, transparent, rgba(10, 102, 194, 0.4), transparent)`,
+                animation: `float ${20 + i * 4}s linear infinite`,
+                animationDelay: `${i * 3}s`,
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                transform: `rotate(${Math.random() * 180}deg)`
+              }}
+            />
+          ))}
+          
+          {/* Floating Words */}
+          {[
+            'Resume', 'Career', 'Skills', 'ATS', 'Interview', 'Job', 'Success', 'Professional',
+            'Experience', 'Achievement', 'Leadership', 'Growth', 'Excellence', 'Results',
+            'Performance', 'Expertise', 'Talent', 'Optimize', 'Keywords', 'Impact'
+          ].map((word, i) => (
+            <Box
+              key={`word-${i}`}
+              sx={{
+                position: 'absolute',
+                fontSize: { xs: '12px', md: '16px' },
+                fontWeight: 300,
+                color: `rgba(10, 102, 194, ${0.15 + Math.random() * 0.1})`,
+                userSelect: 'none',
+                pointerEvents: 'none',
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                animation: `float ${25 + Math.random() * 15}s linear infinite`,
+                animationDelay: `${Math.random() * 20}s`,
+                transform: `rotate(${Math.random() * 20 - 10}deg)`
+              }}
+            >
+              {word}
+            </Box>
+          ))}
+        </Box>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={{ xs: 3, md: 8 }} alignItems="center">
             <Grid item xs={12} md={6}>
@@ -630,6 +707,58 @@ export function LandingPage() {
                       overflow: 'hidden',
                       p: { xs: 0.8, md: 1.8 }
                     }}>
+                      {/* Large Vertical ATS Score Bar - Right Side */}
+                      <Box sx={{
+                        position: 'absolute',
+                        right: { xs: 8, sm: 15, md: 20 },
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 1,
+                        animation: 'float 4s ease-in-out infinite'
+                      }}>
+                        <Typography sx={{
+                          fontSize: { xs: '6px', sm: '10px', md: '12px' },
+                          fontWeight: 'bold',
+                          color: '#ff6b6b',
+                          writingMode: 'vertical-rl',
+                          textOrientation: 'mixed'
+                        }}>
+                          ATS SCORE
+                        </Typography>
+                        <Box sx={{
+                          width: { xs: '8px', sm: '12px', md: '15px' },
+                          height: { xs: '80px', sm: '150px', md: '180px' },
+                          bgcolor: '#e0e0e0',
+                          borderRadius: 2,
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}>
+                          <Box sx={{
+                            width: '100%',
+                            bgcolor: '#ff6b6b',
+                            borderRadius: 2,
+                            position: 'absolute',
+                            bottom: 0,
+                            animation: 'slideUpBefore 3s ease-out infinite',
+                            animationDelay: '1s',
+                            '@keyframes slideUpBefore': {
+                              '0%': { height: '0%' },
+                              '50%': { height: '35%' },
+                              '100%': { height: '0%' }
+                            }
+                          }} />
+                        </Box>
+                        <Typography sx={{
+                          fontSize: { xs: '8px', sm: '14px', md: '16px' },
+                          fontWeight: 'bold',
+                          color: '#ff6b6b'
+                        }}>
+                          45%
+                        </Typography>
+                      </Box>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', borderBottom: '1px solid #ccc', pb: 1 }}>
                         <Typography sx={{ 
@@ -860,35 +989,6 @@ export function LandingPage() {
                   </motion.div>
                   </Box>
 
-                  {/* AI Transformation Arrow in the middle */}
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0.7 }}
-                    animate={{ scale: 1.2, opacity: 1 }}
-                    transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
-                    style={{ 
-                      margin: { xs: '0 4px', sm: '0 25px' }, 
-                      zIndex: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%'
-                    }}
-                  >
-                    <Box sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mt: { xs: 4, sm: 6, md: 7 } // Move down slightly to align with middle of resumes
-                    }}>
-                      <AutoAwesomeIcon sx={{ 
-                        fontSize: { xs: 18, sm: 35, md: 45 }, 
-                        color: '#0A66C2',
-                        filter: 'drop-shadow(0 0 15px rgba(10, 102, 194, 0.6))',
-                        transform: 'rotate(0deg)'
-                      }} />
-                    </Box>
-                  </motion.div>
-
                   {/* After Resume with Label */}
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Box sx={{
@@ -920,6 +1020,59 @@ export function LandingPage() {
                       overflow: 'hidden',
                       p: { xs: 0.8, md: 1.8 }
                     }}>
+                      {/* Large Vertical ATS Score Bar - Right Side */}
+                      <Box sx={{
+                        position: 'absolute',
+                        right: { xs: 8, sm: 15, md: 20 },
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 1,
+                        animation: 'float 4s ease-in-out infinite',
+                        animationDelay: '1s'
+                      }}>
+                        <Typography sx={{
+                          fontSize: { xs: '6px', sm: '10px', md: '12px' },
+                          fontWeight: 'bold',
+                          color: '#0A66C2',
+                          writingMode: 'vertical-rl',
+                          textOrientation: 'mixed'
+                        }}>
+                          ATS SCORE
+                        </Typography>
+                        <Box sx={{
+                          width: { xs: '8px', sm: '12px', md: '15px' },
+                          height: { xs: '80px', sm: '150px', md: '180px' },
+                          bgcolor: '#e0e0e0',
+                          borderRadius: 2,
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}>
+                          <Box sx={{
+                            width: '100%',
+                            bgcolor: '#4caf50',
+                            borderRadius: 2,
+                            position: 'absolute',
+                            bottom: 0,
+                            animation: 'slideUpAfter 3s ease-out infinite',
+                            animationDelay: '2s',
+                            '@keyframes slideUpAfter': {
+                              '0%': { height: '0%' },
+                              '50%': { height: '90%' },
+                              '100%': { height: '0%' }
+                            }
+                          }} />
+                        </Box>
+                        <Typography sx={{
+                          fontSize: { xs: '8px', sm: '14px', md: '16px' },
+                          fontWeight: 'bold',
+                          color: '#4caf50'
+                        }}>
+                          90%
+                        </Typography>
+                      </Box>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', bgcolor: '#f8fbff', mx: { xs: -1, md: -1.8 }, mt: { xs: -1, md: -1.8 }, p: { xs: 1, md: 1.8 }, borderBottom: '2px solid #0A66C2' }}>
                         <Typography sx={{ 
