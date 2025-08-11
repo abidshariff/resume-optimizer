@@ -41,9 +41,9 @@ def create_enhanced_word_resume(resume_json):
         name_style = styles.add_style('Name', WD_STYLE_TYPE.PARAGRAPH)
         name_font = name_style.font
         name_font.name = 'Arial'
-        name_font.size = Pt(14)  # Keep current size
+        name_font.size = Pt(12)  # Reduced from 14
         name_font.bold = True
-        name_style.paragraph_format.space_after = Pt(3)
+        name_style.paragraph_format.space_after = Pt(2)  # Tighter spacing
         name_style.paragraph_format.space_before = Pt(0)
         
         # Contact style - center aligned, smaller
@@ -146,11 +146,11 @@ def create_enhanced_word_resume(resume_json):
             skills_heading = doc.add_paragraph('CORE COMPETENCIES')
             skills_heading.style = heading_style
             
-            # Format skills in a single paragraph for compactness
+            # Format skills as individual bullet points for better readability
             skills_list = resume_json['skills']
-            skills_text = ' • '.join(skills_list[:12])  # Limit to 12 skills for space
-            skills_para = doc.add_paragraph(skills_text)
-            skills_para.style = body_style
+            for skill in skills_list[:12]:  # Limit to 12 skills for space
+                skill_para = doc.add_paragraph(f"• {skill}")
+                skill_para.style = bullet_style
         
         # Add professional experience - compact format
         if resume_json.get('experience'):
@@ -189,7 +189,8 @@ def create_enhanced_word_resume(resume_json):
                 institution = edu.get('institution', 'Institution')
                 edu_details = institution
                 
-                if edu.get('dates'):
+                # Only add dates if they exist and are not "N/A"
+                if edu.get('dates') and edu['dates'].strip() and edu['dates'].strip().upper() != 'N/A':
                     edu_details += f" | {edu['dates']}"
                 if edu.get('gpa'):
                     edu_details += f" | GPA: {edu['gpa']}"
@@ -325,13 +326,16 @@ def create_basic_word_resume(resume_json):
             skills_heading.paragraph_format.space_before = Pt(8)
             skills_heading.paragraph_format.space_after = Pt(3)
             
-            # Format skills compactly
-            skills_text = ' • '.join(resume_json['skills'][:12])
-            skills_para = doc.add_paragraph(skills_text)
-            skills_para.runs[0].font.name = 'Arial'
-            skills_para.runs[0].font.size = Pt(9)  # Reduced size
-            skills_para.paragraph_format.space_after = Pt(3)
-            skills_para.paragraph_format.space_after = Pt(3)
+            # Format skills as individual bullet points for better readability
+            for skill in resume_json['skills'][:12]:
+                skill_para = doc.add_paragraph(f"• {skill}")
+                skill_run = skill_para.runs[0]
+                skill_run.font.name = 'Arial'
+                skill_run.font.size = Pt(9)  # Reduced size
+                skill_para.paragraph_format.space_after = Pt(0)  # No spacing between bullets
+                skill_para.paragraph_format.space_before = Pt(0)
+                skill_para.paragraph_format.left_indent = Inches(0.15)
+                skill_para.paragraph_format.line_spacing = 1.0
         
         # Experience - blue underlined
         if resume_json.get('experience'):
@@ -396,7 +400,8 @@ def create_basic_word_resume(resume_json):
                 degree_para.paragraph_format.space_after = Pt(1)
                 
                 edu_info = edu.get('institution', 'Institution')
-                if edu.get('dates'):
+                # Only add dates if they exist and are not "N/A"
+                if edu.get('dates') and edu['dates'].strip() and edu['dates'].strip().upper() != 'N/A':
                     edu_info += f" | {edu['dates']}"
                 
                 edu_para = doc.add_paragraph(edu_info)
