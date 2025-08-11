@@ -10,7 +10,7 @@ import urllib.parse
 import datetime
 from datetime import datetime
 from dateutil import parser as date_parser
-from minimal_word_generator import create_minimal_word_resume
+from rtf_word_generator import create_rtf_word_resume
 from prompt_template import get_resume_optimization_prompt
 from skills_manager import SkillsManager
 
@@ -1554,58 +1554,47 @@ def process_resume_optimization(event, context):
                         optimized_resume = f"PDF generation failed. Here's your resume in text format:\n\n{text_resume}"
             elif output_format.lower() == 'word':
                 try:
-                    print("Starting Word document generation...")
-                    # Use the enhanced Word generator that's already in the deployment
-                    from enhanced_word_generator import create_enhanced_word_resume
-                    
-                    # Generate Word document with enhanced formatting
-                    word_content = create_enhanced_word_resume(resume_json)
+                    print("Starting Word document generation with RTF-based generator...")
+                    # Use the improved RTF-based Word generator
+                    word_content = create_rtf_word_resume(resume_json)
                     
                     output_extension = 'docx'
                     content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                     is_binary = True
                     optimized_resume = word_content
                     
-                    print("Successfully generated Word document using enhanced formatting")
+                    print("Successfully generated Word document using RTF-based formatting")
                     
-                except Exception as enhanced_error:
-                    print(f"Error using enhanced Word generator: {str(enhanced_error)}")
+                except Exception as word_error:
+                    print(f"Error generating Word document: {str(word_error)}")
                     try:
-                        # Fall back to minimal Word generator
-                        print("Trying minimal Word generator...")
-                        word_content = create_minimal_word_resume(resume_json)
+                        # Fall back to enhanced Word generator if available
+                        print("Trying enhanced Word generator fallback...")
+                        from enhanced_word_generator import create_enhanced_word_resume
+                        word_content = create_enhanced_word_resume(resume_json)
                         
                         output_extension = 'docx'
                         content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                         is_binary = True
                         optimized_resume = word_content
                         
-                        print("Successfully generated Word document using minimal approach")
-                    except Exception as word_error:
-                        print(f"Error generating Word document: {str(word_error)}")
-                        # Create error message but still try to provide Word format
+                        print("Successfully generated Word document using enhanced fallback")
+                    except Exception as enhanced_error:
+                        print(f"Enhanced fallback also failed: {str(enhanced_error)}")
                         try:
-                            error_resume_json = {
-                                "full_name": "Word Generation Error",
-                                "contact_info": "Word creation failed",
-                                "professional_summary": f"Unable to generate Word format. Error: {str(word_error)[:100]}",
-                                "skills": ["Word generation failed", "Please try PDF or text format"],
-                                "experience": [{
-                                    "title": "Format Error",
-                                    "company": "JobTailorAI",
-                                    "dates": "Current",
-                                    "achievements": ["Word generation encountered an error", "Your resume content is preserved", "Try downloading in PDF format instead"]
-                                }],
-                                "education": []
-                            }
-                            word_content = create_minimal_word_resume(error_resume_json)
+                            # Final fallback to minimal generator
+                            print("Trying minimal Word generator as final fallback...")
+                            from minimal_word_generator import create_minimal_word_resume
+                            word_content = create_minimal_word_resume(resume_json)
+                            
                             output_extension = 'docx'
                             content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                             is_binary = True
                             optimized_resume = word_content
-                            print("Generated error Word document with fallback content")
+                            
+                            print("Successfully generated Word document using minimal fallback")
                         except Exception as final_word_error:
-                            print(f"Final Word generation fallback failed: {str(final_word_error)}")
+                            print(f"All Word generation methods failed: {str(final_word_error)}")
                             # Final fallback to text but inform user
                             text_resume = create_text_resume(resume_json)
                             output_extension = 'txt'

@@ -11,43 +11,141 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.style import WD_STYLE_TYPE
 
 def create_enhanced_word_resume(resume_json):
-    """
-    Create a compact, ATS-friendly Word document with proper formatting.
-    
-    Args:
-        resume_json (dict): Resume data
-    
-    Returns:
-        bytes: Generated Word document as bytes
-    """
+    """Create compact, ATS-friendly Word document"""
     
     try:
-        # Create a new Document
+        from docx import Document
+        from docx.shared import Pt, Inches
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        
         doc = Document()
         
-        # Set very tight margins for maximum space utilization
-        sections = doc.sections
-        for section in sections:
-            section.top_margin = Inches(0.4)    # Reduced from 0.5
-            section.bottom_margin = Inches(0.4) # Reduced from 0.5
-            section.left_margin = Inches(0.6)   # Reduced from 0.75
-            section.right_margin = Inches(0.6)  # Reduced from 0.75
+        # Tight margins
+        for section in doc.sections:
+            section.top_margin = Inches(0.5)
+            section.bottom_margin = Inches(0.5)
+            section.left_margin = Inches(0.7)
+            section.right_margin = Inches(0.7)
         
-        # Define compact, professional styles
-        styles = doc.styles
+        # Name - centered
+        name_p = doc.add_paragraph()
+        name_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        name_run = name_p.add_run(resume_json.get('full_name', '').upper())
+        name_run.font.size = Pt(16)
+        name_run.bold = True
+        name_p.space_after = Pt(3)
         
-        # Name style - prominent but not oversized
-        # Name style - center aligned, smaller
-        name_style = styles.add_style('Name', WD_STYLE_TYPE.PARAGRAPH)
-        name_font = name_style.font
-        name_font.name = 'Arial'
-        name_font.size = Pt(14)  # Keep current size
-        name_font.bold = True
-        name_style.paragraph_format.space_after = Pt(3)
-        name_style.paragraph_format.space_before = Pt(0)
+        # Contact - centered
+        contact_parts = []
+        if resume_json.get('email'): contact_parts.append(resume_json['email'])
+        if resume_json.get('phone'): contact_parts.append(resume_json['phone'])
+        if resume_json.get('location'): contact_parts.append(resume_json['location'])
         
-        # Contact style - center aligned, smaller
-        contact_style = styles.add_style('Contact', WD_STYLE_TYPE.PARAGRAPH)
+        if contact_parts:
+            contact_p = doc.add_paragraph()
+            contact_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            contact_run = contact_p.add_run(' • '.join(contact_parts))
+            contact_run.font.size = Pt(11)
+            contact_p.space_after = Pt(8)
+        
+        # Professional Summary
+        if resume_json.get('professional_summary'):
+            summary_header = doc.add_paragraph()
+            summary_run = summary_header.add_run('PROFESSIONAL SUMMARY')
+            summary_run.font.size = Pt(12)
+            summary_run.bold = True
+            summary_header.space_before = Pt(6)
+            summary_header.space_after = Pt(3)
+            
+            summary_p = doc.add_paragraph()
+            summary_text = summary_p.add_run(resume_json['professional_summary'])
+            summary_text.font.size = Pt(11)
+            summary_p.space_after = Pt(6)
+        
+        # Core Competencies
+        if resume_json.get('skills'):
+            skills_header = doc.add_paragraph()
+            skills_run = skills_header.add_run('CORE COMPETENCIES')
+            skills_run.font.size = Pt(12)
+            skills_run.bold = True
+            skills_header.space_before = Pt(6)
+            skills_header.space_after = Pt(3)
+            
+            skills = resume_json['skills']
+            if isinstance(skills, list):
+                skills_text = ' • '.join(skills)
+            else:
+                skills_text = str(skills)
+            
+            skills_p = doc.add_paragraph()
+            skills_content = skills_p.add_run(skills_text)
+            skills_content.font.size = Pt(11)
+            skills_p.space_after = Pt(6)
+        
+        # Professional Experience
+        if resume_json.get('experience'):
+            exp_header = doc.add_paragraph()
+            exp_run = exp_header.add_run('PROFESSIONAL EXPERIENCE')
+            exp_run.font.size = Pt(12)
+            exp_run.bold = True
+            exp_header.space_before = Pt(6)
+            exp_header.space_after = Pt(3)
+            
+            for exp in resume_json['experience']:
+                # Job title
+                job_p = doc.add_paragraph()
+                job_run = job_p.add_run(exp.get('title', ''))
+                job_run.font.size = Pt(11)
+                job_run.bold = True
+                job_p.space_before = Pt(4)
+                job_p.space_after = Pt(1)
+                
+                # Company and dates
+                company_p = doc.add_paragraph()
+                company_text = f"{exp.get('company', '')} | {exp.get('dates', '')}"
+                company_run = company_p.add_run(company_text)
+                company_run.font.size = Pt(11)
+                company_p.space_after = Pt(2)
+                
+                # Achievements
+                for achievement in exp.get('achievements', []):
+                    bullet_p = doc.add_paragraph()
+                    bullet_p.style = 'List Bullet'
+                    bullet_run = bullet_p.add_run(achievement)
+                    bullet_run.font.size = Pt(10)
+                    bullet_p.space_after = Pt(1)
+        
+        # Education
+        if resume_json.get('education'):
+            edu_header = doc.add_paragraph()
+            edu_run = edu_header.add_run('EDUCATION')
+            edu_run.font.size = Pt(12)
+            edu_run.bold = True
+            edu_header.space_before = Pt(6)
+            edu_header.space_after = Pt(3)
+            
+            for edu in resume_json['education']:
+                degree_p = doc.add_paragraph()
+                degree_run = degree_p.add_run(edu.get('degree', ''))
+                degree_run.font.size = Pt(11)
+                degree_run.bold = True
+                degree_p.space_after = Pt(1)
+                
+                school_p = doc.add_paragraph()
+                school_text = f"{edu.get('institution', '')} | {edu.get('year', '')}"
+                school_run = school_p.add_run(school_text)
+                school_run.font.size = Pt(11)
+                school_p.space_after = Pt(3)
+        
+        # Save to BytesIO
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        return buffer.getvalue()
+        
+    except Exception as e:
+        print(f"Error creating Word document: {e}")
+        return None
         contact_font = contact_style.font
         contact_font.name = 'Arial'
         contact_font.size = Pt(9)  # Reduced from 10

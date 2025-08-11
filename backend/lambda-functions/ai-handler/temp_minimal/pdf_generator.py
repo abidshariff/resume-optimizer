@@ -175,93 +175,256 @@ startxref
 
 def create_pdf_resume(resume_json):
     """
-    Create a PDF resume from JSON data.
+    Create an ATS-optimized PDF resume from JSON data.
     """
     try:
-        # Build text content from JSON
+        # Build ATS-friendly text content
         text_lines = []
         
-        # Header
+        # Name - clean, centered
         if resume_json.get('full_name'):
             text_lines.append(resume_json['full_name'].upper())
-            text_lines.append("=" * len(resume_json['full_name']))
             text_lines.append("")
         
-        # Contact info
+        # Contact info - single line, pipe separated
+        contact_parts = []
+        if resume_json.get('email'):
+            contact_parts.append(resume_json['email'])
+        if resume_json.get('phone'):
+            contact_parts.append(resume_json['phone'])
+        if resume_json.get('location'):
+            contact_parts.append(resume_json['location'])
         if resume_json.get('contact_info'):
-            text_lines.append(resume_json['contact_info'])
+            # Handle legacy contact_info field
+            contact_parts.append(resume_json['contact_info'])
+        
+        if contact_parts:
+            text_lines.append(" | ".join(contact_parts))
             text_lines.append("")
         
         # Professional Summary
         if resume_json.get('professional_summary'):
             text_lines.append("PROFESSIONAL SUMMARY")
-            text_lines.append("-" * 20)
+            text_lines.append("")
             text_lines.append(resume_json['professional_summary'])
             text_lines.append("")
         
-        # Skills
+        # Core Competencies/Skills
         if resume_json.get('skills'):
-            text_lines.append("SKILLS")
-            text_lines.append("-" * 6)
+            text_lines.append("CORE COMPETENCIES")
+            text_lines.append("")
             skills = resume_json['skills']
+            
             if isinstance(skills, list):
-                for skill in skills:
-                    text_lines.append(f"• {skill}")
+                # Format skills in readable rows
+                skill_chunks = []
+                for i in range(0, len(skills), 4):
+                    chunk = skills[i:i+4]
+                    skill_chunks.append(" • ".join(chunk))
+                text_lines.extend(skill_chunks)
             else:
-                text_lines.append(str(skills))
+                skills_text = str(skills).replace(',', ' •')
+                text_lines.append(skills_text)
             text_lines.append("")
         
-        # Experience
+        # Professional Experience
         if resume_json.get('experience'):
-            text_lines.append("EXPERIENCE")
-            text_lines.append("-" * 10)
+            text_lines.append("PROFESSIONAL EXPERIENCE")
             text_lines.append("")
             
             for exp in resume_json['experience']:
-                if exp.get('title') and exp.get('company'):
-                    text_lines.append(f"{exp['title']} | {exp['company']}")
-                elif exp.get('title'):
-                    text_lines.append(exp['title'])
-                
+                # Job title, company, dates on one line
+                job_line = []
+                if exp.get('title'):
+                    job_line.append(exp['title'])
+                if exp.get('company'):
+                    job_line.append(exp['company'])
                 if exp.get('dates'):
-                    text_lines.append(exp['dates'])
+                    job_line.append(exp['dates'])
+                
+                if job_line:
+                    text_lines.append(" | ".join(job_line))
                 
                 text_lines.append("")
                 
-                if exp.get('achievements'):
-                    for achievement in exp['achievements']:
-                        text_lines.append(f"• {achievement}")
+                # Achievements with proper bullet formatting
+                achievements = exp.get('achievements', [])
+                if not achievements:
+                    achievements = exp.get('responsibilities', [])
+                
+                for achievement in achievements:
+                    clean_achievement = achievement.strip()
+                    if not clean_achievement.startswith('•'):
+                        clean_achievement = f"• {clean_achievement}"
+                    text_lines.append(clean_achievement)
                 
                 text_lines.append("")
         
         # Education
         if resume_json.get('education'):
             text_lines.append("EDUCATION")
-            text_lines.append("-" * 9)
             text_lines.append("")
             
             for edu in resume_json['education']:
-                if edu.get('degree') and edu.get('institution'):
-                    text_lines.append(f"{edu['degree']} | {edu['institution']}")
-                elif edu.get('degree'):
-                    text_lines.append(edu['degree'])
+                edu_line = []
+                if edu.get('degree'):
+                    edu_line.append(edu['degree'])
+                if edu.get('institution'):
+                    edu_line.append(edu['institution'])
+                if edu.get('dates') or edu.get('year'):
+                    date_info = edu.get('dates') or edu.get('year')
+                    edu_line.append(str(date_info))
                 
-                if edu.get('dates'):
-                    text_lines.append(edu['dates'])
+                if edu_line:
+                    text_lines.append(" | ".join(edu_line))
                 
                 if edu.get('details'):
-                    text_lines.append(edu['details'])
+                    text_lines.append(f"  {edu['details']}")
                 
                 text_lines.append("")
         
         # Join all lines
         resume_text = '\n'.join(text_lines)
         
-        # Create PDF
-        return create_pdf_from_text(resume_text, "Resume")
+        # Create ATS-optimized PDF
+        return create_ats_pdf(resume_text, "ATS_Resume")
         
     except Exception as e:
         print(f"Error creating PDF resume: {str(e)}")
-        # Fallback to simple text
-        fallback_text = f"Resume PDF Generation Error: {str(e)}\n\nPlease download as text format instead."
+        fallback_text = f"Resume content error: {str(e)}"
         return create_minimal_pdf(fallback_text)
+
+def create_ats_pdf(text_content, title="Document"):
+    """
+    Create ATS-friendly PDF with proper formatting and spacing
+    """
+    try:
+        lines = text_content.split('\n')
+        
+        pdf_objects = []
+        
+        # Object 1: Catalog
+        catalog = """1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj"""
+        pdf_objects.append(catalog)
+        
+        # Object 2: Pages
+        pages = """2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj"""
+        pdf_objects.append(pages)
+        
+        # Content with improved formatting
+        content_lines = []
+        content_lines.append("BT")
+        content_lines.append("/F1 11 Tf")  # Good font size for ATS
+        content_lines.append("1 0 0 1 50 750 Tm")
+        
+        y_position = 750
+        line_height = 14
+        
+        for line in lines:
+            if y_position < 50:
+                break
+            
+            clean_line = line.encode('ascii', errors='ignore').decode('ascii')
+            escaped_line = clean_line.replace('\\', '\\\\').replace('(', '\\(').replace(')', '\\)')
+            
+            # Handle section headers
+            if line.strip() and line.strip().isupper() and len(line.strip()) < 50:
+                content_lines.append(f"0 -{line_height * 0.5} Td")
+                content_lines.append(f"({escaped_line}) Tj")
+                content_lines.append(f"0 -{line_height * 1.5} Td")
+                y_position -= line_height * 2
+            elif line.strip() == "":
+                content_lines.append(f"0 -{line_height * 0.5} Td")
+                y_position -= line_height * 0.5
+            else:
+                content_lines.append(f"({escaped_line}) Tj")
+                content_lines.append(f"0 -{line_height} Td")
+                y_position -= line_height
+        
+        content_lines.append("ET")
+        content_stream = '\n'.join(content_lines)
+        
+        # Object 3: Page
+        page = f"""3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj"""
+        pdf_objects.append(page)
+        
+        # Object 4: Content stream
+        content_obj = f"""4 0 obj
+<<
+/Length {len(content_stream)}
+>>
+stream
+{content_stream}
+endstream
+endobj"""
+        pdf_objects.append(content_obj)
+        
+        # Object 5: Standard font for ATS compatibility
+        font = """5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj"""
+        pdf_objects.append(font)
+        
+        # Build PDF
+        pdf_content = "%PDF-1.4\n"
+        
+        xref_positions = []
+        current_pos = len(pdf_content)
+        
+        for obj in pdf_objects:
+            xref_positions.append(current_pos)
+            pdf_content += obj + "\n"
+            current_pos = len(pdf_content)
+        
+        xref_start = current_pos
+        pdf_content += "xref\n"
+        pdf_content += f"0 {len(pdf_objects) + 1}\n"
+        pdf_content += "0000000000 65535 f \n"
+        
+        for pos in xref_positions:
+            pdf_content += f"{pos:010d} 00000 n \n"
+        
+        pdf_content += "trailer\n"
+        pdf_content += f"<<\n/Size {len(pdf_objects) + 1}\n/Root 1 0 R\n>>\n"
+        pdf_content += "startxref\n"
+        pdf_content += f"{xref_start}\n"
+        pdf_content += "%%EOF\n"
+        
+        try:
+            pdf_buffer = io.BytesIO(pdf_content.encode('latin-1'))
+        except UnicodeEncodeError:
+            pdf_content_clean = pdf_content.encode('latin-1', errors='replace').decode('latin-1')
+            pdf_buffer = io.BytesIO(pdf_content_clean.encode('latin-1'))
+        
+        return pdf_buffer
+        
+    except Exception as e:
+        print(f"Error creating ATS PDF: {str(e)}")
+        return create_minimal_pdf(text_content)
