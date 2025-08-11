@@ -1,27 +1,41 @@
 # JobTailorAI
 
-A production-ready web application that uses AI to optimize resumes based on job descriptions, featuring real-time preview and side-by-side comparison capabilities.
+A production-ready, AI-powered web application that intelligently optimizes resumes and generates cover letters based on job descriptions. Features advanced job URL extraction, real-time preview, side-by-side comparison, and comprehensive user management.
 
-## 🚀 Features
+## 🚀 Key Features
 
-- **AI-Powered Optimization**: Uses Amazon Bedrock (Claude 3 Sonnet) for intelligent resume enhancement
+### Core AI Capabilities
+- **AI-Powered Resume Optimization**: Uses Amazon Bedrock (Claude 3 Sonnet) for intelligent resume enhancement with dynamic prompt templates
+- **Cover Letter Generation**: AI-generated personalized cover letters with company research integration
+- **ATS Scoring**: Applicant Tracking System compatibility scoring with detailed feedback
+- **Smart Job URL Extraction**: Automatically extracts job details from major job boards (LinkedIn, Indeed, Glassdoor, company career pages)
+- **Dynamic Skills Enhancement**: Intelligent skill extraction and enhancement based on job requirements
+
+### User Experience
 - **Multi-Format Support**: Upload PDF, Word (.docx), or text files
-- **Real-Time Preview**: See formatted preview of your optimized resume
-- **Side-by-Side Comparison**: Compare original vs optimized resume with smart formatting
-- **Professional Output**: Download optimized resumes in Word format
-- **User Authentication**: Secure user registration and login with AWS Cognito
-- **History Tracking**: Keep track of all your resume optimizations
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Real-Time Preview**: See formatted preview of optimized resumes and cover letters
+- **Side-by-Side Comparison**: Compare original vs optimized content with smart formatting
+- **Multiple Output Formats**: Download in PDF, Word, or text format
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **Dark/Light Theme**: User-customizable interface themes
+
+### Professional Features
+- **User Authentication**: Secure registration and login with AWS Cognito
+- **History Tracking**: Complete optimization history with search and filtering
+- **Batch Processing**: Handle multiple resume optimizations efficiently
+- **Progress Tracking**: Real-time status updates during processing
+- **Error Recovery**: Robust error handling with user-friendly messages
 
 ## 🏗️ Architecture
 
-This application uses a serverless architecture on AWS:
+This application uses a serverless architecture on AWS with advanced AI processing capabilities:
 
-- **Frontend**: React application (deployable on AWS Amplify or S3/CloudFront)
-- **Backend**: AWS Lambda functions with API Gateway
-- **AI Processing**: Amazon Bedrock (Claude 3 Sonnet)
+- **Frontend**: React application with Material-UI components (deployable on AWS Amplify or S3/CloudFront)
+- **Backend**: AWS Lambda functions with API Gateway for serverless processing
+- **AI Processing**: Amazon Bedrock (Claude 3 Sonnet) with custom prompt templates
 - **Storage**: Amazon S3 for file storage and DynamoDB for user history
 - **Authentication**: Amazon Cognito for user management
+- **Job Data Extraction**: Dedicated Lambda function for parsing job URLs from major job boards
 
 ### Architecture Diagram
 
@@ -42,11 +56,18 @@ This application uses a serverless architecture on AWS:
 │                 │     │               │     │                 │
 └─────────────────┘     └───────────────┘     └────────┬────────┘
                                                        │
-                                                       │
                                               ┌────────▼────────┐
                                               │                 │
                                               │ Amazon Bedrock  │
                                               │ (Claude 3)      │
+                                              │                 │
+                                              └─────────────────┘
+                                                       │
+                                              ┌────────▼────────┐
+                                              │                 │
+                                              │ Job URL         │
+                                              │ Extractor       │
+                                              │ Lambda Function │
                                               │                 │
                                               └─────────────────┘
 ```
@@ -61,8 +82,19 @@ resume-optimizer/
 │   │   ├── components/                 # React components
 │   │   │   ├── MainApp.js             # Main application logic
 │   │   │   ├── LandingPage.js         # Landing page component
+│   │   │   ├── FormatSelector.js      # Output format selection
+│   │   │   ├── ProcessingIndicator.js # Real-time progress tracking
+│   │   │   ├── LoadingScreen.js       # Loading animations
+│   │   │   ├── ProfileDialog.js       # User profile management
+│   │   │   ├── SettingsDialog.js      # Application settings
 │   │   │   └── ...                    # Other components
 │   │   ├── contexts/                  # React contexts
+│   │   │   ├── ThemeContext.js        # Dark/light theme management
+│   │   │   ├── LoadingContext.js      # Loading state management
+│   │   │   └── AuthContext.js         # Authentication context
+│   │   ├── utils/                     # Utility functions
+│   │   │   ├── logger.js              # Conditional logging utility
+│   │   │   └── sessionManager.js      # Session management
 │   │   ├── App.js                     # App entry point
 │   │   └── index.js                   # React DOM entry point
 │   ├── package.json                   # Frontend dependencies
@@ -71,20 +103,28 @@ resume-optimizer/
 │   ├── lambda-functions/              # AWS Lambda functions
 │   │   ├── ai-handler/               # AI processing logic
 │   │   │   ├── index.py              # Main AI handler
-│   │   │   ├── enhanced_word_generator.py
-│   │   │   ├── pdf_generator.py
-│   │   │   └── ...                   # Word generation utilities
+│   │   │   ├── prompt_template.py    # Dynamic prompt generation
+│   │   │   ├── enhanced_word_generator.py # Word document generation
+│   │   │   ├── pdf_generator.py      # PDF generation
+│   │   │   ├── skills_manager.py     # Skills extraction and enhancement
+│   │   │   ├── minimal_word_generator.py # Lightweight Word generation
+│   │   │   └── requirements.txt      # Python dependencies
+│   │   ├── job-url-extractor/        # Job URL parsing service
+│   │   │   ├── index.py              # Job data extraction logic
+│   │   │   └── requirements.txt      # Web scraping dependencies
 │   │   ├── resume-processor/         # File processing
-│   │   │   └── index.py
+│   │   │   └── index.py              # Resume file handling
 │   │   ├── status-checker/           # Status polling
-│   │   │   └── index.py
+│   │   │   └── index.py              # Processing status updates
 │   │   └── contact-handler/          # Contact form handler
-│   │       └── index.py
+│   │       └── index.py              # Contact form processing
 │   └── templates/
 │       └── resume-optimizer-stack.yaml # CloudFormation template
 ├── deploy.sh                         # One-click deployment script
 ├── cleanup.sh                        # Resource cleanup script
 ├── amplify.yml                       # AWS Amplify configuration
+├── test_*.py                         # Testing scripts
+├── *.md                              # Documentation files
 └── README.md                         # This file
 ```
 
@@ -187,6 +227,7 @@ REACT_APP_TEST_MODE=false
 **Backend (Lambda Environment Variables)**:
 - `STORAGE_BUCKET`: S3 bucket for file storage
 - `USER_HISTORY_TABLE`: DynamoDB table for user history
+- `JOB_URL_EXTRACTOR_FUNCTION`: Job URL extraction Lambda function name
 
 ### Logging Configuration
 
@@ -224,6 +265,15 @@ aws lambda invoke \
   --function-name ResumeOptimizerAIHandler-prod \
   --payload '{"test": "data"}' \
   response.json
+
+# Test job URL extraction
+python test_job_url_extractor.py
+
+# Test resume optimization with real data
+python test_resume_optimization.py
+
+# Test skills extraction and enhancement
+python test_skills_system.py
 ```
 
 ### Frontend Testing
@@ -235,12 +285,37 @@ npm run test:integration   # Run integration tests
 npm run build              # Test production build
 ```
 
+### End-to-End Testing
+
+The project includes comprehensive test scripts:
+
+- **`test_resume_optimization.py`**: Tests complete resume optimization workflow
+- **`test_job_url_extractor.py`**: Tests job URL extraction from major job boards
+- **`test_skills_system.py`**: Tests skills extraction and enhancement
+- **`test_netflix_extraction.py`**: Tests Netflix job posting extraction
+- **`simple_resume_test.py`**: Simple resume optimization test
+
 ## 📊 Monitoring & Logging
 
 - **CloudWatch Logs**: All Lambda functions log to CloudWatch
 - **API Gateway Logs**: Request/response logging enabled
 - **Error Tracking**: Comprehensive error handling with user-friendly messages
 - **Performance Metrics**: Lambda duration, memory usage, and error rates
+- **Cost Monitoring**: AI usage tracking and cost optimization scripts
+
+### Cost Management
+
+The project includes AI cost monitoring:
+
+```bash
+# Monitor AI costs and usage
+./monitor-ai-costs.sh
+
+# View detailed cost breakdown
+aws logs filter-log-events \
+  --log-group-name /aws/lambda/ResumeOptimizerAIHandler-prod \
+  --filter-pattern "BEDROCK_COST"
+```
 
 ## 🔒 Security Features
 
@@ -250,6 +325,8 @@ npm run build              # Test production build
 - **Input Validation**: Comprehensive validation on all inputs
 - **File Security**: Secure file upload with type validation
 - **Data Privacy**: User data isolated by user ID
+- **Rate Limiting**: API throttling to prevent abuse
+- **Encryption**: Data encrypted at rest and in transit
 
 ## 🚨 Troubleshooting
 
@@ -259,6 +336,8 @@ npm run build              # Test production build
 2. **Bedrock Access**: Verify Claude 3 models are enabled in your AWS region
 3. **Lambda Timeouts**: Check CloudWatch logs for performance issues
 4. **Authentication Issues**: Verify Cognito configuration matches frontend
+5. **Job URL Extraction Failures**: Check supported job board formats
+6. **ATS Scoring Issues**: Verify anthropic_version parameter in Claude requests
 
 ### Debug Commands
 
@@ -274,7 +353,20 @@ aws apigateway test-invoke-method \
   --rest-api-id your-api-id \
   --resource-id your-resource-id \
   --http-method POST
+
+# View job URL extractor logs
+./view-job-extractor-logs.sh
+
+# Verify AI handler deployment
+./verify-ai-handler.sh
 ```
+
+### Performance Optimization
+
+- **Lambda Layers**: Shared dependencies for faster cold starts
+- **S3 Transfer Acceleration**: Faster file uploads
+- **CloudFront CDN**: Optimized content delivery
+- **Minimal Deployments**: Reduced package sizes for faster deployments
 
 ## 🧹 Cleanup
 
@@ -291,6 +383,68 @@ This will delete:
 - API Gateway
 - Cognito user pools
 - DynamoDB tables
+
+## 📈 Advanced Features
+
+### Job URL Extraction
+
+Supports extraction from:
+- **LinkedIn**: Job postings and company pages
+- **Indeed**: Job listings with full descriptions
+- **Glassdoor**: Company reviews and job postings
+- **Company Career Pages**: Direct company job postings
+- **Netflix**: Specialized Netflix job extraction
+- **Mastercard**: Custom Mastercard job parsing
+
+### AI Prompt Engineering
+
+- **Dynamic Prompt Templates**: Contextual prompts based on job requirements
+- **Experience Level Detection**: Automatic seniority level determination
+- **Role Type Classification**: Technical, Management, or Analytical roles
+- **Skills Enhancement**: Intelligent skill extraction and improvement
+- **ATS Optimization**: Keyword optimization for Applicant Tracking Systems
+
+### Company Research Integration
+
+- **Company Mission Alignment**: Incorporates company values in cover letters
+- **Recent News Integration**: Includes relevant company updates
+- **Culture Fit Analysis**: Matches candidate profile to company culture
+- **Industry Insights**: Contextual industry knowledge integration
+
+## 🔄 Deployment Strategies
+
+### Environment Management
+
+```bash
+# Development environment
+./deploy.sh dev
+
+# Testing environment with validation
+./deploy.sh test
+
+# Production deployment with rollback capability
+./deploy.sh prod
+```
+
+### Blue-Green Deployment
+
+The system supports blue-green deployments for zero-downtime updates:
+
+1. Deploy to staging environment
+2. Run comprehensive tests
+3. Switch traffic to new version
+4. Monitor for issues
+5. Rollback if necessary
+
+### Rollback Procedures
+
+```bash
+# Emergency rollback
+./emergency-recovery.sh
+
+# Revert to previous version
+./deploy-reverted-backend.sh
+```
 
 ## 📝 License
 

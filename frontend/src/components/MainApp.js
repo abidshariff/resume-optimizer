@@ -820,8 +820,8 @@ function MainApp() {
       Logger.log('Selected cover letter format:', selectedCoverLetterFormat);
       Logger.log('Generate CV:', generateCV);
       
-      let companyName = '';
-      let jobDescription = '';
+      let finalCompanyName = companyName.trim();
+      let finalJobDescription = manualJobDescription.trim();
       let finalJobTitle = jobTitle.trim();
       
       // Extract job data if URL is provided
@@ -831,8 +831,8 @@ function MainApp() {
         try {
           const extractedData = await handleJobUrlExtraction(jobUrl);
           if (extractedData) {
-            companyName = extractedData.company || '';
-            jobDescription = extractedData.description || '';
+            finalCompanyName = extractedData.company || finalCompanyName;
+            finalJobDescription = extractedData.description || finalJobDescription;
             
             // Use extracted job title if user hasn't provided one
             if (!finalJobTitle && extractedData.job_title) {
@@ -843,26 +843,13 @@ function MainApp() {
             setUrlExtractionFailed(false);
           }
         } catch (extractError) {
-          // URL extraction failed - enable manual fields for user input
+          // URL extraction failed - use manual inputs (already set above)
           setUrlExtractionFailed(true);
-          setSnackbarMessage(`URL extraction failed: ${extractError.message}. Please use the manual input fields below.`);
+          setSnackbarMessage(`URL extraction failed: ${extractError.message}. Using manual input fields.`);
           setSnackbarOpen(true);
-          
-          // If we don't have manual inputs, stop the process
-          if (!finalJobTitle || (generateCV && (!companyName.trim() || !manualJobDescription.trim()))) {
-            throw new Error(`Failed to extract job data from URL. Please fill in the manual fields: Job Title${generateCV ? ', Company Name, and Job Description' : ''}.`);
-          }
-          
-          // Use manual inputs
-          companyName = companyName.trim();
-          jobDescription = manualJobDescription.trim();
           
           Logger.warn('Job extraction failed, using manual inputs:', extractError.message);
         }
-      } else {
-        // No URL provided - use manual inputs
-        companyName = companyName.trim();
-        jobDescription = manualJobDescription.trim();
       }
       
       // Final validation after extraction
@@ -870,8 +857,8 @@ function MainApp() {
         throw new Error('Job title is required. Please provide a job title or a valid job URL.');
       }
       
-      if (generateCV && !companyName) {
-        throw new Error('Company information is required for cover letter generation. Please provide a valid job URL.');
+      if (generateCV && !finalCompanyName) {
+        throw new Error('Company information is required for cover letter generation. Please provide company name.');
       }
       
       setStatusMessage('Processing your resume with AI...');
@@ -879,8 +866,8 @@ function MainApp() {
       const payload = {
         resume: resume,
         jobTitle: finalJobTitle,
-        companyName: companyName,
-        jobDescription: jobDescription,
+        companyName: finalCompanyName,
+        jobDescription: finalJobDescription,
         generateCV: generateCV,
         outputFormat: selectedResumeFormat,
         coverLetterFormat: generateCV ? selectedCoverLetterFormat : null
@@ -889,7 +876,7 @@ function MainApp() {
       Logger.log('=== API PAYLOAD DEBUG ===');
       Logger.log('API payload:', payload);
       Logger.log('Generate CV flag:', generateCV);
-      Logger.log('Company name:', companyName);
+      Logger.log('Company name:', finalCompanyName);
       Logger.log('Job title:', finalJobTitle);
       Logger.log('Resume format:', selectedResumeFormat);
       Logger.log('Cover letter format:', selectedCoverLetterFormat);

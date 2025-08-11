@@ -234,9 +234,7 @@ def extract_linkedin_job(soup, url):
             if title_elem:
                 break
         
-        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
-        
-        # Try multiple selectors for company name
+        job_data['job_title'] = clean_job_title(clean_job_title(clean_text(title_elem.get_text()))) if title_elem else ''
         company_selectors = [
             'a.topcard__org-name-link',
             'span.topcard__flavor',
@@ -300,7 +298,7 @@ def extract_linkedin_job(soup, url):
                     data = json.loads(script.string)
                     if data.get('@type') == 'JobPosting':
                         if not job_data['job_title'] and 'title' in data:
-                            job_data['job_title'] = data['title']
+                            job_data['job_title'] = clean_job_title(data['title'])
                         if not job_data['company'] and 'hiringOrganization' in data:
                             org = data['hiringOrganization']
                             if isinstance(org, dict) and 'name' in org:
@@ -328,7 +326,7 @@ def extract_indeed_job(soup, url):
         
         # Job title
         title_elem = soup.find('h1', class_='jobsearch-JobInfoHeader-title') or soup.find('h1')
-        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        job_data['job_title'] = clean_job_title(clean_job_title(clean_text(title_elem.get_text()))) if title_elem else ''
         
         # Company name
         company_elem = soup.find('div', class_='jobsearch-InlineCompanyRating') or soup.find('span', class_='jobsearch-JobInfoHeader-subtitle-item')
@@ -367,7 +365,7 @@ def extract_glassdoor_job(soup, url):
         
         # Job title
         title_elem = soup.find('div', {'data-test': 'job-title'}) or soup.find('h1')
-        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        job_data['job_title'] = clean_job_title(clean_text(title_elem.get_text())) if title_elem else ''
         
         # Company name
         company_elem = soup.find('div', {'data-test': 'employer-name'})
@@ -413,7 +411,7 @@ def extract_mastercard_job(soup, url):
                 if data.get('@type') == 'JobPosting':
                     # Extract job title
                     if 'title' in data:
-                        job_data['job_title'] = data['title']
+                        job_data['job_title'] = clean_job_title(data['title'])
                     
                     # Extract location
                     if 'jobLocation' in data:
@@ -463,7 +461,7 @@ def extract_mastercard_job(soup, url):
                         job_location_part = parts[0]  # "Manager, Data Engineering in O Fallon, United States of America, 63368-7263"
                         if ' in ' in job_location_part:
                             job_title, location = job_location_part.split(' in ', 1)
-                            job_data['job_title'] = job_title.strip()
+                            job_data['job_title'] = clean_job_title(job_title.strip())
                             job_data['location'] = location.strip()
         
         # Strategy 3: Extract from Twitter/OG meta tags
@@ -473,7 +471,7 @@ def extract_mastercard_job(soup, url):
                 title_content = twitter_title.get('content', '')
                 if ' in ' in title_content:
                     job_title = title_content.split(' in ')[0]
-                    job_data['job_title'] = job_title.strip()
+                    job_data['job_title'] = clean_job_title(job_title.strip())
         
         if not job_data.get('description'):
             twitter_desc = soup.find('meta', {'name': 'twitter:description'})
@@ -509,7 +507,7 @@ def extract_lever_job(soup, url):
         
         # Job title
         title_elem = soup.find('h2', class_='posting-headline') or soup.find('h1')
-        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        job_data['job_title'] = clean_job_title(clean_text(title_elem.get_text())) if title_elem else ''
         
         # Company name (extract from URL or page)
         company_match = re.search(r'jobs\.lever\.co/([^/]+)', url)
@@ -540,7 +538,7 @@ def extract_greenhouse_job(soup, url):
         
         # Job title
         title_elem = soup.find('h1', class_='app-title') or soup.find('h1')
-        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        job_data['job_title'] = clean_job_title(clean_text(title_elem.get_text())) if title_elem else ''
         
         # Company name (usually in the page title or header)
         company_elem = soup.find('div', class_='company-name') or soup.find('title')
@@ -609,7 +607,7 @@ def extract_naukri_job(soup, url):
             if title_elem:
                 break
         
-        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        job_data['job_title'] = clean_job_title(clean_text(title_elem.get_text())) if title_elem else ''
         
         # Company name - Naukri specific selectors
         company_selectors = [
@@ -740,7 +738,7 @@ def extract_seek_job(soup, url):
             if title_elem:
                 break
         
-        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        job_data['job_title'] = clean_job_title(clean_text(title_elem.get_text())) if title_elem else ''
         
         # Company name - Seek specific selectors
         company_selectors = [
@@ -832,7 +830,7 @@ def extract_generic_job(soup, url):
             if title_elem:
                 break
         
-        job_data['job_title'] = clean_text(title_elem.get_text()) if title_elem else ''
+        job_data['job_title'] = clean_job_title(clean_text(title_elem.get_text())) if title_elem else ''
         
         # Location - try multiple selectors
         location_selectors = ['.location', '[class*="location"]', '[class*="city"]']
@@ -861,6 +859,41 @@ def extract_generic_job(soup, url):
         return None
 
 def clean_text(text):
+    """Clean and normalize text content."""
+    if not text:
+        return ''
+    return ' '.join(text.strip().split())
+
+def clean_job_title(title):
+    """Clean job title by removing common suffixes and location info."""
+    if not title:
+        return ''
+    
+    # Remove common patterns
+    patterns_to_remove = [
+        r'\s*\(Remote.*?\)',  # (Remote - United States)
+        r'\s*\(.*?Remote.*?\)',  # (Remote)
+        r'\s*-\s*Remote.*',  # - Remote
+        r'\s*,\s*Analytics\s*\(.*?\)',  # , Analytics (Monetization)
+        r'\s*-\s*Analytics\s*\(.*?\)',  # - Analytics (Monetization)
+        r'\s*\|\s*.*',  # | anything after pipe
+        r'\s*-\s*\d+.*',  # - numbers (job IDs)
+        r'\s*\(.*?\)\s*$',  # (anything) at end
+        r'\s*-\s*.*\s+\w{2,3}\s*$',  # - Location State
+    ]
+    
+    import re
+    cleaned = title.strip()
+    
+    for pattern in patterns_to_remove:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+    
+    # Clean up extra spaces
+    cleaned = ' '.join(cleaned.split())
+    
+    return cleaned.strip()
+
+def clean_text_old(text):
     """Clean and normalize extracted text."""
     if not text:
         return ''

@@ -9,6 +9,7 @@ import sys
 import urllib.parse
 import datetime
 from datetime import datetime
+from dateutil import parser as date_parser
 from minimal_word_generator import create_minimal_word_resume
 from prompt_template import get_resume_optimization_prompt
 from skills_manager import SkillsManager
@@ -230,25 +231,25 @@ def create_cover_letter_word_document(cover_letter_text):
         raise e
 
 # AI Model Configuration - Models are tried in order of preference
-# Claude 3.5 Sonnet is now the primary model for optimal resume optimization quality
+# DeepSeek R1 as primary model for advanced reasoning and resume optimization
 AI_MODELS = [
+    {
+        'id': 'us.deepseek.r1-v1:0',
+        'name': 'DeepSeek R1',
+        'max_tokens': 4000,
+        'cost_tier': 1,
+        'cost_per_1m_input': 0.55,
+        'cost_per_1m_output': 2.19,
+        'description': 'Primary model - DeepSeek R1 for advanced reasoning and resume optimization'
+    },
     {
         'id': 'anthropic.claude-3-5-sonnet-20240620-v1:0',
         'name': 'Claude 3.5 Sonnet',
         'max_tokens': 4000,
-        'cost_tier': 1,
+        'cost_tier': 2,
         'cost_per_1m_input': 3.00,
         'cost_per_1m_output': 15.00,
-        'description': 'Primary model - latest Claude with excellent intelligence and performance for resume optimization'
-    },
-    {
-        'id': 'amazon.nova-pro-v1:0',
-        'name': 'Amazon Nova Pro',
-        'max_tokens': 4000,
-        'cost_tier': 2,
-        'cost_per_1m_input': 2.00,
-        'cost_per_1m_output': 8.00,
-        'description': 'Premium multimodal model - high performance fallback'
+        'description': 'Fallback model - latest Claude with excellent intelligence and performance for resume optimization'
     },
     {
         'id': 'anthropic.claude-3-haiku-20240307-v1:0',
@@ -257,55 +258,11 @@ AI_MODELS = [
         'cost_tier': 3,
         'cost_per_1m_input': 0.25,
         'cost_per_1m_output': 1.25,
-        'description': 'Fast, efficient Claude model - excellent value fallback'
-    },
-    {
-        'id': 'amazon.nova-lite-v1:0',
-        'name': 'Amazon Nova Lite',
-        'max_tokens': 4000,
-        'cost_tier': 4,
-        'cost_per_1m_input': 0.60,
-        'cost_per_1m_output': 2.40,
-        'description': 'Balanced multimodal model - good performance, moderate cost'
-    },
-    {
-        'id': 'meta.llama3-2-3b-instruct-v1:0',
-        'name': 'Llama 3.2 3B Instruct',
-        'max_tokens': 4000,
-        'cost_tier': 5,
-        'cost_per_1m_input': 0.60,
-        'cost_per_1m_output': 0.60,
-        'description': 'Cost-effective text model - good balance of performance and cost'
-    },
-    {
-        'id': 'amazon.titan-text-lite-v1',
-        'name': 'Amazon Titan Text Lite',
-        'max_tokens': 4000,
-        'cost_tier': 6,
-        'cost_per_1m_input': 0.30,
-        'cost_per_1m_output': 0.40,
-        'description': 'Cost-effective model - reliable and economical'
-    },
-    {
-        'id': 'amazon.nova-micro-v1:0',
-        'name': 'Amazon Nova Micro',
-        'max_tokens': 4000,
-        'cost_tier': 7,
-        'cost_per_1m_input': 0.35,
-        'cost_per_1m_output': 1.40,
-        'description': 'Ultra-economical text model - fastest and cheapest'
-    },
-    {
-        'id': 'mistral.mistral-7b-instruct-v0:2',
-        'name': 'Mistral 7B Instruct',
-        'max_tokens': 4000,
-        'cost_tier': 8,
-        'cost_per_1m_input': 0.15,
-        'cost_per_1m_output': 0.20,
-        'description': 'Backup model - excellent value for basic tasks'
+        'description': 'Budget fallback - Fast, efficient Claude model - excellent value fallback'
     }
 ]
 
+# AWS service clients
 s3 = boto3.client('s3')
 bedrock_runtime = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
@@ -864,6 +821,7 @@ Evaluate:
         for model in models:
             try:
                 request_body = {
+                    "anthropic_version": "bedrock-2023-05-31",
                     "max_tokens": 200,
                     "temperature": 0.1,
                     "system": "You are an ATS scoring expert. Respond only with valid JSON containing numeric scores 0-100.",
@@ -901,7 +859,8 @@ Evaluate:
         print(f"Error in ATS score calculation: {str(e)}")
         return None
 
-
+def process_resume_optimization(event, context):
+    """Main function to process resume optimization"""
     status_key = None
     try:
         print("Received event:", json.dumps(event))
@@ -1196,7 +1155,17 @@ Evaluate:
                 skills_text = "Dynamic Skills Database (prioritize these skills when relevant):\n" + "\n".join(skills_sections)
                 print(f"Generated skills text with {len(skills_sections)} categories")
         
-        prompt = get_resume_optimization_prompt(resume_text, job_description, job_title, company_name, skills_text, length_guidance)
+        # Log all variables sent to prompt template
+        print(f"=== PROMPT TEMPLATE VARIABLES ===")
+        print(f"Resume text length: {len(resume_text)} characters")
+        print(f"Job description length: {len(job_description)} characters")
+        print(f"Job title: {job_title}")
+        print(f"Company name: {company_name}")
+        print(f"Skills text length: {len(skills_text)} characters")
+        print(f"Length guidance: {length_guidance}")
+        print(f"=== END PROMPT VARIABLES ===")
+        
+        prompt = get_resume_optimization_prompt(resume_text, job_description, job_title, company_name, skills_text)
         
         # Call Amazon Bedrock with automatic model fallback
         def call_bedrock_with_fallback(prompt):
@@ -1221,13 +1190,25 @@ Evaluate:
                     print(f"  Description: {model['description']}")
                     
                     # Prepare the request body based on model type
-                    if model['id'].startswith('anthropic.'):
+                    if model['id'] == 'us.deepseek.r1-v1:0':
+                        # DeepSeek R1 via Bedrock with special formatting
+                        formatted_prompt = f"<｜begin▁of▁sentence｜><｜User｜>{prompt}<｜Assistant｜><think>"
+                        request_body = {
+                            "max_tokens": model['max_tokens'],
+                            "temperature": 0.5,
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": formatted_prompt
+                                }
+                            ]
+                        }
+                    elif model['id'].startswith('anthropic.'):
                         # Anthropic models use the messages format
                         request_body = {
                             "anthropic_version": "bedrock-2023-05-31",
                             "max_tokens": model['max_tokens'],
                             "temperature": 0.5,
-                            "system": "You are an expert ATS resume optimizer that preserves document formatting.",
                             "messages": [
                                 {
                                     "role": "user",
@@ -1293,7 +1274,15 @@ Evaluate:
                     # Parse the response based on model type
                     response_body = json.loads(response['body'].read())
                     
-                    if model['id'].startswith('anthropic.'):
+                    if model['id'] == 'us.deepseek.r1-v1:0':
+                        # DeepSeek R1 response format - try multiple possible formats
+                        if 'content' in response_body and response_body['content']:
+                            optimized_resume = response_body['content'][0]['text']
+                        elif 'output' in response_body:
+                            optimized_resume = response_body['output']
+                        else:
+                            optimized_resume = str(response_body)
+                    elif model['id'].startswith('anthropic.'):
                         optimized_resume = response_body['content'][0]['text']
                     elif model['id'].startswith('amazon.'):
                         if 'nova' in model['id']:
@@ -1414,16 +1403,96 @@ Evaluate:
         
         # Parse the JSON response from Claude
         try:
-            # Extract JSON from the response
+            # Extract JSON from the response with multiple fallback strategies
             import re
-            json_match = re.search(r'```json\s*(.*?)\s*```', optimized_resume, re.DOTALL)
-            if json_match:
-                resume_json = json.loads(json_match.group(1))
-            else:
-                # Try to parse the entire response as JSON
-                resume_json = json.loads(optimized_resume)
+            resume_json = None
+            
+            print(f"Raw AI response (first 500 chars): {optimized_resume[:500]}")
+            
+            # Parse the AI response for JSON format
+            actual_content = parse_ai_response(optimized_resume, "json")
+            
+            # Strategy 1: Look for JSON in code blocks (```json...``` or ```...```)
+            json_patterns = [
+                r'```json\s*(.*?)\s*```',
+                r'```\s*(.*?)\s*```',
+                r'```json\n(.*?)\n```',
+                r'```\n(.*?)\n```'
+            ]
+            
+            for pattern in json_patterns:
+                json_match = re.search(pattern, actual_content, re.DOTALL)
+                if json_match:
+                    try:
+                        resume_json = json.loads(json_match.group(1).strip())
+                        print(f"Successfully parsed JSON from code block with pattern: {pattern}")
+                        break
+                    except json.JSONDecodeError as e:
+                        print(f"Failed to parse JSON from pattern {pattern}: {str(e)}")
+                        continue
+            
+            # Strategy 2: Look for JSON between curly braces (entire object)
+            if not resume_json:
+                brace_match = re.search(r'\{.*\}', actual_content, re.DOTALL)
+                if brace_match:
+                    try:
+                        resume_json = json.loads(brace_match.group(0))
+                        print("Successfully parsed JSON from braces")
+                    except json.JSONDecodeError as e:
+                        print(f"Failed to parse JSON from braces: {str(e)}")
+            
+            # Strategy 3: Try to parse the entire response as JSON
+            if not resume_json:
+                try:
+                    resume_json = json.loads(actual_content.strip())
+                    print("Successfully parsed entire response as JSON")
+                except json.JSONDecodeError as e:
+                    print(f"Failed to parse entire response as JSON: {str(e)}")
+            
+            # Strategy 4: Look for JSON-like structure and clean it
+            if not resume_json:
+                # Try to find and extract a JSON object more aggressively
+                lines = actual_content.split('\n')
+                json_lines = []
+                in_json = False
+                brace_count = 0
                 
-            print("Successfully parsed JSON response")
+                for line in lines:
+                    if '{' in line and not in_json:
+                        in_json = True
+                        brace_count = line.count('{') - line.count('}')
+                        json_lines.append(line)
+                    elif in_json:
+                        json_lines.append(line)
+                        brace_count += line.count('{') - line.count('}')
+                        if brace_count <= 0:
+                            break
+                
+                if json_lines:
+                    try:
+                        json_text = '\n'.join(json_lines)
+                        resume_json = json.loads(json_text)
+                        print("Successfully parsed JSON using line-by-line extraction")
+                    except json.JSONDecodeError as e:
+                        print(f"Failed to parse extracted JSON: {str(e)}")
+            
+            if not resume_json:
+                print("All JSON parsing strategies failed, creating fallback structure")
+                resume_json = {
+                    "full_name": "Resume Processing Error",
+                    "contact_info": "Unable to parse AI response",
+                    "professional_summary": "The AI service returned an invalid response format. Please try again.",
+                    "skills": ["Resume processing", "Error recovery"],
+                    "experience": [{
+                        "title": "Processing Error",
+                        "company": "JobTailorAI",
+                        "dates": "Current",
+                        "achievements": ["AI response could not be parsed", "Please try submitting again"]
+                    }],
+                    "education": []
+                }
+            else:
+                print("Successfully prepared JSON response")
             
             # Debug: Check content preservation
             experience_count = len(resume_json.get('experience', []))
@@ -1437,70 +1506,73 @@ Evaluate:
             print(f"Generating resume in format: {output_format}")
             if output_format.lower() == 'pdf':
                 try:
-                    print("Starting PDF generation...")
-                    # Try to use reportlab for PDF generation
+                    print("Starting PDF generation using custom generator...")
+                    # Use the custom PDF generator that's already in the deployment
+                    from pdf_generator import create_pdf_resume
+                    
+                    print("Creating PDF document...")
+                    pdf_content = create_pdf_resume(resume_json)
+                    
+                    output_extension = 'pdf'
+                    content_type = 'application/pdf'
+                    is_binary = True
+                    optimized_resume = pdf_content
+                    
+                    print("Successfully generated PDF document")
+                    
+                except Exception as pdf_error:
+                    print(f"Error generating PDF document: {str(pdf_error)}")
+                    # Still try to provide PDF format with error message
                     try:
-                        print("Installing reportlab...")
-                        # Install reportlab in /tmp
-                        subprocess.check_call(['pip', 'install', 'reportlab', '-t', '/tmp'])
-                        sys.path.append('/tmp')
-                        
-                        print("Importing PDF generator...")
-                        # Import the PDF generator
+                        error_resume_json = {
+                            "full_name": "PDF Generation Error",
+                            "contact_info": "PDF creation failed",
+                            "professional_summary": f"Unable to generate PDF format. Error: {str(pdf_error)[:100]}",
+                            "skills": ["PDF generation failed", "Please try Word or text format"],
+                            "experience": [{
+                                "title": "Format Error",
+                                "company": "JobTailorAI",
+                                "dates": "Current",
+                                "achievements": ["PDF generation encountered an error", "Your resume content is preserved", "Try downloading in Word format instead"]
+                            }],
+                            "education": []
+                        }
                         from pdf_generator import create_pdf_resume
-                        
-                        print("Creating PDF document...")
-                        # Generate PDF document
-                        pdf_content = create_pdf_resume(resume_json)
-                        
+                        pdf_content = create_pdf_resume(error_resume_json)
                         output_extension = 'pdf'
                         content_type = 'application/pdf'
                         is_binary = True
                         optimized_resume = pdf_content
-                        
-                        print("Successfully generated PDF document using reportlab")
-                        
-                    except Exception as pdf_error:
-                        print(f"Error using reportlab PDF generator: {str(pdf_error)}")
-                        # Fall back to text format
+                        print("Generated error PDF with fallback content")
+                    except Exception as fallback_error:
+                        print(f"Fallback PDF generation also failed: {str(fallback_error)}")
+                        # Final fallback to text but inform user
                         text_resume = create_text_resume(resume_json)
                         output_extension = 'txt'
                         content_type = 'text/plain'
                         is_binary = False
-                        optimized_resume = text_resume if text_resume else f"Failed to create PDF resume. Error: {str(pdf_error)}"
-                    
-                except Exception as pdf_outer_error:
-                    print(f"Error generating PDF document: {str(pdf_outer_error)}")
-                    # Fall back to text format
-                    text_resume = create_text_resume(resume_json)
-                    output_extension = 'txt'
-                    content_type = 'text/plain'
-                    is_binary = False
-                    optimized_resume = text_resume if text_resume else f"Failed to create resume. Error: {str(pdf_outer_error)}"
+                        optimized_resume = f"PDF generation failed. Here's your resume in text format:\n\n{text_resume}"
             elif output_format.lower() == 'word':
                 try:
-                    # Try to use python-docx for enhanced formatting
+                    print("Starting Word document generation...")
+                    # Use the enhanced Word generator that's already in the deployment
+                    from enhanced_word_generator import create_enhanced_word_resume
+                    
+                    # Generate Word document with enhanced formatting
+                    word_content = create_enhanced_word_resume(resume_json)
+                    
+                    output_extension = 'docx'
+                    content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    is_binary = True
+                    optimized_resume = word_content
+                    
+                    print("Successfully generated Word document using enhanced formatting")
+                    
+                except Exception as enhanced_error:
+                    print(f"Error using enhanced Word generator: {str(enhanced_error)}")
                     try:
-                        # Install python-docx in /tmp
-                        subprocess.check_call(['pip', 'install', 'python-docx', '-t', '/tmp'])
-                        sys.path.append('/tmp')
-                        
-                        # Import the enhanced Word generator
-                        from enhanced_word_generator import create_enhanced_word_resume
-                        
-                        # Generate Word document with enhanced formatting
-                        word_content = create_enhanced_word_resume(resume_json)
-                        
-                        output_extension = 'docx'
-                        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                        is_binary = True
-                        optimized_resume = word_content
-                        
-                        print("Successfully generated Word document using enhanced formatting")
-                        
-                    except Exception as enhanced_error:
-                        print(f"Error using enhanced Word generator: {str(enhanced_error)}")
                         # Fall back to minimal Word generator
+                        print("Trying minimal Word generator...")
                         word_content = create_minimal_word_resume(resume_json)
                         
                         output_extension = 'docx'
@@ -1509,15 +1581,37 @@ Evaluate:
                         optimized_resume = word_content
                         
                         print("Successfully generated Word document using minimal approach")
-                    
-                except Exception as word_error:
-                    print(f"Error generating Word document: {str(word_error)}")
-                    # Fall back to text format
-                    text_resume = create_text_resume(resume_json)
-                    output_extension = 'txt'
-                    content_type = 'text/plain'
-                    is_binary = False
-                    optimized_resume = text_resume if text_resume else f"Failed to create resume. Error: {str(word_error)}"
+                    except Exception as word_error:
+                        print(f"Error generating Word document: {str(word_error)}")
+                        # Create error message but still try to provide Word format
+                        try:
+                            error_resume_json = {
+                                "full_name": "Word Generation Error",
+                                "contact_info": "Word creation failed",
+                                "professional_summary": f"Unable to generate Word format. Error: {str(word_error)[:100]}",
+                                "skills": ["Word generation failed", "Please try PDF or text format"],
+                                "experience": [{
+                                    "title": "Format Error",
+                                    "company": "JobTailorAI",
+                                    "dates": "Current",
+                                    "achievements": ["Word generation encountered an error", "Your resume content is preserved", "Try downloading in PDF format instead"]
+                                }],
+                                "education": []
+                            }
+                            word_content = create_minimal_word_resume(error_resume_json)
+                            output_extension = 'docx'
+                            content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                            is_binary = True
+                            optimized_resume = word_content
+                            print("Generated error Word document with fallback content")
+                        except Exception as final_word_error:
+                            print(f"Final Word generation fallback failed: {str(final_word_error)}")
+                            # Final fallback to text but inform user
+                            text_resume = create_text_resume(resume_json)
+                            output_extension = 'txt'
+                            content_type = 'text/plain'
+                            is_binary = False
+                            optimized_resume = f"Word generation failed. Here's your resume in text format:\n\n{text_resume}"
             else:
                 # Generate text format (default)
                 text_resume = create_text_resume(resume_json)
@@ -1536,10 +1630,27 @@ Evaluate:
             
         except Exception as e:
             print(f"Error parsing JSON response: {str(e)}")
-            # Fall back to text format
-            output_extension = 'txt'
-            content_type = 'text/plain'
-            is_binary = False
+            print(f"Raw response that failed to parse: {optimized_resume[:500]}...")
+            
+            # Create a minimal valid JSON structure to preserve user's format choice
+            resume_json = {
+                "full_name": "Resume Processing Error",
+                "contact_info": "JSON parsing failed",
+                "professional_summary": f"The AI service returned an unparseable response. Error: {str(e)[:100]}",
+                "skills": ["Resume processing", "Error recovery", "Please try again"],
+                "experience": [{
+                    "title": "Processing Error",
+                    "company": "JobTailorAI",
+                    "dates": "Current",
+                    "achievements": [
+                        "AI response could not be parsed as valid JSON",
+                        "This is likely a temporary issue with the AI service",
+                        "Please try submitting your resume again"
+                    ]
+                }],
+                "education": []
+            }
+            print("Created fallback JSON structure to preserve user format choice")
             optimized_resume = f"Failed to parse JSON response. Here's the raw response:\n\n{optimized_resume}"
         
         # Store the optimized resume
@@ -1761,6 +1872,12 @@ Evaluate:
                 cover_letter_prompt = f"""
                 Create a professional cover letter using the provided information. You must research the company and provide actual, real information - NO PLACEHOLDERS allowed.
 
+                CRITICAL OUTPUT REQUIREMENT: 
+                - Provide ONLY the final cover letter text
+                - Do NOT include any reasoning, thinking process, or explanations
+                - Do NOT include phrases like "Let me think", "I need to", or any meta-commentary
+                - Start directly with the candidate's contact information
+
                 IMPORTANT REQUIREMENTS:
                 1. Use the ACTUAL current date: {current_date}
                 2. Research {company_name} and find their real headquarters/main office address
@@ -1786,7 +1903,6 @@ Evaluate:
                 Hiring Manager
                 {company_name}
                 [RESEARCH AND PROVIDE ACTUAL COMPANY ADDRESS]
-                [CITY, STATE ZIP CODE]
 
                 Dear Hiring Manager,
 
@@ -1803,18 +1919,45 @@ Evaluate:
                 Regards,
                 [CANDIDATE NAME FROM RESUME]
 
-                CRITICAL INSTRUCTIONS:
-                1. Replace ALL bracketed placeholders with actual information
-                2. Research {company_name} to get real company address and information about their mission/values
-                3. Extract candidate's actual details from the resume provided
-                4. Write specific, personalized content - no generic statements
-                5. Make the cover letter highly relevant to both the role and the company
-                6. Ensure professional formatting and tone throughout
+                CRITICAL: Return ONLY the completed cover letter text. No JSON, no markdown, no code blocks, no explanations, no reasoning. Just the plain cover letter text starting with the candidate's name.
                 """
                 
                 # Generate cover letter using the same AI model
                 cover_letter_response, _ = call_bedrock_with_fallback(cover_letter_prompt)
-                cover_letter_text = cover_letter_response.strip()
+                
+                # Parse the cover letter response for text format
+                cover_letter_text = parse_ai_response(cover_letter_response, "text")
+                
+                # Clean up any AI reasoning that might have leaked through
+                # Remove common AI thinking patterns
+                reasoning_patterns = [
+                    r"^.*?let me.*?(?=\n[A-Z])",  # Remove "let me" reasoning
+                    r"^.*?I need to.*?(?=\n[A-Z])",  # Remove "I need to" reasoning  
+                    r"^.*?First.*?(?=\n[A-Z])",  # Remove "First" reasoning
+                    r"^.*?Okay.*?(?=\n[A-Z])",  # Remove "Okay" reasoning
+                    r"^.*?</think>.*?(?=\n[A-Z])",  # Remove thinking tags
+                    r"^.*?Let me.*?(?=\n[A-Z])",  # Remove "Let me" reasoning
+                ]
+                
+                import re
+                for pattern in reasoning_patterns:
+                    cover_letter_text = re.sub(pattern, '', cover_letter_text, flags=re.DOTALL | re.IGNORECASE)
+                
+                # Find the actual start of the cover letter (candidate name)
+                lines = cover_letter_text.split('\n')
+                start_index = 0
+                for i, line in enumerate(lines):
+                    line = line.strip()
+                    # Look for email pattern or candidate name pattern
+                    if '@' in line or (line and not line.lower().startswith(('okay', 'let me', 'first', 'i need', 'the current'))):
+                        start_index = i
+                        break
+                
+                # Reconstruct cover letter from the actual start
+                if start_index > 0:
+                    cover_letter_text = '\n'.join(lines[start_index:])
+                
+                cover_letter_text = cover_letter_text.strip()
                 
                 print(f"Cover letter generated successfully (length: {len(cover_letter_text)})")
                 
@@ -1979,3 +2122,41 @@ Evaluate:
         return {
             'error': str(e)
         }
+
+def parse_ai_response(response_text, expected_format="text"):
+    """
+    Simple AI response parser for enforced formats.
+    expected_format: "json" for resume, "text" for cover letter
+    """
+    if not response_text:
+        return "" if expected_format == "text" else "{}"
+    
+    content = response_text.strip()
+    
+    # Extract from Bedrock wrapper if present
+    if content.startswith("{'choices':") or content.startswith('{"choices":'):
+        try:
+            import ast
+            response_dict = ast.literal_eval(content)
+            if 'choices' in response_dict and response_dict['choices']:
+                message = response_dict['choices'][0]['message']
+                content = message.get('content') or message.get('reasoning_content') or content
+        except:
+            pass
+    
+    # Remove markdown code blocks if present
+    if expected_format == "json":
+        import re
+        json_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', content, re.DOTALL)
+        if json_match:
+            content = json_match.group(1)
+        elif not content.strip().startswith('{'):
+            brace_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if brace_match:
+                content = brace_match.group(0)
+    
+    return content.strip()
+
+def lambda_handler(event, context):
+    """AWS Lambda handler function"""
+    return process_resume_optimization(event, context)

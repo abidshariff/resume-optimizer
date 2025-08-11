@@ -17,10 +17,35 @@ class SkillsManager:
         
     def extract_skills_from_text(self, text: str) -> List[Dict]:
         """Extract potential skills from job description text"""
-        from skill_extractor import SkillExtractor
-        
-        extractor = SkillExtractor()
-        return extractor.extract_from_job_description(text)
+        try:
+            from skill_extractor import SkillExtractor
+            extractor = SkillExtractor()
+            return extractor.extract_from_job_description(text)
+        except ImportError:
+            # Fallback: simple keyword extraction
+            import re
+            
+            # Common technical skills patterns
+            tech_skills = [
+                'python', 'java', 'javascript', 'sql', 'aws', 'azure', 'gcp', 'docker', 'kubernetes',
+                'react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask', 'spring',
+                'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark',
+                'tensorflow', 'pytorch', 'scikit-learn', 'pandas', 'numpy', 'git', 'jenkins',
+                'terraform', 'ansible', 'linux', 'bash', 'powershell', 'api', 'rest', 'graphql'
+            ]
+            
+            found_skills = []
+            text_lower = text.lower()
+            
+            for skill in tech_skills:
+                if skill in text_lower:
+                    found_skills.append({
+                        'skill': skill.title(),
+                        'category': 'technical',
+                        'confidence': 0.8
+                    })
+            
+            return found_skills
     
     def normalize_skill_name(self, skill: str) -> str:
         """Normalize skill names for consistency"""

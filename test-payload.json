@@ -1,0 +1,7 @@
+{
+  "jobId": "test-job-123",
+  "resumeKey": "test-resume.pdf",
+  "statusKey": "test-status",
+  "jobDescription": "Software Engineer position requiring Python and AWS skills",
+  "resumeText": "John Doe\nSoftware Developer\nExperience with Python, JavaScript, and cloud technologies."
+}
