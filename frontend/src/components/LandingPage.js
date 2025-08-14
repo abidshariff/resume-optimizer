@@ -37,14 +37,12 @@ import {
   useMediaQuery
 } from '@mui/material';
 import { 
-  AutoAwesome as AutoAwesomeIcon,
   PlayArrow as PlayArrowIcon,
   TrendingUp as TrendingUpIcon,
   Speed as SpeedIcon,
   Shield as ShieldIcon,
   Psychology as PsychologyIcon,
   Logout as LogoutIcon,
-  WorkOutline as WorkIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
   HelpOutline as HelpOutlineIcon,
@@ -233,12 +231,34 @@ export function LandingPage() {
       description: 'Download your crafted resume in Word (.docx) or text format, perfectly formatted for any application.'
     },
     {
-      icon: <AutoAwesomeIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
+      icon: <Box sx={{ 
+        width: 40, 
+        height: 40, 
+        borderRadius: '50%', 
+        bgcolor: '#0A66C2', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: '18px'
+      }}>AI</Box>,
       title: 'ATS Optimization',
       description: 'Ensure your resume passes Applicant Tracking Systems with keyword optimization and proper formatting.'
     },
     {
-      icon: <WorkIcon sx={{ fontSize: 40, color: '#0A66C2' }} />,
+      icon: <Box sx={{ 
+        width: 40, 
+        height: 40, 
+        borderRadius: '50%', 
+        bgcolor: '#0A66C2', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: '18px'
+      }}>JT</Box>,
       title: 'Job-Specific Tailoring',
       description: 'Each resume is uniquely crafted for the specific job you\'re applying to, not generic templates.'
     }
@@ -272,17 +292,31 @@ export function LandingPage() {
                 }}
                 onClick={() => navigate('/')}
               >
-                <AutoAwesomeIcon sx={{ mr: { xs: 1, md: 2 }, color: '#0A66C2', fontSize: { xs: 24, md: 28 } }} />
-                <Typography variant="h5" component="div" sx={{ 
-                  fontWeight: 700,
-                  fontSize: { xs: '1.2rem', md: '1.5rem' },
-                  background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}>
-                  JobTailorAI
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="h5" component="div" sx={{ 
+                    fontWeight: 800,
+                    fontSize: { xs: '1.3rem', md: '1.6rem' },
+                    background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    letterSpacing: '-0.5px'
+                  }}>
+                    JobTailor
+                  </Typography>
+                  <Box sx={{
+                    bgcolor: '#0A66C2',
+                    color: 'white',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                    fontSize: { xs: '0.8rem', md: '1rem' },
+                    fontWeight: 700,
+                    letterSpacing: '0.5px'
+                  }}>
+                    AI
+                  </Box>
+                </Box>
               </Box>
               <Box sx={{ flexGrow: 1 }} />
               <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 } }}>
@@ -478,15 +512,15 @@ export function LandingPage() {
 
       {/* Hero Section */}
       <Box sx={{ 
-        background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2a2a2a 100%)',
-        py: { xs: 4, md: 6 },
+        background: 'linear-gradient(135deg, #0A1929 0%, #1A2332 25%, #0A66C2 50%, #1976D2 75%, #0D47A1 100%)',
+        py: { xs: 3, md: 4 },
         minHeight: { xs: 'calc(100vh - 64px)', md: 'calc(100vh - 80px)' },
         display: 'flex',
         alignItems: 'center',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'visible'
       }}>
-        {/* Background Elements */}
+        {/* Enhanced Modern Background */}
         <Box sx={{
           position: 'absolute',
           top: 0,
@@ -496,26 +530,81 @@ export function LandingPage() {
           overflow: 'hidden',
           zIndex: 0
         }}>
-          {/* Floating Circles */}
-          {[...Array(8)].map((_, i) => (
-            <Box
-              key={`circle-${i}`}
-              sx={{
-                position: 'absolute',
-                borderRadius: '50%',
-                background: `rgba(10, 102, 194, ${0.1 + Math.random() * 0.1})`,
-                animation: `float ${15 + i * 3}s ease-in-out infinite`,
-                animationDelay: `${i * 2}s`,
-                width: { xs: `${40 + Math.random() * 60}px`, md: `${80 + Math.random() * 120}px` },
-                height: { xs: `${40 + Math.random() * 60}px`, md: `${80 + Math.random() * 120}px` },
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                filter: 'blur(1px)'
-              }}
-            />
-          ))}
+          {/* Animated Gradient Overlay */}
+          <Box sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(45deg, rgba(10, 102, 194, 0.1) 0%, rgba(25, 118, 210, 0.15) 25%, rgba(13, 71, 161, 0.1) 50%, rgba(10, 102, 194, 0.05) 75%, rgba(25, 118, 210, 0.1) 100%)',
+            animation: 'gradientShift 8s ease-in-out infinite',
+            '@keyframes gradientShift': {
+              '0%, 100%': { 
+                background: 'linear-gradient(45deg, rgba(10, 102, 194, 0.1) 0%, rgba(25, 118, 210, 0.15) 25%, rgba(13, 71, 161, 0.1) 50%, rgba(10, 102, 194, 0.05) 75%, rgba(25, 118, 210, 0.1) 100%)'
+              },
+              '50%': { 
+                background: 'linear-gradient(225deg, rgba(25, 118, 210, 0.15) 0%, rgba(13, 71, 161, 0.1) 25%, rgba(10, 102, 194, 0.1) 50%, rgba(25, 118, 210, 0.05) 75%, rgba(13, 71, 161, 0.1) 100%)'
+              }
+            }
+          }} />
+
+          {/* Floating Geometric Shapes */}
+          <Box sx={{
+            position: 'absolute',
+            top: '10%',
+            left: '5%',
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(10, 102, 194, 0.2) 100%)',
+            animation: 'floatUpDown 6s ease-in-out infinite',
+            '@keyframes floatUpDown': {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateY(-20px) rotate(180deg)' }
+            }
+          }} />
           
-          {/* Grid Pattern */}
+          <Box sx={{
+            position: 'absolute',
+            top: '60%',
+            right: '8%',
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0%, rgba(25, 118, 210, 0.15) 100%)',
+            borderRadius: '8px',
+            animation: 'floatUpDown 8s ease-in-out infinite reverse',
+            animationDelay: '2s'
+          }} />
+
+          <Box sx={{
+            position: 'absolute',
+            top: '25%',
+            right: '15%',
+            width: '80px',
+            height: '80px',
+            border: '2px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '50%',
+            animation: 'slowRotate 12s linear infinite',
+            '@keyframes slowRotate': {
+              '0%': { transform: 'rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg)' }
+            }
+          }} />
+
+          <Box sx={{
+            position: 'absolute',
+            bottom: '20%',
+            left: '10%',
+            width: '50px',
+            height: '50px',
+            background: 'linear-gradient(135deg, rgba(13, 71, 161, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%)',
+            clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+            animation: 'floatUpDown 7s ease-in-out infinite',
+            animationDelay: '1s'
+          }} />
+
+          {/* Subtle Grid Pattern */}
           <Box sx={{
             position: 'absolute',
             top: 0,
@@ -523,96 +612,121 @@ export function LandingPage() {
             width: '100%',
             height: '100%',
             backgroundImage: `
-              linear-gradient(rgba(10, 102, 194, 0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(10, 102, 194, 0.1) 1px, transparent 1px)
+              linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
             `,
-            backgroundSize: '40px 40px',
+            backgroundSize: '50px 50px',
             opacity: 0.3
           }} />
-          
-          {/* Floating Lines */}
-          {[...Array(6)].map((_, i) => (
-            <Box
-              key={`line-${i}`}
-              sx={{
-                position: 'absolute',
-                width: { xs: '80px', md: '150px' },
-                height: '2px',
-                background: `linear-gradient(90deg, transparent, rgba(10, 102, 194, 0.4), transparent)`,
-                animation: `float ${20 + i * 4}s linear infinite`,
-                animationDelay: `${i * 3}s`,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                transform: `rotate(${Math.random() * 180}deg)`
-              }}
-            />
-          ))}
-          
-          {/* Floating Words */}
-          {[
-            'Resume', 'Career', 'Skills', 'ATS', 'Interview', 'Job', 'Success', 'Professional',
-            'Experience', 'Achievement', 'Leadership', 'Growth', 'Excellence', 'Results',
-            'Performance', 'Expertise', 'Talent', 'Optimize', 'Keywords', 'Impact'
-          ].map((word, i) => (
-            <Box
-              key={`word-${i}`}
-              sx={{
-                position: 'absolute',
-                fontSize: { xs: '12px', md: '16px' },
-                fontWeight: 300,
-                color: `rgba(10, 102, 194, ${0.15 + Math.random() * 0.1})`,
-                userSelect: 'none',
-                pointerEvents: 'none',
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animation: `float ${25 + Math.random() * 15}s linear infinite`,
-                animationDelay: `${Math.random() * 20}s`,
-                transform: `rotate(${Math.random() * 20 - 10}deg)`
-              }}
-            >
-              {word}
-            </Box>
-          ))}
+
+          {/* Subtle JobTailorAI Watermark */}
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%) rotate(-45deg)',
+            fontSize: { xs: '120px', md: '200px' },
+            fontWeight: 900,
+            color: 'rgba(255, 255, 255, 0.02)',
+            userSelect: 'none',
+            pointerEvents: 'none',
+            fontFamily: 'Arial, sans-serif',
+            letterSpacing: '-0.05em'
+          }}>
+            JobTailorAI
+          </Box>
+
+          {/* Radial Gradient Spotlight */}
+          <Box sx={{
+            position: 'absolute',
+            top: '30%',
+            left: '20%',
+            width: '400px',
+            height: '400px',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%)',
+            borderRadius: '50%',
+            animation: 'pulse 4s ease-in-out infinite',
+            '@keyframes pulse': {
+              '0%, 100%': { opacity: 0.3, transform: 'scale(1)' },
+              '50%': { opacity: 0.6, transform: 'scale(1.1)' }
+            }
+          }} />
         </Box>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={{ xs: 3, md: 8 }} alignItems="center">
+          <Grid container spacing={{ xs: 2, md: 4 }} alignItems="center" sx={{ minHeight: '100%' }}>
             <Grid item xs={12} md={6}>
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <Typography variant="h1" sx={{ 
-                  fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.8rem', lg: '3.2rem' },
-                  fontWeight: 700,
-                  background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  mb: { xs: 2, md: 3 },
-                  lineHeight: { xs: 1.3, md: 1.2 },
+                {/* Enhanced Hero Badge */}
+                <Box sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '50px',
+                  px: 3,
+                  py: 1,
+                  mb: 3,
+                  backdropFilter: 'blur(15px)',
                   textAlign: { xs: 'center', md: 'left' },
-                  maxWidth: { xs: '100%', md: '90%', lg: '85%' },
-                  letterSpacing: '-0.02em'
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                  animation: 'badgeGlow 3s ease-in-out infinite',
+                  '@keyframes badgeGlow': {
+                    '0%, 100%': { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)' },
+                    '50%': { boxShadow: '0 8px 32px rgba(255, 255, 255, 0.2)' }
+                  }
+                }}>
+                  <Box sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: '#4CAF50',
+                    mr: 1.5,
+                    animation: 'pulse 2s infinite'
+                  }} />
+                  <Typography variant="body2" sx={{
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600,
+                    fontSize: '0.85rem'
+                  }}>
+                    {currentUser ? '🎯 Ready for your next opportunity' : '🚀 AI-Powered • ATS-Optimized • Professional'}
+                  </Typography>
+                </Box>
+
+                <Typography variant="h1" sx={{ 
+                  fontSize: { xs: '2.2rem', sm: '2.8rem', md: '3.5rem', lg: '4rem' },
+                  fontWeight: 900,
+                  color: '#ffffff',
+                  mb: { xs: 2, md: 3 },
+                  lineHeight: { xs: 1.1, md: 1.05 },
+                  textAlign: { xs: 'center', md: 'left' },
+                  maxWidth: { xs: '100%', md: '95%', lg: '90%' },
+                  letterSpacing: '-0.03em',
+                  textShadow: '0 4px 8px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2)'
                 }}>
                   {(currentUser && authDataLoaded)
                     ? `Welcome back, ${getDisplayName()}!`
-                    : 'Land Your Dream Job with AI-Crafted Resumes'
+                    : 'Transform Your Career with AI-Powered Resumes'
                   }
                 </Typography>
+                
                 <Typography variant="h5" sx={{ 
-                  fontSize: { xs: '0.95rem', sm: '1.05rem', md: '1.2rem', lg: '1.3rem' },
-                  color: '#cccccc',
+                  fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.4rem', lg: '1.5rem' },
+                  color: '#ffffff',
                   mb: { xs: 4, md: 5 }, 
                   fontWeight: 400,
                   lineHeight: { xs: 1.5, md: 1.4 },
                   textAlign: { xs: 'center', md: 'left' },
-                  maxWidth: { xs: '100%', md: '85%', lg: '80%' },
-                  letterSpacing: '0.01em'
+                  maxWidth: { xs: '100%', md: '90%', lg: '85%' },
+                  letterSpacing: '0.005em',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
                 }}>
                   {currentUser
                     ? 'Ready to craft another resume? Let\'s get started with your next career opportunity.'
-                    : 'Transform your resume in seconds with our advanced AI technology. Get past ATS systems and land 3x more interviews.'
+                    : 'Create professional, ATS-optimized resumes in seconds. Land 3x more interviews with cutting-edge AI technology.'
                   }
                 </Typography>
                 <Box sx={{ 
@@ -622,19 +736,44 @@ export function LandingPage() {
                 }}>
                   <Button 
                     variant="contained" 
-                    size={isMobile ? "medium" : "large"}
+                    size={isMobile ? "large" : "large"}
                     onClick={handleGetStarted}
                     endIcon={<PlayArrowIcon />}
                     sx={{
-                      py: { xs: 1.5, md: 2 },
-                      px: { xs: 3, md: 4 },
-                      fontSize: { xs: '0.9rem', md: '1.1rem' },
-                      background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                      boxShadow: '0 8px 32px rgba(10, 102, 194, 0.3)',
+                      py: { xs: 2, md: 2.5 },
+                      px: { xs: 4, md: 6 },
+                      fontSize: { xs: '1rem', md: '1.2rem' },
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                      color: '#0A66C2',
+                      border: '2px solid rgba(255, 255, 255, 0.4)',
+                      borderRadius: '50px',
+                      boxShadow: '0 12px 40px rgba(255, 255, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                      backdropFilter: 'blur(15px)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: '-100%',
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
+                        transition: 'left 0.6s ease-in-out'
+                      },
                       '&:hover': {
-                        background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
-                        boxShadow: '0 12px 40px rgba(10, 102, 194, 0.4)',
-                        transform: 'translateY(-2px)'
+                        background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                        boxShadow: '0 16px 50px rgba(255, 255, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+                        transform: 'translateY(-4px) scale(1.03)',
+                        border: '2px solid rgba(255, 255, 255, 0.6)',
+                        '&::before': {
+                          left: '100%'
+                        }
+                      },
+                      '&:active': {
+                        transform: 'translateY(-2px) scale(1.01)'
                       }
                     }}
                   >
@@ -645,7 +784,7 @@ export function LandingPage() {
             </Grid>
             
             {/* Resume Transformation Mockup */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -655,10 +794,10 @@ export function LandingPage() {
                   position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'flex-start',
+                  justifyContent: 'center',
                   alignItems: 'center',
-                  height: { xs: '220px', sm: '480px', md: '530px' },
-                  pt: 2
+                  width: '100%',
+                  py: 2
                 }}>
                   {/* Mobile Resume Mockups (xs only) */}
                   <Box sx={{ 
@@ -672,9 +811,10 @@ export function LandingPage() {
                   <Box sx={{
                     display: { xs: 'none', sm: 'flex' },
                     justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: { sm: 2, md: 3 },
-                    flexDirection: 'row'
+                    alignItems: 'flex-start',
+                    gap: { sm: 1.5, md: 2 },
+                    flexDirection: 'row',
+                    width: '100%'
                   }}>
                   {/* Before Resume with Label */}
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -697,67 +837,67 @@ export function LandingPage() {
                     transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
                   >
                     <Box sx={{
-                      width: { xs: '130px', sm: '300px', md: '340px' },
-                      height: { xs: '190px', sm: '450px', md: '500px' },
+                      width: { xs: '130px', sm: '280px', md: '320px' },
+                      height: { xs: '190px', sm: '400px', md: '450px' },
                       bgcolor: '#f9f9f9',
                       borderRadius: 2,
                       border: '2px solid #ddd',
                       position: 'relative',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                       overflow: 'hidden',
-                      p: { xs: 0.8, md: 1.8 }
+                      p: { xs: 0.8, sm: 0.8, md: 1 },
+                      flexShrink: 0
                     }}>
-                      {/* Large Vertical ATS Score Bar - Right Side */}
+                      {/* Static ATS Score Badge - Top Right */}
                       <Box sx={{
                         position: 'absolute',
-                        right: { xs: 8, sm: 15, md: 20 },
-                        top: '50%',
-                        transform: 'translateY(-50%)',
+                        top: { xs: 8, sm: 12, md: 15 },
+                        right: { xs: 8, sm: 12, md: 15 },
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        gap: 1,
-                        animation: 'float 4s ease-in-out infinite'
+                        bgcolor: 'rgba(255, 107, 107, 0.1)',
+                        border: '2px solid #ff6b6b',
+                        borderRadius: 2,
+                        p: { xs: 0.4, sm: 0.8, md: 1 },
+                        minWidth: { xs: '30px', sm: '45px', md: '55px' }
                       }}>
                         <Typography sx={{
-                          fontSize: { xs: '6px', sm: '10px', md: '12px' },
+                          fontSize: { xs: '5px', sm: '7px', md: '8px' },
                           fontWeight: 'bold',
                           color: '#ff6b6b',
-                          writingMode: 'vertical-rl',
-                          textOrientation: 'mixed'
+                          textAlign: 'center',
+                          lineHeight: 1,
+                          mb: 0.5
                         }}>
-                          ATS SCORE
+                          ATS
                         </Typography>
+                        <Typography sx={{
+                          fontSize: { xs: '8px', sm: '12px', md: '14px' },
+                          fontWeight: 'bold',
+                          color: '#ff6b6b',
+                          textAlign: 'center',
+                          lineHeight: 1
+                        }}>
+                          45%
+                        </Typography>
+                        {/* Static Progress Bar */}
                         <Box sx={{
-                          width: { xs: '8px', sm: '12px', md: '15px' },
-                          height: { xs: '80px', sm: '150px', md: '180px' },
-                          bgcolor: '#e0e0e0',
-                          borderRadius: 2,
+                          width: { xs: '18px', sm: '25px', md: '30px' },
+                          height: { xs: '3px', sm: '4px', md: '5px' },
+                          bgcolor: '#ffebee',
+                          borderRadius: 1,
+                          mt: 0.4,
                           position: 'relative',
                           overflow: 'hidden'
                         }}>
                           <Box sx={{
-                            width: '100%',
+                            width: '45%',
+                            height: '100%',
                             bgcolor: '#ff6b6b',
-                            borderRadius: 2,
-                            position: 'absolute',
-                            bottom: 0,
-                            animation: 'slideUpBefore 3s ease-out infinite',
-                            animationDelay: '1s',
-                            '@keyframes slideUpBefore': {
-                              '0%': { height: '0%' },
-                              '50%': { height: '35%' },
-                              '100%': { height: '0%' }
-                            }
+                            borderRadius: 1
                           }} />
                         </Box>
-                        <Typography sx={{
-                          fontSize: { xs: '8px', sm: '14px', md: '16px' },
-                          fontWeight: 'bold',
-                          color: '#ff6b6b'
-                        }}>
-                          45%
-                        </Typography>
                       </Box>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', borderBottom: '1px solid #ccc', pb: 1 }}>
@@ -785,12 +925,12 @@ export function LandingPage() {
                       </Box>
                       
                       {/* Summary Section */}
-                      <Box sx={{ mb: 1.2 }}>
+                      <Box sx={{ mb: 0.6 }}>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '9px', md: '11px' }, 
                           fontWeight: 'bold', 
                           color: '#333',
-                          mb: 0.5,
+                          mb: 0.3,
                           textDecoration: 'underline'
                         }}>
                           SUMMARY
@@ -798,14 +938,14 @@ export function LandingPage() {
                         <Typography sx={{ 
                           fontSize: { xs: '4px', sm: '7.5px', md: '9px' }, 
                           color: '#555',
-                          lineHeight: 1.3
+                          lineHeight: 1.2
                         }}>
                           Experienced data engineer with background in ETL processes and database management.
                         </Typography>
                       </Box>
 
                       {/* Experience Section */}
-                      <Box sx={{ mb: 1.2 }}>
+                      <Box sx={{ mb: 0.8 }}>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '9px', md: '11px' }, 
                           fontWeight: 'bold', 
@@ -826,32 +966,32 @@ export function LandingPage() {
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#555',
-                          lineHeight: 1.2,
-                          mb: 0.2
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Built ETL pipelines using Python and SQL for data processing
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#555',
-                          lineHeight: 1.2,
-                          mb: 0.2
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Managed PostgreSQL and MySQL databases for reporting
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#555',
-                          lineHeight: 1.2,
-                          mb: 0.2
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Worked with team on data migration and cleanup projects
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#555',
-                          lineHeight: 1.2,
-                          mb: 0.3
+                          lineHeight: 1.1,
+                          mb: 0.2
                         }}>
                           • Optimized database queries to improve performance
                         </Typography>
@@ -860,15 +1000,15 @@ export function LandingPage() {
                           fontSize: { xs: '5px', sm: '8px', md: '10px' }, 
                           fontWeight: 'bold',
                           color: '#444',
-                          mb: 0.2
+                          mb: 0.1
                         }}>
                           Junior Data Analyst - DataSoft LLC (2020-2022)
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#555',
-                          lineHeight: 1.2,
-                          mb: 0.2
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Created weekly and monthly reports using Excel and SQL
                         </Typography>
@@ -939,12 +1079,12 @@ export function LandingPage() {
                       </Box>
 
                       {/* Skills Section */}
-                      <Box sx={{ mb: 1 }}>
+                      <Box sx={{ mb: 0.6 }}>
                         <Typography sx={{ 
                           fontSize: { xs: '6px', sm: '9px', md: '11px' }, 
                           fontWeight: 'bold', 
                           color: '#333',
-                          mb: 0.5,
+                          mb: 0.3,
                           textDecoration: 'underline'
                         }}>
                           TECHNICAL SKILLS
@@ -952,19 +1092,19 @@ export function LandingPage() {
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#555',
-                          lineHeight: 1.3
+                          lineHeight: 1.2
                         }}>
                           Python, SQL, PostgreSQL, MySQL, Excel, Git
                         </Typography>
                       </Box>
                       
                       {/* Education Section */}
-                      <Box sx={{ mb: 1 }}>
+                      <Box sx={{ mb: 0.5 }}>
                         <Typography sx={{ 
                           fontSize: { xs: '6px', sm: '9px', md: '11px' }, 
                           fontWeight: 'bold', 
                           color: '#333',
-                          mb: 0.5,
+                          mb: 0.3,
                           textDecoration: 'underline'
                         }}>
                           EDUCATION
@@ -973,14 +1113,14 @@ export function LandingPage() {
                           fontSize: { xs: '5px', sm: '8px', md: '10px' }, 
                           fontWeight: 'bold', 
                           color: '#444',
-                          mb: 0.3
+                          mb: 0.2
                         }}>
                           BS Computer Science - State University
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#555',
-                          lineHeight: 1.2
+                          lineHeight: 1.1
                         }}>
                           2018-2022 | GPA: 3.5
                         </Typography>
@@ -1010,68 +1150,67 @@ export function LandingPage() {
                     transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', delay: 1 }}
                   >
                     <Box sx={{
-                      width: { xs: '130px', sm: '320px', md: '370px' },
-                      height: { xs: '190px', sm: '450px', md: '500px' },
+                      width: { xs: '130px', sm: '300px', md: '340px' },
+                      height: { xs: '190px', sm: '400px', md: '450px' },
                       bgcolor: 'white',
                       borderRadius: 2,
                       border: '2px solid #0A66C2',
                       position: 'relative',
                       boxShadow: '0 8px 30px rgba(10, 102, 194, 0.3)',
                       overflow: 'hidden',
-                      p: { xs: 0.8, md: 1.8 }
+                      p: { xs: 0.8, sm: 0.8, md: 1 },
+                      flexShrink: 0
                     }}>
-                      {/* Large Vertical ATS Score Bar - Right Side */}
+                      {/* Static ATS Score Badge - Top Right */}
                       <Box sx={{
                         position: 'absolute',
-                        right: { xs: 8, sm: 15, md: 20 },
-                        top: '50%',
-                        transform: 'translateY(-50%)',
+                        top: { xs: 8, sm: 12, md: 15 },
+                        right: { xs: 8, sm: 12, md: 15 },
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        gap: 1,
-                        animation: 'float 4s ease-in-out infinite',
-                        animationDelay: '1s'
+                        bgcolor: 'rgba(76, 175, 80, 0.1)',
+                        border: '2px solid #4caf50',
+                        borderRadius: 2,
+                        p: { xs: 0.5, sm: 1, md: 1.2 },
+                        minWidth: { xs: '35px', sm: '50px', md: '60px' }
                       }}>
                         <Typography sx={{
-                          fontSize: { xs: '6px', sm: '10px', md: '12px' },
+                          fontSize: { xs: '5px', sm: '7px', md: '8px' },
                           fontWeight: 'bold',
-                          color: '#0A66C2',
-                          writingMode: 'vertical-rl',
-                          textOrientation: 'mixed'
+                          color: '#4caf50',
+                          textAlign: 'center',
+                          lineHeight: 1,
+                          mb: 0.5
                         }}>
-                          ATS SCORE
+                          ATS
                         </Typography>
+                        <Typography sx={{
+                          fontSize: { xs: '8px', sm: '12px', md: '14px' },
+                          fontWeight: 'bold',
+                          color: '#4caf50',
+                          textAlign: 'center',
+                          lineHeight: 1
+                        }}>
+                          90%
+                        </Typography>
+                        {/* Static Progress Bar */}
                         <Box sx={{
-                          width: { xs: '8px', sm: '12px', md: '15px' },
-                          height: { xs: '80px', sm: '150px', md: '180px' },
-                          bgcolor: '#e0e0e0',
-                          borderRadius: 2,
+                          width: { xs: '20px', sm: '30px', md: '35px' },
+                          height: { xs: '3px', sm: '4px', md: '5px' },
+                          bgcolor: '#e8f5e8',
+                          borderRadius: 1,
+                          mt: 0.5,
                           position: 'relative',
                           overflow: 'hidden'
                         }}>
                           <Box sx={{
-                            width: '100%',
+                            width: '90%',
+                            height: '100%',
                             bgcolor: '#4caf50',
-                            borderRadius: 2,
-                            position: 'absolute',
-                            bottom: 0,
-                            animation: 'slideUpAfter 3s ease-out infinite',
-                            animationDelay: '2s',
-                            '@keyframes slideUpAfter': {
-                              '0%': { height: '0%' },
-                              '50%': { height: '90%' },
-                              '100%': { height: '0%' }
-                            }
+                            borderRadius: 1
                           }} />
                         </Box>
-                        <Typography sx={{
-                          fontSize: { xs: '8px', sm: '14px', md: '16px' },
-                          fontWeight: 'bold',
-                          color: '#4caf50'
-                        }}>
-                          90%
-                        </Typography>
                       </Box>
                       {/* Header */}
                       <Box sx={{ mb: 1, textAlign: 'center', bgcolor: '#f8fbff', mx: { xs: -1, md: -1.8 }, mt: { xs: -1, md: -1.8 }, p: { xs: 1, md: 1.8 }, borderBottom: '2px solid #0A66C2' }}>
@@ -1100,28 +1239,28 @@ export function LandingPage() {
                       </Box>
                       
                       {/* Summary Section */}
-                      <Box sx={{ mb: 1.2 }}>
+                      <Box sx={{ mb: 0.6 }}>
                         <Typography sx={{ 
                           fontSize: { xs: '6px', sm: '9px', md: '11px' }, 
                           fontWeight: 'bold', 
                           color: '#0A66C2',
-                          mb: 0.5,
+                          mb: 0.3,
                           borderBottom: '1px solid #0A66C2',
-                          pb: 0.2
+                          pb: 0.1
                         }}>
                           PROFESSIONAL SUMMARY
                         </Typography>
                         <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
+                          fontSize: { xs: '5px', sm: '7px', md: '8px' }, 
                           color: '#333',
-                          lineHeight: 1.3
+                          lineHeight: 1.1
                         }}>
                           AI/ML Developer with expertise in machine learning, deep learning, and data science. Proven track record in developing intelligent systems and predictive models.
                         </Typography>
                       </Box>
 
                       {/* Experience Section */}
-                      <Box sx={{ mb: 1.2 }}>
+                      <Box sx={{ mb: 0.8 }}>
                         <Typography sx={{ 
                           fontSize: { xs: '6px', sm: '9px', md: '11px' }, 
                           fontWeight: 'bold', 
@@ -1143,65 +1282,57 @@ export function LandingPage() {
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#333',
-                          lineHeight: 1.2,
-                          mb: 0.3
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Developed end-to-end ML pipelines using TensorFlow & PyTorch
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#333',
-                          lineHeight: 1.2,
-                          mb: 0.2
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Built predictive models achieving 95% accuracy for forecasting
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#333',
-                          lineHeight: 1.2,
-                          mb: 0.2
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Implemented MLOps practices for model deployment and monitoring
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#333',
-                          lineHeight: 1.2,
+                          lineHeight: 1.1,
                           mb: 0.2
                         }}>
                           • Led cross-functional AI initiatives with engineering and product teams
-                        </Typography>
-                        <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
-                          color: '#333',
-                          lineHeight: 1.2,
-                          mb: 0.3
-                        }}>
-                          • Optimized neural networks reducing inference time by 40%
                         </Typography>
                         
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '8px', md: '10px' }, 
                           fontWeight: 'bold',
                           color: '#0A66C2',
-                          mb: 0.2
+                          mb: 0.1
                         }}>
                           Data Scientist - DataSoft LLC (2020-2022)
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#333',
-                          lineHeight: 1.2,
-                          mb: 0.2
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Built advanced predictive analytics models for customer segmentation
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#333',
-                          lineHeight: 1.2,
-                          mb: 0.2
+                          lineHeight: 1.1,
+                          mb: 0.1
                         }}>
                           • Implemented NLP solutions for sentiment analysis and text mining
                         </Typography>
@@ -1256,35 +1387,35 @@ export function LandingPage() {
                       </Box>
 
                       {/* Skills Section */}
-                      <Box sx={{ mb: 1 }}>
+                      <Box sx={{ mb: 0.6 }}>
                         <Typography sx={{ 
                           fontSize: { xs: '6px', sm: '9px', md: '11px' }, 
                           fontWeight: 'bold', 
                           color: '#0A66C2',
-                          mb: 0.5,
+                          mb: 0.3,
                           borderBottom: '1px solid #0A66C2',
-                          pb: 0.2
+                          pb: 0.1
                         }}>
                           CORE COMPETENCIES
                         </Typography>
                         <Typography sx={{ 
-                          fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
+                          fontSize: { xs: '5px', sm: '7px', md: '8px' }, 
                           color: '#333',
-                          lineHeight: 1.3
+                          lineHeight: 1.1
                         }}>
                           Python, TensorFlow, PyTorch, Scikit-learn, Keras, Neural Networks, Deep Learning, NLP, Computer Vision, MLOps, AWS SageMaker
                         </Typography>
                       </Box>
                       
                       {/* Education Section - Enhanced */}
-                      <Box sx={{ mb: 1 }}>
+                      <Box sx={{ mb: 0.5 }}>
                         <Typography sx={{ 
                           fontSize: { xs: '6px', sm: '9px', md: '11px' }, 
                           fontWeight: 'bold', 
                           color: '#0A66C2',
-                          mb: 0.5,
+                          mb: 0.3,
                           borderBottom: '1px solid #0A66C2',
-                          pb: 0.2
+                          pb: 0.1
                         }}>
                           EDUCATION & CERTIFICATIONS
                         </Typography>
@@ -1292,14 +1423,14 @@ export function LandingPage() {
                           fontSize: { xs: '5px', sm: '8px', md: '10px' }, 
                           fontWeight: 'bold', 
                           color: '#0A66C2',
-                          mb: 0.3
+                          mb: 0.2
                         }}>
                           BS Computer Science
                         </Typography>
                         <Typography sx={{ 
                           fontSize: { xs: '5px', sm: '7.5px', md: '9px' }, 
                           color: '#333',
-                          lineHeight: 1.2
+                          lineHeight: 1.1
                         }}>
                           State University (2018-2022) | GPA: 3.5
                         </Typography>
@@ -1315,28 +1446,8 @@ export function LandingPage() {
                         alignItems: 'flex-end',
                         gap: 0.5
                       }}>
-                        <Box sx={{
-                          fontSize: { xs: '6px', sm: '7px', md: '8px' },
-                          color: '#4caf50',
-                          fontWeight: 'bold',
-                          bgcolor: 'rgba(76, 175, 80, 0.1)',
-                          px: 0.5,
-                          py: 0.2,
-                          borderRadius: 0.5
-                        }}>
-                          ✓ ATS Enhanced
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                          {[...Array(4)].map((_, i) => (
-                            <Box key={i} sx={{
-                              width: { xs: '5px', sm: '6px', md: '7px' },
-                              height: { xs: '5px', sm: '6px', md: '7px' },
-                              bgcolor: '#4caf50',
-                              borderRadius: '50%',
-                              animation: `pulse 1.5s ease-in-out infinite ${i * 0.2}s`
-                            }} />
-                          ))}
-                        </Box>
+
+
                       </Box>
                     </Box>
                   </motion.div>
@@ -1375,15 +1486,17 @@ export function LandingPage() {
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h4" sx={{ 
                             fontSize: { sm: '1.5rem', md: '2rem' },
-                            color: '#0A66C2', 
+                            color: '#ffffff', 
                             fontWeight: 'bold',
-                            mb: 0.5
+                            mb: 0.5,
+                            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
                           }}>
                             {stat.number}
                           </Typography>
                           <Typography variant="caption" sx={{ 
-                            color: '#cccccc',
-                            fontSize: { sm: '10px', md: '12px' }
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            fontSize: { sm: '10px', md: '12px' },
+                            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
                           }}>
                             {stat.label}
                           </Typography>
@@ -1397,54 +1510,105 @@ export function LandingPage() {
         </Container>
       </Box>
 
-      {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }} id="features-section">
-        <Typography variant="h2" align="center" sx={{ 
-          fontSize: { xs: '1.8rem', md: '2.5rem' },
-          mb: { xs: 6, md: 8 },
-          fontWeight: 700,
-          background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
-        }}>
-          Why Choose JobTailorAI?
-        </Typography>
+      {/* Enhanced Features Section */}
+      <Box sx={{
+        background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f1f3f4 100%)',
+        py: { xs: 10, md: 15 }
+      }}>
+        <Container maxWidth="lg" id="features-section">
+          {/* Section Header */}
+          <Box sx={{ textAlign: 'center', mb: { xs: 8, md: 10 } }}>
+            <Typography variant="overline" sx={{
+              color: '#0A66C2',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              letterSpacing: '0.1em',
+              mb: 2,
+              display: 'block'
+            }}>
+              FEATURES
+            </Typography>
+            <Typography variant="h2" sx={{ 
+              fontSize: { xs: '2.2rem', md: '3rem' },
+              mb: 3,
+              fontWeight: 900,
+              background: 'linear-gradient(135deg, #0A66C2 0%, #378FE9 50%, #4CAF50 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.02em'
+            }}>
+              Why Choose JobTailorAI?
+            </Typography>
+            <Typography variant="h6" sx={{
+              color: '#666',
+              maxWidth: 600,
+              mx: 'auto',
+              lineHeight: 1.6,
+              fontWeight: 400
+            }}>
+              Discover the powerful features that make JobTailorAI the ultimate resume optimization platform
+            </Typography>
+          </Box>
 
-        <Grid container spacing={{ xs: 3, md: 4 }}>
-          {features.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card sx={{ 
-                height: '100%', 
-                textAlign: 'center', 
-                p: { xs: 2, md: 0 },
-                '&:hover': { 
-                  transform: 'translateY(-4px)', 
-                  transition: 'all 0.3s ease' 
-                } 
-              }}>
-                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                  <Box sx={{ mb: { xs: 2, md: 3 } }}>{feature.icon}</Box>
-                  <Typography variant="h6" sx={{ 
-                    mb: { xs: 1.5, md: 2 }, 
-                    fontWeight: 600,
-                    fontSize: { xs: '1.1rem', md: '1.25rem' }
+          <Grid container spacing={{ xs: 4, md: 5 }}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                >
+                  <Card sx={{ 
+                    height: '100%', 
+                    textAlign: 'center',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    borderRadius: 4,
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': { 
+                      transform: 'translateY(-8px) scale(1.02)', 
+                      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+                      border: '1px solid rgba(10, 102, 194, 0.2)'
+                    } 
                   }}>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2" sx={{ 
-                    color: '#666666', 
-                    lineHeight: 1.6,
-                    fontSize: { xs: '0.85rem', md: '0.9rem' }
-                  }}>
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
+                    <CardContent sx={{ p: { xs: 4, md: 5 } }}>
+                      <Box sx={{ 
+                        mb: 3,
+                        '& > div': {
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'scale(1.1)'
+                          }
+                        }
+                      }}>
+                        {feature.icon}
+                      </Box>
+                      <Typography variant="h5" sx={{ 
+                        mb: 2, 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.2rem', md: '1.4rem' },
+                        color: '#333'
+                      }}>
+                        {feature.title}
+                      </Typography>
+                      <Typography variant="body1" sx={{ 
+                        color: '#666', 
+                        lineHeight: 1.7,
+                        fontSize: { xs: '0.95rem', md: '1rem' }
+                      }}>
+                        {feature.description}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
 
       {/* Detailed Features Showcase */}
       <Box sx={{ bgcolor: 'background.paper', py: { xs: 8, md: 12 } }}>
@@ -2037,48 +2201,87 @@ export function LandingPage() {
         </Grid>
       </Container>
 
-      {/* CTA Section */}
+      {/* Enhanced CTA Section */}
       <Box sx={{ 
-        bgcolor: 'linear-gradient(135deg, #0A66C2 0%, #378FE9 100%)', 
-        py: { xs: 4, md: 6 },
-        color: 'white'
+        background: 'linear-gradient(135deg, #0A66C2 0%, #378FE9 50%, #4CAF50 100%)', 
+        py: { xs: 8, md: 12 },
+        color: 'white',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
-        <Container maxWidth="md">
+        {/* Background Pattern */}
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%)',
+          opacity: 0.3
+        }} />
+        
+        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h2" sx={{ 
-              fontSize: { xs: '1.8rem', md: '2.5rem' },
-              mb: { xs: 2, md: 3 },
+            <Typography variant="overline" sx={{
+              color: 'rgba(255,255,255,0.8)',
               fontWeight: 700,
-              px: { xs: 2, md: 0 }
+              fontSize: '0.9rem',
+              letterSpacing: '0.1em',
+              mb: 2,
+              display: 'block'
+            }}>
+              READY TO GET STARTED?
+            </Typography>
+            
+            <Typography variant="h2" sx={{ 
+              fontSize: { xs: '2.2rem', md: '3rem' },
+              mb: { xs: 2, md: 3 },
+              fontWeight: 900,
+              px: { xs: 2, md: 0 },
+              letterSpacing: '-0.02em',
+              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               Ready to Land Your Dream Job?
             </Typography>
+            
             <Typography variant="h5" sx={{ 
-              fontSize: { xs: '1rem', md: '1.25rem' },
-              mb: { xs: 4, md: 6 },
+              fontSize: { xs: '1.1rem', md: '1.4rem' },
+              mb: { xs: 5, md: 7 },
               opacity: 0.9,
-              fontWeight: 300,
-              px: { xs: 2, md: 0 }
+              fontWeight: 400,
+              px: { xs: 2, md: 0 },
+              lineHeight: 1.5,
+              maxWidth: 600,
+              mx: 'auto'
             }}>
-              Join thousands of professionals who have successfully crafted their resumes
+              Join thousands of professionals who have successfully transformed their careers with AI-powered resumes
             </Typography>
+            
             <Button 
               variant="contained"
-              size={isMobile ? "medium" : "large"}
+              size="large"
               onClick={handleGetStarted}
+              className="enhanced-button"
               sx={{
-                bgcolor: 'white',
+                bgcolor: 'rgba(255, 255, 255, 0.95)',
                 color: '#0A66C2',
-                px: { xs: 4, md: 6 },
-                py: { xs: 1.5, md: 2 },
-                fontSize: { xs: '1rem', md: '1.2rem' },
-                fontWeight: 600,
-                borderRadius: 3,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                px: { xs: 5, md: 8 },
+                py: { xs: 2, md: 2.5 },
+                fontSize: { xs: '1.1rem', md: '1.3rem' },
+                fontWeight: 700,
+                borderRadius: '50px',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  bgcolor: '#f5f5f5',
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 12px 40px rgba(0,0,0,0.3)'
+                  bgcolor: 'rgba(255, 255, 255, 1)',
+                  transform: 'translateY(-4px) scale(1.05)',
+                  boxShadow: '0 16px 48px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4)',
+                  border: '2px solid rgba(255, 255, 255, 0.5)'
+                },
+                '&:active': {
+                  transform: 'translateY(-2px) scale(1.02)'
                 }
               }}
             >
@@ -2094,14 +2297,29 @@ export function LandingPage() {
           <Grid container spacing={{ xs: 3, md: 4 }}>
             <Grid item xs={12} md={4}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 3 } }}>
-                <WorkIcon sx={{ fontSize: { xs: 28, md: 32 }, mr: 2, color: '#0A66C2' }} />
-                <Typography variant="h5" sx={{ 
-                  fontWeight: 700, 
-                  color: 'white',
-                  fontSize: { xs: '1.2rem', md: '1.5rem' }
-                }}>
-                  JobTailorAI
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="h4" sx={{ 
+                    fontWeight: 900, 
+                    color: 'white',
+                    fontSize: { xs: '1.4rem', md: '1.8rem' },
+                    letterSpacing: '-0.5px'
+                  }}>
+                    JobTailor
+                  </Typography>
+                  <Box sx={{
+                    bgcolor: 'white',
+                    color: '#0A66C2',
+                    px: 1.5,
+                    py: 0.8,
+                    borderRadius: 1.5,
+                    fontSize: { xs: '1rem', md: '1.2rem' },
+                    fontWeight: 800,
+                    letterSpacing: '0.5px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}>
+                    AI
+                  </Box>
+                </Box>
               </Box>
               <Typography variant="body2" sx={{ 
                 color: '#cccccc', 

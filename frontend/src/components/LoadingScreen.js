@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
-import { AutoAwesome as AutoAwesomeIcon } from '@mui/icons-material';
+// Removed JobTailorIcon import - using inline branding instead
 
 function LoadingScreen({ 
   message = "Loading your workspace...",
@@ -122,45 +122,41 @@ function LoadingScreen({
         }
       }
     }}>
-      {/* Logo Icon - Clean and sleek, no containers */}
-      <AutoAwesomeIcon sx={{ 
-        color: '#0A66C2',
-        fontSize: 64,
-        mb: 3,
-        animation: 'fadeInScale 0.8s ease-out, pulse 2s ease-in-out infinite',
-        // Explicitly remove any background or border
-        backgroundColor: 'transparent !important',
-        background: 'transparent !important',
-        border: 'none !important',
-        boxShadow: 'none !important',
-        // Ensure no padding or margin creates visual borders
-        p: '0 !important',
-        m: '0 !important',
-        mb: '24px !important', // Keep bottom margin for spacing
-        // Remove any default Material-UI styling
-        '&::before, &::after': {
-          display: 'none !important'
-        },
-        // Override any theme or global styles
-        '&.MuiSvgIcon-root': {
-          backgroundColor: 'transparent !important',
-          background: 'transparent !important'
-        }
-      }} />
 
-      {/* Brand Name */}
-      <Typography variant="h3" sx={{ 
-        fontWeight: 700,
-        fontSize: '2.5rem',
-        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
+
+      {/* Brand Name with Boxed AI */}
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1,
         mb: 2,
         animation: 'fadeInUp 0.8s ease-out 0.2s both'
       }}>
-        JobTailorAI
-      </Typography>
+        <Typography variant="h3" sx={{ 
+          fontWeight: 700,
+          fontSize: '2.5rem',
+          background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          letterSpacing: '-0.5px'
+        }}>
+          JobTailor
+        </Typography>
+        <Box sx={{
+          bgcolor: '#0A66C2',
+          color: 'white',
+          px: 1.5,
+          py: 0.8,
+          borderRadius: 1.5,
+          fontSize: '1.5rem',
+          fontWeight: 700,
+          letterSpacing: '0.5px',
+          animation: 'fadeInScale 0.8s ease-out 0.4s both'
+        }}>
+          AI
+        </Box>
+      </Box>
 
       {/* Tagline */}
       <Typography variant="h6" sx={{ 

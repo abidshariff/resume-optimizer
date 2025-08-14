@@ -27,12 +27,13 @@ import {
   Checkbox
 } from '@mui/material';
 import { 
-  AutoAwesome as AutoAwesomeIcon,
+
   Visibility,
   VisibilityOff,
   CheckCircle,
   RadioButtonUnchecked
 } from '@mui/icons-material';
+// Removed JobTailorIcon import - using inline branding instead
 
 function SimpleAuth() {
   const navigate = useNavigate();
@@ -802,7 +803,7 @@ function SimpleAuth() {
         fontStyle: 'italic',
         textAlign: 'center'
       }}>
-        Get ready to create an amazing resume! ✨
+        Get ready to create an amazing resume!
       </Typography>
     </Box>
   );
@@ -1103,16 +1104,31 @@ function SimpleAuth() {
           }}
           onClick={() => navigate('/')}
           >
-            <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
-            <Typography variant="h5" sx={{ 
-              fontWeight: 700,
-              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              JobTailorAI
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="h5" component="div" sx={{ 
+                fontWeight: 800,
+                fontSize: '1.4rem',
+                background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                letterSpacing: '-0.5px'
+              }}>
+                JobTailor
+              </Typography>
+              <Box sx={{
+                bgcolor: '#0A66C2',
+                color: 'white',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                letterSpacing: '0.5px'
+              }}>
+                AI
+              </Box>
+            </Box>
           </Box>
         </Toolbar>
       </AppBar>
@@ -1138,7 +1154,31 @@ function SimpleAuth() {
           }}>
             {/* Logo */}
             <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <AutoAwesomeIcon sx={{ fontSize: 40, color: '#0A66C2' }} />
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="h4" component="div" sx={{ 
+                  fontWeight: 800,
+                  fontSize: '2rem',
+                  background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  letterSpacing: '-0.5px'
+                }}>
+                  JobTailor
+                </Typography>
+                <Box sx={{
+                  bgcolor: '#0A66C2',
+                  color: 'white',
+                  px: 1.5,
+                  py: 0.8,
+                  borderRadius: 1.5,
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.5px'
+                }}>
+                  AI
+                </Box>
+              </Box>
             </Box>
 
             {/* Error Message */}

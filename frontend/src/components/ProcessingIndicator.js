@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, LinearProgress, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { 
-  AutoAwesome as AutoAwesomeIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon
 } from '@mui/icons-material';
+import JobTailorIcon from './JobTailorIcon';
 
 function ProcessingIndicator({ status = 'PROCESSING' }) {
   const [progress, setProgress] = useState(0);
@@ -111,9 +111,7 @@ function ProcessingIndicator({ status = 'PROCESSING' }) {
         alignItems: 'center', 
         mb: 2 
       }}>
-        <AutoAwesomeIcon sx={{ 
-          fontSize: 32, 
-          color: statusInfo.color,
+        <JobTailorIcon size={32} sx={{
           mr: 2,
           animation: 'pulse 2s ease-in-out infinite'
         }} />

@@ -47,12 +47,13 @@ import {
   LinkedIn as LinkedInIcon,
   GitHub as GitHubIcon,
   Language as WebsiteIcon,
-  AutoAwesome as AutoAwesomeIcon,
+
   ArrowBack as ArrowBackIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+// Removed JobTailorIcon import - using inline branding instead
 import { getCurrentUser, fetchUserAttributes, signOut } from 'aws-amplify/auth';
 
 function Profile() {
@@ -179,158 +180,269 @@ function Profile() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Paper sx={{ p: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: '#0A66C2' }}>
-            Personal Details
-          </Typography>
+      {/* Profile Header Card */}
+      <Paper 
+        elevation={2}
+        sx={{ 
+          p: 4, 
+          mb: 3,
+          background: 'linear-gradient(135deg, rgba(10, 102, 194, 0.05) 0%, rgba(55, 143, 233, 0.05) 100%)',
+          border: '1px solid rgba(10, 102, 194, 0.1)',
+          borderRadius: 3
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Avatar
+              sx={{ 
+                width: 80, 
+                height: 80, 
+                bgcolor: '#0A66C2',
+                fontSize: '2rem',
+                boxShadow: '0 4px 20px rgba(10, 102, 194, 0.3)'
+              }}
+            >
+              {getDisplayName().charAt(0).toUpperCase()}
+            </Avatar>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: '#0A66C2', mb: 0.5 }}>
+                {getDisplayName()}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                {userInfo.email}
+              </Typography>
+              {userInfo.location && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                  <Typography variant="body2" color="text.secondary">
+                    {userInfo.location}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+          
           <Button
             variant={editMode ? "contained" : "outlined"}
             startIcon={<EditIcon />}
             onClick={() => setEditMode(!editMode)}
+            size="large"
             sx={{
-              background: editMode ? 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)' : 'transparent'
+              borderRadius: 2,
+              px: 3,
+              py: 1.5,
+              fontWeight: 600,
+              textTransform: 'none',
+              ...(editMode ? {
+                background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                boxShadow: '0 4px 16px rgba(10, 102, 194, 0.3)'
+              } : {
+                borderColor: '#0A66C2',
+                color: '#0A66C2',
+                '&:hover': {
+                  borderColor: '#004182',
+                  backgroundColor: 'rgba(10, 102, 194, 0.04)'
+                }
+              })
             }}
           >
-            {editMode ? 'Cancel' : 'Edit Profile'}
+            {editMode ? 'Cancel Edit' : 'Edit Profile'}
           </Button>
         </Box>
 
+        {userInfo.bio && (
+          <Box sx={{ 
+            p: 2, 
+            bgcolor: 'background.paper', 
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'divider'
+          }}>
+            <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
+              {userInfo.bio}
+            </Typography>
+          </Box>
+        )}
+      </Paper>
+
+      {/* Contact Information Card */}
+      <Paper elevation={2} sx={{ p: 4, mb: 3, borderRadius: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: 'text.primary' }}>
+          Contact Information
+        </Typography>
+        
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Avatar
-                sx={{ 
-                  width: 120, 
-                  height: 120, 
-                  mx: 'auto', 
-                  mb: 2,
-                  bgcolor: '#0A66C2',
-                  fontSize: '3rem'
-                }}
-              >
-                {userInfo.name.charAt(0).toUpperCase()}
-              </Avatar>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {userInfo.name || 'Your Name'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {userInfo.email}
-              </Typography>
-            </Box>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Full Name"
+              value={userInfo.name}
+              onChange={(e) => setUserInfo({...userInfo, name: e.target.value})}
+              disabled={!editMode}
+              variant={editMode ? "outlined" : "standard"}
+              InputProps={{
+                startAdornment: <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
+              }}
+            />
           </Grid>
-
-          <Grid item xs={12} md={8}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Full Name"
-                  value={userInfo.name}
-                  onChange={(e) => setUserInfo({...userInfo, name: e.target.value})}
-                  disabled={!editMode}
-                  variant={editMode ? "outlined" : "filled"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  value={userInfo.email}
-                  disabled
-                  variant="filled"
-                  helperText="Email cannot be changed"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Phone Number"
-                  value={userInfo.phone}
-                  onChange={(e) => setUserInfo({...userInfo, phone: e.target.value})}
-                  disabled={!editMode}
-                  variant={editMode ? "outlined" : "filled"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Location"
-                  value={userInfo.location}
-                  onChange={(e) => setUserInfo({...userInfo, location: e.target.value})}
-                  disabled={!editMode}
-                  variant={editMode ? "outlined" : "filled"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="LinkedIn Profile"
-                  value={userInfo.linkedin}
-                  onChange={(e) => setUserInfo({...userInfo, linkedin: e.target.value})}
-                  disabled={!editMode}
-                  variant={editMode ? "outlined" : "filled"}
-                  placeholder="https://linkedin.com/in/yourprofile"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="GitHub Profile"
-                  value={userInfo.github}
-                  onChange={(e) => setUserInfo({...userInfo, github: e.target.value})}
-                  disabled={!editMode}
-                  variant={editMode ? "outlined" : "filled"}
-                  placeholder="https://github.com/yourusername"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Website"
-                  value={userInfo.website}
-                  onChange={(e) => setUserInfo({...userInfo, website: e.target.value})}
-                  disabled={!editMode}
-                  variant={editMode ? "outlined" : "filled"}
-                  placeholder="https://yourwebsite.com"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Bio"
-                  value={userInfo.bio}
-                  onChange={(e) => setUserInfo({...userInfo, bio: e.target.value})}
-                  disabled={!editMode}
-                  variant={editMode ? "outlined" : "filled"}
-                  placeholder="Tell us about yourself..."
-                />
-              </Grid>
-            </Grid>
-
-            {editMode && (
-              <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleSaveProfile}
-                  sx={{
-                    background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-                  }}
-                >
-                  Save Changes
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => setEditMode(false)}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            )}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Email"
+              value={userInfo.email}
+              disabled
+              variant="standard"
+              helperText="Email cannot be changed"
+              InputProps={{
+                startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Phone Number"
+              value={userInfo.phone}
+              onChange={(e) => setUserInfo({...userInfo, phone: e.target.value})}
+              disabled={!editMode}
+              variant={editMode ? "outlined" : "standard"}
+              placeholder="+1 (555) 123-4567"
+              InputProps={{
+                startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Location"
+              value={userInfo.location}
+              onChange={(e) => setUserInfo({...userInfo, location: e.target.value})}
+              disabled={!editMode}
+              variant={editMode ? "outlined" : "standard"}
+              placeholder="City, State, Country"
+              InputProps={{
+                startAdornment: <LocationIcon sx={{ mr: 1, color: 'text.secondary' }} />
+              }}
+            />
           </Grid>
         </Grid>
+      </Paper>
+
+      {/* Professional Links Card */}
+      <Paper elevation={2} sx={{ p: 4, mb: 3, borderRadius: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: 'text.primary' }}>
+          Professional Links
+        </Typography>
+        
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="LinkedIn Profile"
+              value={userInfo.linkedin}
+              onChange={(e) => setUserInfo({...userInfo, linkedin: e.target.value})}
+              disabled={!editMode}
+              variant={editMode ? "outlined" : "standard"}
+              placeholder="https://linkedin.com/in/yourprofile"
+              InputProps={{
+                startAdornment: <LinkedInIcon sx={{ mr: 1, color: '#0077B5' }} />
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="GitHub Profile"
+              value={userInfo.github}
+              onChange={(e) => setUserInfo({...userInfo, github: e.target.value})}
+              disabled={!editMode}
+              variant={editMode ? "outlined" : "standard"}
+              placeholder="https://github.com/yourusername"
+              InputProps={{
+                startAdornment: <GitHubIcon sx={{ mr: 1, color: '#333' }} />
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Personal Website"
+              value={userInfo.website}
+              onChange={(e) => setUserInfo({...userInfo, website: e.target.value})}
+              disabled={!editMode}
+              variant={editMode ? "outlined" : "standard"}
+              placeholder="https://yourwebsite.com"
+              InputProps={{
+                startAdornment: <WebsiteIcon sx={{ mr: 1, color: 'text.secondary' }} />
+              }}
+            />
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* About Me Card */}
+      <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: 'text.primary' }}>
+          About Me
+        </Typography>
+        
+        <TextField
+          fullWidth
+          multiline
+          rows={4}
+          label="Bio"
+          value={userInfo.bio}
+          onChange={(e) => setUserInfo({...userInfo, bio: e.target.value})}
+          disabled={!editMode}
+          variant={editMode ? "outlined" : "standard"}
+          placeholder="Tell us about yourself, your experience, and what makes you unique..."
+          sx={{
+            '& .MuiInputBase-root': {
+              fontSize: '1rem',
+              lineHeight: 1.6
+            }
+          }}
+        />
+
+        {editMode && (
+          <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Button
+              variant="outlined"
+              onClick={() => setEditMode(false)}
+              size="large"
+              sx={{ 
+                px: 3, 
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveProfile}
+              size="large"
+              sx={{
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                boxShadow: '0 4px 16px rgba(10, 102, 194, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+                  boxShadow: '0 6px 20px rgba(10, 102, 194, 0.4)'
+                }
+              }}
+            >
+              Save Changes
+            </Button>
+          </Box>
+        )}
       </Paper>
     </motion.div>
   );
@@ -524,7 +636,22 @@ function Profile() {
             </Typography>
             <Button
               variant="contained"
-              startIcon={<AutoAwesomeIcon />}
+              startIcon={
+                <Box sx={{
+                  bgcolor: 'white',
+                  color: '#0A66C2',
+                  px: 0.8,
+                  py: 0.3,
+                  borderRadius: 0.8,
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.3px',
+                  minWidth: '20px',
+                  textAlign: 'center'
+                }}>
+                  AI
+                </Box>
+              }
               onClick={() => navigate('/app/upload')}
               sx={{
                 background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
@@ -724,42 +851,65 @@ function Profile() {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* Header */}
-      <AppBar position="static" elevation={0}>
-        <Toolbar sx={{ py: 1 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc' }}>
+      {/* Modern Header */}
+      <AppBar 
+        position="static" 
+        elevation={0}
+        sx={{ 
+          bgcolor: 'white',
+          borderBottom: '1px solid',
+          borderColor: 'divider'
+        }}
+      >
+        <Toolbar sx={{ py: 1.5 }}>
           <IconButton
-            onClick={() => navigate('/app/upload')}
-            sx={{ mr: 2, color: 'white' }}
+            onClick={() => navigate(-1)}
+            sx={{ 
+              mr: 2, 
+              color: '#0A66C2',
+              '&:hover': { bgcolor: 'rgba(10, 102, 194, 0.04)' }
+            }}
           >
             <ArrowBackIcon />
           </IconButton>
+          
           <Box 
             sx={{ 
               display: 'flex', 
               alignItems: 'center',
               cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.8
-              }
+              gap: 0.5,
+              '&:hover': { opacity: 0.8 }
             }}
             onClick={() => navigate('/app/upload')}
           >
-            <AutoAwesomeIcon sx={{ mr: 2, color: '#0A66C2', fontSize: 28 }} />
             <Typography variant="h5" component="div" sx={{ 
               fontWeight: 700,
-              background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
+              color: '#0A66C2'
             }}>
-              JobTailorAI
+              JobTailor
             </Typography>
+            <Box sx={{
+              bgcolor: '#0A66C2',
+              color: 'white',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              fontSize: '1rem',
+              fontWeight: 700,
+              letterSpacing: '0.5px'
+            }}>
+              AI
+            </Box>
           </Box>
+          
           <Box sx={{ flexGrow: 1 }} />
+          
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ 
-              color: 'text.secondary',
+            <Typography variant="body1" sx={{ 
+              color: 'text.primary',
+              fontWeight: 500,
               display: { xs: 'none', sm: 'block' }
             }}>
               Welcome, {getDisplayName()}
@@ -767,21 +917,26 @@ function Profile() {
             <IconButton
               onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
               sx={{ 
-                p: 0,
+                p: 0.5,
                 border: '2px solid #0A66C2',
-                '&:hover': { border: '2px solid #666666' }
+                borderRadius: 2,
+                '&:hover': { 
+                  border: '2px solid #004182',
+                  transform: 'scale(1.05)'
+                },
+                transition: 'all 0.2s ease'
               }}
             >
               <Avatar 
                 sx={{ 
                   bgcolor: '#0A66C2',
-                  width: 40,
-                  height: 40,
+                  width: 36,
+                  height: 36,
                   fontSize: '1rem',
-                  fontWeight: 600
+                  fontWeight: 700
                 }}
               >
-                {(currentUser?.username || 'U').charAt(0).toUpperCase()}
+                {getDisplayName().charAt(0).toUpperCase()}
               </Avatar>
             </IconButton>
             
@@ -821,55 +976,74 @@ function Profile() {
         </Toolbar>
       </AppBar>
 
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Grid container spacing={3}>
-        {/* Left Sidebar */}
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#0A66C2' }}>
-              Profile Menu
-            </Typography>
-            <List>
-              {menuItems.map((item) => (
-                <ListItemButton
-                  key={item.id}
-                  selected={selectedSection === item.id}
-                  onClick={() => setSelectedSection(item.id)}
-                  sx={{
-                    borderRadius: 1,
-                    mb: 1,
-                    '&.Mui-selected': {
-                      backgroundColor: '#e3f2fd',
-                      '&:hover': {
-                        backgroundColor: '#e3f2fd',
-                      },
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{ color: selectedSection === item.id ? '#0A66C2' : 'inherit' }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.label}
-                    sx={{ 
-                      '& .MuiListItemText-primary': {
-                        fontWeight: selectedSection === item.id ? 600 : 400,
-                        color: selectedSection === item.id ? '#0A66C2' : 'inherit'
-                      }
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Grid container spacing={4}>
+          {/* Modern Left Sidebar */}
+          <Grid item xs={12} md={3}>
+            <Paper 
+              elevation={2}
+              sx={{ 
+                p: 3, 
+                borderRadius: 3,
+                position: 'sticky',
+                top: 24
+              }}
+            >
+              <Typography variant="h6" sx={{ 
+                fontWeight: 700, 
+                mb: 3, 
+                color: '#0A66C2',
+                fontSize: '1.1rem'
+              }}>
+                Profile Menu
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {menuItems.map((item) => (
+                  <Button
+                    key={item.id}
+                    variant={selectedSection === item.id ? "contained" : "text"}
+                    startIcon={item.icon}
+                    onClick={() => setSelectedSection(item.id)}
+                    fullWidth
+                    sx={{
+                      justifyContent: 'flex-start',
+                      py: 1.5,
+                      px: 2,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      ...(selectedSection === item.id ? {
+                        background: 'linear-gradient(45deg, #0A66C2 30%, #378FE9 90%)',
+                        boxShadow: '0 4px 12px rgba(10, 102, 194, 0.3)',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #004182 30%, #0A66C2 90%)',
+                        }
+                      } : {
+                        color: 'text.primary',
+                        '&:hover': {
+                          backgroundColor: 'rgba(10, 102, 194, 0.04)',
+                          color: '#0A66C2'
+                        }
+                      })
                     }}
-                  />
-                </ListItemButton>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </Box>
+            </Paper>
+          </Grid>
 
-        {/* Main Content */}
-        <Grid item xs={12} md={9}>
-          {selectedSection === 'personal' && renderPersonalDetails()}
-          {selectedSection === 'resumes' && renderSavedResumes()}
+          {/* Modern Main Content */}
+          <Grid item xs={12} md={9}>
+            <Box sx={{ minHeight: '70vh' }}>
+              {selectedSection === 'personal' && renderPersonalDetails()}
+              {selectedSection === 'resumes' && renderSavedResumes()}
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { AutoAwesome as AutoAwesomeIcon } from '@mui/icons-material';
+import JobTailorIcon from './JobTailorIcon';
 import { motion } from 'framer-motion';
 
 const MobileResumeMockups = () => {
@@ -209,9 +209,7 @@ const MobileResumeMockups = () => {
           zIndex: 2
         }}
       >
-        <AutoAwesomeIcon sx={{ 
-          fontSize: 16, 
-          color: '#0A66C2',
+        <JobTailorIcon size={16} sx={{
           filter: 'drop-shadow(0 0 10px rgba(10, 102, 194, 0.6))'
         }} />
       </motion.div>
