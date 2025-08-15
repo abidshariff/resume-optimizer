@@ -26,7 +26,7 @@ def analyze_role_seniority_and_type(job_title):
     
     # Determine role type
     role_type = "technical"  # default
-    if any(term in job_title_lower for term in ['manager', 'director', 'lead', 'supervisor', 'head']):
+    if any(term in job_title_lower for term in ['manager', 'director', 'supervisor', 'head']):
         role_type = "management"
     elif any(term in job_title_lower for term in ['sales', 'account', 'business development', 'customer success']):
         role_type = "sales"

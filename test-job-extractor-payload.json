@@ -1,0 +1,9 @@
+{
+  "httpMethod": "POST",
+  "path": "/extract-job-url",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "test-token"
+  },
+  "body": "{\"jobUrl\": \"https://jobs.netflix.com/jobs/790298\"}"
+}

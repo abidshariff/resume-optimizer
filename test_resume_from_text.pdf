@@ -1,0 +1,92 @@
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+4 0 obj
+<<
+/Length 1345
+>>
+stream
+BT
+/F1 10 Tf
+50 750 Td
+14 TL
+(John Smith) Tj T*
+(Senior Software Engineer) Tj T*
+(Email: john.smith@email.com | Phone: 555 123-4567) Tj T*
+T*
+(PROFESSIONAL SUMMARY) Tj T*
+(Experienced Senior Software Engineer with 8+ years of expertise in full-stack de) Tj T*
+T*
+(TECHNICAL SKILLS) Tj T*
+(• Programming Languages: Python, JavaScript, TypeScript, Java) Tj T*
+(• Frontend Technologies: React, Vue.js, Angular, HTML5, CSS3) Tj T*
+(• Backend Technologies: Node.js, Django, Flask, Spring Boot) Tj T*
+(• Cloud Platforms: AWS, Azure, Google Cloud Platform) Tj T*
+T*
+(PROFESSIONAL EXPERIENCE) Tj T*
+T*
+(Senior Software Engineer | TechCorp Inc. | Jan 2020 - Present) Tj T*
+(• Led development of microservices architecture serving 1M+ daily active users) Tj T*
+(• Implemented CI/CD pipelines reducing deployment time by 75%) Tj T*
+(• Mentored team of 5 junior developers and conducted code reviews) Tj T*
+T*
+(Software Engineer | StartupXYZ | Jun 2017 - Dec 2019) Tj T*
+(• Developed responsive web applications using React and Node.js) Tj T*
+(• Built automated testing suites increasing code coverage to 95%) Tj T*
+(• Integrated third-party APIs and payment processing systems) Tj T*
+T*
+(EDUCATION) Tj T*
+(Bachelor of Science in Computer Science) Tj T*
+(University of California, Berkeley | 2011 - 2015) Tj T*
+(GPA: 3.7/4.0) Tj T*
+T*
+ET
+endstream
+endobj
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001645 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+1715
+%%EOF

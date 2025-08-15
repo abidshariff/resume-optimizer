@@ -1,9 +1,0 @@
-{
-  "userId": "test-user",
-  "jobId": "test-job-123",
-  "resumeKey": "test-resume.pdf",
-  "statusKey": "test-status-key",
-  "jobTitleKey": "test-job-title",
-  "jobDescriptionKey": "test-job-desc",
-  "outputFormat": "pdf"
-}
