@@ -1,6 +1,6 @@
-boto3>=1.26.0
-PyPDF2>=3.0.1
-typing_extensions>=4.0.0
-reportlab>=4.0.0
-python-docx>=0.8.11
-python-dateutil>=2.8.0
+reportlab==4.2.2
+Pillow==10.4.0
+python-docx==0.8.11
+lxml==4.9.3
+PyPDF2==3.0.1
+boto3
